@@ -1,0 +1,154 @@
+got it — here’s a single, copy‑paste **build prompt**. Use this with your code assistant (e.g., “GPT‑5 Thinking” or your IDE Copilot). It tells it exactly what to generate for the **Phase‑1 website** without you having to explain again.
+
+---
+
+# Build Prompt: Retirement Planning Web App (Phase‑1)
+
+You are a **senior full‑stack engineer**. Generate a production‑ready **Next.js + React** app that collects client inputs and renders a simple, visual **retirement plan**. Do not skip files. Include README with setup steps.
+
+## Objectives
+
+* Two plan modes: **Quick Plan** and **Detailed Plan**.
+* Any skipped numeric field → treat as **0**; any skipped assumption → pull from **CRM defaults API**.
+* **Net Worth line chart** (stock‑like) with icons for events: mini‑retirement, child education, child marriage, retirement start.
+* **Lead capture**: gate PDF export behind name, email, phone (push to CRM).
+* **Login/Sign‑up**: email + password (basic).
+* **Theme**: professional, light UI (light blue, light green, white).
+
+## Tech & Libraries
+
+* Next.js (App Router), TypeScript, TailwindCSS.
+* Form: React Hook Form + Zod validation.
+* Charts: lightweight (e.g., Recharts).
+* Auth: next-auth (email/password Credentials provider).
+* DB: Prisma + Postgres (Neon/Supabase).
+* PDF: server‑side HTML → PDF (e.g., @react-pdf/renderer or Puppeteer).
+* API: Next.js route handlers (/api/\*).
+
+## Pages & Routes
+
+* `/` – Landing with CTA “Create Quick Plan” + lead magnet explainer.
+* `/signup`, `/login`, `/logout`
+* `/plan/new?mode=quick|detailed`
+* `/plan/[id]` – Dashboard view
+* `/settings/crm` – Admin page to edit defaults (guard **admin** role)
+* API:
+
+  * `GET /api/crm/defaults` (inflation, life\_expectancy, returns, tax defaults)
+  * `POST /api/lead`
+  * `POST /api/plan` (create)
+  * `GET /api/plan/:id` (read)
+  * `PUT /api/plan/:id` (update)
+  * `POST /api/calc` (return calculated timeline + markers)
+  * `POST /api/export/pdf`
+
+## Data Model (Prisma)
+
+* User { id, name, email (unique), role: 'client'|'admin', createdAt }
+* Scenario { id, userId, name, mode: 'quick'|'detailed', createdAt, updatedAt }
+* Assumptions { scenarioId, inflationHeadline, inflationEdu, inflationHealth, returnPre, returnPost, lifeExpectancy, taxRegime, source: 'crm'|'user' }
+* HouseholdMember { scenarioId, name, relation, dob, dependent, dependenceEnd }
+* IncomeItem { scenarioId, type: 'salary'|'side'|'family'|'pension'|'rental', amount, frequency: 'monthly'|'annual', start, end }
+* ExpenseItem { scenarioId, type: 'core'|'education'|'health'|'lifestyle', amountMonthly }
+* Goal { scenarioId, kind: 'child\_edu'|'child\_marriage'|'home'|'other', todaysCost, targetYear, inflationCategory }
+* Asset { scenarioId, kind: 'equity'|'debt'|'real\_estate'|'gold'|'cash', value, expectedReturnPre, expectedReturnPost }
+* Liability { scenarioId, principalLeft, rate, emi, endDate }
+* MiniRetirement { scenarioId, start, months, incomeDuring, expenseDeltaPct, fundingOrder }
+* Lead { scenarioId?, name, email, phone, utm, createdAt }
+
+## CRM Defaults (Mock for now)
+
+Create `/api/crm/defaults` returning JSON (editable in **/settings/crm** when admin):
+
+```json
+{
+  "inflationHeadline": 6.0,
+  "inflationEdu": 8.0,
+  "inflationHealth": 7.0,
+  "returnPre": 10.0,
+  "returnPost": 7.0,
+  "lifeExpectancy": 85,
+  "taxRegime": "new"
+}
+```
+
+## Plan Modes – Form Schemas
+
+### Quick Plan (minimal)
+
+* Personal: fullName, dob, retirementAge, spouseDob? (optional)
+* MonthlyExpenseTotal (one number)
+* Children (array, optional): { name, dob?, eduTodaysCost?, marriageTodaysCost? }
+* AssetsLumpSum? (optional)
+* Assumptions (optional): returnPre, returnPost, inflationHeadline
+* MiniRetirement? (optional): { start, months, incomeDuring, expenseDeltaPct }
+  **Validation:** sensible ranges; if absent → use CRM defaults or 0.
+
+### Detailed Plan
+
+Use the full schema above (household members, itemized incomes/expenses, assets, liabilities, goals, mini‑retirements). Any missing numeric → 0; missing assumption → CRM defaults.
+
+## Calculations (server function used by /api/calc)
+
+* Build monthly timeline → roll up to yearly.
+* Phase 1: Now→Retirement
+
+  * Grow expenses by inflation; apply income streams with start/end; include mini‑retirement income and expense delta.
+  * SIP/surplus assumed reinvested into corpus (simplified).
+* Phase 2: Retirement→LifeExpectancy
+
+  * Apply pensions/rental; drawdown using simple guardrail: target real spend based on desired retirement expense; use **returnPost** and **inflationHeadline**.
+* Goals: compute future value using category inflation and subtract from corpus in the target year.
+* Output:
+
+  * `netWorthSeries: [{year, value}]`
+  * `cashflowSeries: [{year, income, expenses, emi, surplus}]`
+  * `markers: [{year, type:'retirement'|'mini'|'edu'|'marriage', label}]`
+  * `summary: { requiredCorpusAtRetirement, projectedCorpusAtRetirement, gap }`
+
+## Dashboard UI (/plan/\[id])
+
+* **Header**: Scenario name, mode, last updated.
+* **KPI tiles**: Required corpus at retirement, projected corpus, gap (₹).
+* **Main chart**: Net Worth line with markers (🎓, 💍, ⏸, 🧓). Hover → tooltip with details.
+* **Cashflow bars**: stacked income vs expenses vs EMI vs surplus (toggle).
+* **Assumptions panel**: show active defaults with “(from CRM)” labels if not overridden.
+* **Export**: “Download PDF” (triggers /api/export/pdf; gate with lead capture modal if user not yet a lead).
+* **Theme**: Tailwind tokens for light blue/light green/white; accessible contrast.
+
+## Lead Capture
+
+* On first PDF export: modal asks name, email, phone; POST `/api/lead` and store `leadId` on scenario.
+
+## Auth & Roles
+
+* next-auth credentials; seed one admin user.
+* Protect `/settings/crm` (admin only). Everyone else can create/manage their own scenarios.
+
+## Accessibility & UX
+
+* Inline helper text and presets (e.g., +5% annual increment).
+* Mobile responsive; large touch targets.
+* Copy is **professional**, India‑context; avoid jargon.
+
+## README
+
+Include:
+
+* local dev setup (env vars, DB migrate/seed, running)
+* deploying to Vercel + Neon/Supabase
+* admin login (seed)
+* how to edit CRM defaults
+* how to change brand colors
+
+## Acceptance Criteria
+
+* Create Quick Plan in **≤ 60 seconds** with defaults.
+* Skipped numbers become **0**; skipped assumptions use CRM defaults.
+* Dashboard renders net worth line + markers correctly.
+* PDF exports and creates a **Lead**.
+* All API routes functional with basic tests.
+
+---
+
+If this looks good, say **“yes”** and I’ll run this prompt to generate the starter code scaffold and README for you.
