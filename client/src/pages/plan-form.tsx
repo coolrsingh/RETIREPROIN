@@ -31,11 +31,11 @@ export default function PlanForm() {
     defaultValues: {
       fullName: "",
       dob: "",
-      retirementAge: 60,
+      retirementAge: undefined as any,
       spouseDob: "",
-      monthlyExpenseTotal: 0,
+      monthlyExpenseTotal: undefined as any,
       children: [],
-      assetsLumpSum: 0,
+      assetsLumpSum: undefined as any,
       assumptions: {
         returnPre: 10,
         returnPost: 7,
@@ -227,15 +227,16 @@ export default function PlanForm() {
                         <FormControl>
                           <Input 
                             type="number" 
-                            min="50" 
-                            max="75"
+                            min="18" 
+                            max="100"
                             placeholder="60"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                             data-testid="input-retirement-age"
                           />
                         </FormControl>
-                        <FormDescription>Typical range: 55-65 years</FormDescription>
+                        <FormDescription>Any age from 18-100 years</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -282,7 +283,8 @@ export default function PlanForm() {
                               placeholder="50,000"
                               className="pl-8"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                               data-testid="input-monthly-expenses"
                             />
                           </div>
@@ -308,7 +310,8 @@ export default function PlanForm() {
                               placeholder="10,00,000"
                               className="pl-8"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                               data-testid="input-assets"
                             />
                           </div>

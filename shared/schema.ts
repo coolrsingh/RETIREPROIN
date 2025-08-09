@@ -296,9 +296,9 @@ export const insertCrmDefaultsSchema = createInsertSchema(crmDefaults).omit({
 export const quickPlanSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   dob: z.string().min(1, "Date of birth is required"),
-  retirementAge: z.number().min(50).max(75),
+  retirementAge: z.number().min(18).max(100),
   spouseDob: z.string().optional(),
-  monthlyExpenseTotal: z.number().min(0),
+  monthlyExpenseTotal: z.number().min(1),
   children: z.array(z.object({
     name: z.string().optional(),
     dob: z.string().optional(),
