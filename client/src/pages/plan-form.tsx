@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { quickPlanSchema, type QuickPlan } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -22,6 +22,7 @@ export default function PlanForm() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [children, setChildren] = useState<any[]>([]);
+  const queryClient = useQueryClient();
 
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
   const mode = searchParams.get('mode') || 'quick';
@@ -56,11 +57,14 @@ export default function PlanForm() {
     },
     onSuccess: async (response) => {
       const scenario = await response.json();
+      // Invalidate scenarios cache to refresh dashboard
+      queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
       toast({
         title: "Plan Created Successfully",
         description: "Your retirement plan has been created and calculated.",
       });
-      navigate(`/plan/${scenario.id}`);
+      // Navigate to home page to see plans list
+      navigate("/");
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -112,10 +116,13 @@ export default function PlanForm() {
   };
 
   const onSubmit = (data: QuickPlan) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
     const formData = {
       ...data,
       children: children.filter(child => child.name), // Only include children with names
     };
+    console.log("Sending to API:", formData);
     createPlanMutation.mutate(formData);
   };
 
