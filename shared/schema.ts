@@ -340,8 +340,7 @@ export type Asset = typeof assets.$inferSelect;
 export type InsertAsset = z.infer<typeof insertAssetSchema>;
 export type Liability = typeof liabilities.$inferSelect;
 export type InsertLiability = z.infer<typeof insertLiabilitySchema>;
-export type MiniRetirement = typeof miniRetirements.$inferSelect;
-export type InsertMiniRetirement = z.infer<typeof insertMiniRetirementSchema>;
+// Mini-retirement feature removed as requested
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type CrmDefaults = typeof crmDefaults.$inferSelect;

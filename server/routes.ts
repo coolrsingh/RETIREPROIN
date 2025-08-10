@@ -275,25 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create assets if provided
-      if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {
-        await storage.createAsset({
-          scenarioId: scenario.id,
-          kind: 'equity',
-          value: planData.assetsLumpSum.toString(),
-        });
-      }
-
-      // Create mini retirement if provided
-      if (planData.miniRetirement && planData.miniRetirement.start) {
-        await storage.createMiniRetirement({
-          scenarioId: scenario.id,
-          start: planData.miniRetirement.start,
-          months: planData.miniRetirement.months || 12,
-          incomeDuring: planData.miniRetirement.incomeDuring?.toString() || '0',
-          expenseDeltaPct: planData.miniRetirement.expenseDeltaPct?.toString() || '0',
-        });
-      }
+      // Mini-retirement feature removed as requested
 
       // Increment plan count for the user
       if (user) {
@@ -321,6 +303,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
+      if (!scenarioData) {
+        return res.status(404).json({ message: "Scenario data not found" });
+      }
       const calculations = await calculateRetirementPlan(scenarioData);
       
       res.json(calculations);
@@ -381,6 +366,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
+      if (!scenarioData) {
+        return res.status(404).json({ message: "Scenario data not found" });
+      }
       const calculations = await calculateRetirementPlan(scenarioData);
       
       const pdfBuffer = await generatePDF(scenarioData, calculations);
@@ -406,11 +394,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allScenarios = await db.select().from(scenarios);
       
       const newUsersToday = allUsers.filter(u => 
-        new Date(u.createdAt).toDateString() === today.toDateString()
+        u.createdAt && new Date(u.createdAt).toDateString() === today.toDateString()
       ).length;
       
       const newPlansToday = allScenarios.filter(s => 
-        new Date(s.createdAt).toDateString() === today.toDateString()
+        s.createdAt && new Date(s.createdAt).toDateString() === today.toDateString()
       ).length;
       
       const totalUsers = allUsers.length;
