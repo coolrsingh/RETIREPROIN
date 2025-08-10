@@ -203,15 +203,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertAssumptions(assumptionData: InsertAssumptions): Promise<Assumptions> {
-    const [assumption] = await db
-      .insert(assumptions)
-      .values(assumptionData)
-      .onConflictDoUpdate({
-        target: assumptions.scenarioId,
-        set: assumptionData,
-      })
-      .returning();
-    return assumption;
+    // Check if assumptions already exist for this scenario
+    const existing = await this.getAssumptions(assumptionData.scenarioId);
+    
+    if (existing) {
+      // Update existing assumptions
+      const [assumption] = await db
+        .update(assumptions)
+        .set(assumptionData)
+        .where(eq(assumptions.scenarioId, assumptionData.scenarioId))
+        .returning();
+      return assumption;
+    } else {
+      // Insert new assumptions
+      const [assumption] = await db
+        .insert(assumptions)
+        .values(assumptionData)
+        .returning();
+      return assumption;
+    }
   }
 
   // Household members operations
