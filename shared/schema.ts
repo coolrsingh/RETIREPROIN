@@ -298,7 +298,10 @@ export const quickPlanSchema = z.object({
   dob: z.string().min(1, "Date of birth is required"),
   retirementAge: z.number().min(18).max(100),
   spouseDob: z.string().optional(),
+  monthlyIncomeTotal: z.number().min(1, "Monthly income is required"),
   monthlyExpenseTotal: z.number().min(1),
+  monthlySavings: z.number().min(0, "Monthly savings is required"),
+  incomeGrowthRate: z.number().min(0).max(50).optional(),
   children: z.array(z.object({
     name: z.string().optional(),
     dob: z.string().optional(),
@@ -306,6 +309,12 @@ export const quickPlanSchema = z.object({
     marriageTodaysCost: z.number().min(0).optional(),
   })).optional(),
   assetsLumpSum: z.number().min(0).optional(),
+  assetsEquity: z.number().min(0).optional(),
+  assetsDebt: z.number().min(0).optional(),
+  assetsRealEstate: z.number().min(0).optional(),
+  assetsCash: z.number().min(0).optional(),
+  preRetirementReturn: z.number().min(0).max(30).optional(),
+  postRetirementReturn: z.number().min(0).max(30).optional(),
   assumptions: z.object({
     returnPre: z.number().min(0).max(30).optional(),
     returnPost: z.number().min(0).max(30).optional(),

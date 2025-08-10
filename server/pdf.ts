@@ -7,8 +7,14 @@ interface PDFData {
 }
 
 export async function generatePDF(scenarioData: any, calculations: any): Promise<Buffer> {
-  // Simple HTML to PDF conversion
-  // In a real application, you would use a library like Puppeteer or @react-pdf/renderer
+  // Enhanced HTML to PDF with comprehensive dashboard information
+  
+  const self = scenarioData.householdMembers?.find((m: any) => m.relation === 'self');
+  const currentYear = new Date().getFullYear();
+  const birthYear = self?.dob ? new Date(self.dob).getFullYear() : currentYear - 35;
+  const currentAge = currentYear - birthYear;
+  const retirementAge = calculations?.summary?.retirementYear ? calculations.summary.retirementYear - birthYear : 60;
+  const yearsToRetirement = Math.max(retirementAge - currentAge, 0);
   
   const html = `
     <!DOCTYPE html>
@@ -19,126 +25,197 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
       <style>
         body { 
           font-family: Arial, sans-serif; 
-          margin: 40px; 
+          margin: 20px; 
           color: #334155;
+          font-size: 12px;
         }
         .header { 
           text-align: center; 
-          margin-bottom: 40px; 
+          margin-bottom: 30px; 
           border-bottom: 2px solid #3b82f6;
-          padding-bottom: 20px;
+          padding-bottom: 15px;
         }
         .summary { 
           display: grid; 
-          grid-template-columns: 1fr 1fr; 
-          gap: 20px; 
-          margin-bottom: 30px; 
+          grid-template-columns: 1fr 1fr 1fr 1fr; 
+          gap: 15px; 
+          margin-bottom: 25px; 
         }
         .kpi-card { 
           border: 1px solid #e2e8f0; 
-          padding: 20px; 
-          border-radius: 8px; 
+          padding: 15px; 
+          border-radius: 6px; 
           background: #f8fafc;
+          text-align: center;
         }
         .kpi-title { 
-          font-size: 14px; 
+          font-size: 11px; 
           color: #64748b; 
-          margin-bottom: 8px; 
+          margin-bottom: 6px; 
         }
         .kpi-value { 
-          font-size: 24px; 
+          font-size: 18px; 
           font-weight: bold; 
           color: #1e293b; 
         }
-        .assumptions { 
-          margin-top: 30px; 
+        .section { 
+          margin-bottom: 25px; 
         }
-        .assumptions h3 { 
-          color: #1e293b; 
-          margin-bottom: 15px; 
+        .section-title {
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 10px;
+          color: #1e293b;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 5px;
         }
-        .assumption-row { 
-          display: flex; 
-          justify-content: space-between; 
-          padding: 8px 0; 
-          border-bottom: 1px solid #e2e8f0; 
+        .info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
         }
-        .disclaimer {
-          margin-top: 40px;
-          padding: 20px;
-          background: #fef3c7;
-          border-radius: 8px;
-          font-size: 12px;
-          color: #92400e;
+        .info-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 5px 0;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .chart-placeholder {
+          height: 200px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #64748b;
+          margin: 10px 0;
         }
       </style>
     </head>
     <body>
       <div class="header">
         <h1>${scenarioData.name}</h1>
-        <p>Retirement Planning Report</p>
+        <p>Comprehensive Retirement Plan Report</p>
         <p>Generated on ${new Date().toLocaleDateString('en-IN')}</p>
       </div>
-
+      
       <div class="summary">
         <div class="kpi-card">
-          <div class="kpi-title">Required Corpus at Retirement</div>
-          <div class="kpi-value">₹${(calculations.summary.requiredCorpusAtRetirement / 10000000).toFixed(1)} Cr</div>
+          <div class="kpi-title">Current Age</div>
+          <div class="kpi-value">${currentAge} years</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-title">Projected Corpus at Retirement</div>
-          <div class="kpi-value">₹${(calculations.summary.projectedCorpusAtRetirement / 10000000).toFixed(1)} Cr</div>
+          <div class="kpi-title">Retirement Age</div>
+          <div class="kpi-value">${retirementAge} years</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-title">Funding Gap</div>
-          <div class="kpi-value" style="color: ${calculations.summary.gap > 0 ? '#dc2626' : '#059669'}">
-            ₹${(calculations.summary.gap / 10000000).toFixed(1)} Cr
+          <div class="kpi-title">Years to Retirement</div>
+          <div class="kpi-value">${yearsToRetirement} years</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Current Net Worth</div>
+          <div class="kpi-value">₹${((calculations?.netWorthSeries?.[0]?.value || 0) / 100000).toFixed(1)}L</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Financial Overview</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span>Monthly Income:</span>
+            <span>₹${((scenarioData.incomeItems?.[0]?.amount || 0) / 12 / 1000).toFixed(0)}K</span>
+          </div>
+          <div class="info-item">
+            <span>Monthly Expenses:</span>
+            <span>₹${((scenarioData.expenseItems?.[0]?.amountMonthly || 0) / 1000).toFixed(0)}K</span>
+          </div>
+          <div class="info-item">
+            <span>Monthly Savings:</span>
+            <span>₹${(((scenarioData.incomeItems?.[0]?.amount || 0) / 12 - (scenarioData.expenseItems?.[0]?.amountMonthly || 0)) / 1000).toFixed(0)}K</span>
+          </div>
+          <div class="info-item">
+            <span>Current Assets:</span>
+            <span>₹${((scenarioData.assets?.reduce((sum: number, asset: any) => sum + parseFloat(asset.value || '0'), 0) || 0) / 100000).toFixed(1)}L</span>
           </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-title">Retirement Year</div>
-          <div class="kpi-value">${calculations.summary.retirementYear}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Retirement Projections</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span>Projected Corpus at Retirement:</span>
+            <span>₹${((calculations?.summary?.projectedCorpusAtRetirement || 0) / 10000000).toFixed(1)}Cr</span>
+          </div>
+          <div class="info-item">
+            <span>Required Corpus:</span>
+            <span>₹${((calculations?.summary?.requiredCorpusAtRetirement || 0) / 10000000).toFixed(1)}Cr</span>
+          </div>
+          <div class="info-item">
+            <span>Surplus/Gap:</span>
+            <span style="color: ${(calculations?.summary?.gap || 0) >= 0 ? '#16a34a' : '#dc2626'}">
+              ₹${(Math.abs(calculations?.summary?.gap || 0) / 10000000).toFixed(1)}Cr ${(calculations?.summary?.gap || 0) >= 0 ? 'Surplus' : 'Gap'}
+            </span>
+          </div>
+          <div class="info-item">
+            <span>Target Retirement Year:</span>
+            <span>${calculations?.summary?.retirementYear || currentYear + yearsToRetirement}</span>
+          </div>
         </div>
       </div>
 
-      <div class="assumptions">
-        <h3>Planning Assumptions</h3>
-        ${scenarioData.assumptions ? `
-        <div class="assumption-row">
-          <span>General Inflation Rate</span>
-          <span>${parseFloat(scenarioData.assumptions.inflationHeadline || '6.0').toFixed(1)}%</span>
+      ${scenarioData.householdMembers?.filter((m: any) => m.relation === 'child').length > 0 ? `
+      <div class="section">
+        <div class="section-title">Children & Goals</div>
+        ${scenarioData.householdMembers.filter((m: any) => m.relation === 'child').map((child: any, index: number) => {
+          const childBirthYear = child.dob ? new Date(child.dob).getFullYear() : null;
+          const currentChildAge = childBirthYear ? currentYear - childBirthYear : 0;
+          return `
+          <div class="info-item">
+            <span>Child ${index + 1} (${child.name || 'Unnamed'}):</span>
+            <span>Age ${currentChildAge}, Education at ${currentChildAge + (20 - currentChildAge)}, Marriage at ${currentChildAge + (30 - currentChildAge)}</span>
+          </div>
+          `;
+        }).join('')}
+      </div>
+      ` : ''}
+
+      <div class="section">
+        <div class="section-title">Assumptions</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span>Pre-Retirement Return:</span>
+            <span>${scenarioData.assumptions?.returnPre || '10.0'}% p.a.</span>
+          </div>
+          <div class="info-item">
+            <span>Post-Retirement Return:</span>
+            <span>${scenarioData.assumptions?.returnPost || '7.0'}% p.a.</span>
+          </div>
+          <div class="info-item">
+            <span>Inflation (General):</span>
+            <span>${scenarioData.assumptions?.inflationHeadline || '6.0'}% p.a.</span>
+          </div>
+          <div class="info-item">
+            <span>Inflation (Education):</span>
+            <span>${scenarioData.assumptions?.inflationEdu || '8.0'}% p.a.</span>
+          </div>
         </div>
-        <div class="assumption-row">
-          <span>Education Inflation Rate</span>
-          <span>${parseFloat(scenarioData.assumptions.inflationEdu || '8.0').toFixed(1)}%</span>
-        </div>
-        <div class="assumption-row">
-          <span>Pre-retirement Return</span>
-          <span>${parseFloat(scenarioData.assumptions.returnPre || '10.0').toFixed(1)}%</span>
-        </div>
-        <div class="assumption-row">
-          <span>Post-retirement Return</span>
-          <span>${parseFloat(scenarioData.assumptions.returnPost || '7.0').toFixed(1)}%</span>
-        </div>
-        <div class="assumption-row">
-          <span>Life Expectancy</span>
-          <span>${scenarioData.assumptions.lifeExpectancy || 85} years</span>
-        </div>
-        ` : '<p>No custom assumptions set - using CRM defaults</p>'}
       </div>
 
-      <div class="disclaimer">
-        <h4>Important Disclaimer</h4>
-        <p>This retirement plan is based on the information provided and assumptions made at the time of calculation. 
-        Actual results may vary due to market conditions, inflation rates, and other economic factors. 
-        This report is for illustrative purposes only and should not be considered as financial advice. 
-        Please consult with a qualified financial advisor before making investment decisions.</p>
+      <div class="chart-placeholder">
+        <p>Net Worth Projection Chart<br>
+        Current: ₹${((calculations?.netWorthSeries?.[0]?.value || 0) / 100000).toFixed(1)}L → 
+        Retirement: ₹${((calculations?.summary?.projectedCorpusAtRetirement || 0) / 10000000).toFixed(1)}Cr</p>
+      </div>
+
+      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 10px;">
+        <p>This report is generated based on the assumptions and data provided. 
+        Actual results may vary based on market conditions and life events.</p>
       </div>
     </body>
-    </html>
-  `;
+    </html>`;
 
-  // For this implementation, we'll return the HTML as a buffer
-  // In a real application, you would convert HTML to PDF using a proper library
+  // Convert HTML to buffer (in a real app, use Puppeteer or similar)
   return Buffer.from(html, 'utf-8');
 }

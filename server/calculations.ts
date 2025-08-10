@@ -39,7 +39,10 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   const self = scenarioData.householdMembers.find(m => m.relation === 'self');
   const birthYear = self?.dob ? new Date(self.dob).getFullYear() : currentYear - 35;
   const currentAge = currentYear - birthYear;
-  const retirementAge = 60; // Default retirement age
+  
+  // Get retirement age from income items or use default
+  const salaryIncome = scenarioData.incomeItems.find(i => i.type === 'salary');
+  const retirementAge = salaryIncome?.end ? salaryIncome.end - birthYear : 60;
   const retirementYear = birthYear + retirementAge;
 
   // Calculate current financial position
@@ -53,6 +56,8 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
 
   const monthlyExpenses = scenarioData.expenseItems.reduce((sum, expense) => 
     sum + parseFloat(expense.amountMonthly || '0'), 0);
+
+  const monthlySavings = monthlyIncome - monthlyExpenses;
 
   const monthlyEMI = scenarioData.liabilities.reduce((sum, liability) => 
     sum + parseFloat(liability.emi || '0'), 0);
@@ -103,24 +108,54 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     label: 'Retirement',
   });
 
-  // Calculate projections year by year
+  // Calculate projections year by year with improved income growth and savings
+  const incomeGrowthRate = 0.08; // 8% annual income growth
+  const baseAnnualIncome = monthlyIncome * 12;
+  
   for (let year = currentYear; year <= lifeExpectancy + birthYear; year++) {
     const yearsFromNow = year - currentYear;
+    const isPreRetirement = year < retirementYear;
     
-    // Adjust for inflation
-    const inflatedExpenses = monthlyExpenses * Math.pow(1 + inflationHeadline, yearsFromNow) * 12;
-    
-    let yearlyIncome = monthlyIncome * 12;
-    let yearlyEMI = monthlyEMI * 12;
-    
-    // Stop income and EMI at retirement
-    if (year >= retirementYear) {
-      yearlyIncome = 0;
-      yearlyEMI = 0;
+    // Calculate income with growth (stops at retirement)
+    let yearlyIncome = 0;
+    if (isPreRetirement) {
+      yearlyIncome = baseAnnualIncome * Math.pow(1 + incomeGrowthRate, yearsFromNow);
     }
     
-    // Calculate goals impact
+    // Adjust expenses for inflation
+    const inflatedExpenses = monthlyExpenses * Math.pow(1 + inflationHeadline, yearsFromNow) * 12;
+    
+    // EMI payments (stop at retirement)
+    const yearlyEMI = isPreRetirement ? monthlyEMI * 12 : 0;
+    
+    // Calculate child age-based goal expenses for this year
     let goalExpenses = 0;
+    scenarioData.householdMembers.forEach(member => {
+      if (member.relation === 'child' && member.dob) {
+        const childBirthYear = new Date(member.dob).getFullYear();
+        const childAge = year - childBirthYear;
+        
+        // Check if this is an education year (age 20)
+        if (childAge === 20) {
+          // Find education goal for this child or use default 15L
+          const eduGoal = scenarioData.goals.find(g => g.kind === 'child_edu');
+          const eduCost = eduGoal ? parseFloat(eduGoal.todaysCost) : 1500000; // 15L default
+          const inflatedEduCost = eduCost * Math.pow(1 + inflationEdu, yearsFromNow);
+          goalExpenses += inflatedEduCost;
+        }
+        
+        // Check if this is a marriage year (age 30)
+        if (childAge === 30) {
+          // Find marriage goal for this child or use default 25L
+          const marriageGoal = scenarioData.goals.find(g => g.kind === 'child_marriage');
+          const marriageCost = marriageGoal ? parseFloat(marriageGoal.todaysCost) : 2500000; // 25L default
+          const inflatedMarriageCost = marriageCost * Math.pow(1 + inflationEdu, yearsFromNow);
+          goalExpenses += inflatedMarriageCost;
+        }
+      }
+    });
+    
+    // Also include existing goal expenses
     scenarioData.goals.forEach(goal => {
       if (parseInt(goal.targetYear) === year) {
         const todaysCost = parseFloat(goal.todaysCost || '0');
@@ -133,9 +168,18 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     const totalExpenses = inflatedExpenses + goalExpenses;
     const surplus = yearlyIncome - totalExpenses - yearlyEMI;
     
-    // Apply investment returns
-    const returnRate = year < retirementYear ? returnPre : returnPost;
-    currentNetWorth = currentNetWorth * (1 + returnRate) + surplus;
+    // Apply investment returns and savings
+    const returnRate = isPreRetirement ? returnPre : returnPost;
+    
+    if (isPreRetirement) {
+      // Pre-retirement: Add systematic savings + returns on existing corpus
+      const savingsContribution = Math.max(monthlySavings * 12, surplus * 0.3);
+      currentNetWorth = currentNetWorth * (1 + returnRate) + savingsContribution;
+    } else {
+      // Post-retirement: Corpus grows at conservative rate but reduces for expenses
+      const netWithdrawal = Math.max(totalExpenses - yearlyIncome, 0);
+      currentNetWorth = currentNetWorth * (1 + returnRate) - netWithdrawal;
+    }
     
     // Ensure net worth doesn't go negative
     currentNetWorth = Math.max(currentNetWorth, 0);

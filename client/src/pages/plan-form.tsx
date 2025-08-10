@@ -291,6 +291,33 @@ export default function PlanForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
+                    name="monthlyIncomeTotal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Income *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3 top-2 text-slate-500">₹</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="1,50,000"
+                              className="pl-8"
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              data-testid="input-monthly-income"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormDescription>Total household income</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="monthlyExpenseTotal"
                     render={({ field }) => (
                       <FormItem>
@@ -311,6 +338,85 @@ export default function PlanForm() {
                           </div>
                         </FormControl>
                         <FormDescription>Include all household expenses</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="monthlySavings"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Savings/Investment *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3 top-2 text-slate-500">₹</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="50,000"
+                              className="pl-8"
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              data-testid="input-monthly-savings"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormDescription>Amount you save/invest monthly</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="retirementAge"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Target Retirement Age *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="40"
+                            max="80"
+                            placeholder="60"
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            data-testid="input-retirement-age"
+                          />
+                        </FormControl>
+                        <FormDescription>Age when you want to retire</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="incomeGrowthRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Annual Income Growth Rate</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              type="number" 
+                              min="0"
+                              max="50"
+                              step="0.1"
+                              placeholder="8.0"
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                              data-testid="input-income-growth"
+                            />
+                            <span className="absolute right-3 top-2 text-slate-500">%</span>
+                          </div>
+                        </FormControl>
+                        <FormDescription>Expected yearly income increase</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -439,7 +545,7 @@ export default function PlanForm() {
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <Label>Child's Name</Label>
                         <Input 
@@ -447,6 +553,15 @@ export default function PlanForm() {
                           value={child.name}
                           onChange={(e) => updateChild(index, 'name', e.target.value)}
                           data-testid={`input-child-name-${index}`}
+                        />
+                      </div>
+                      <div>
+                        <Label>Date of Birth *</Label>
+                        <Input 
+                          type="date"
+                          value={child.dob || ''}
+                          onChange={(e) => updateChild(index, 'dob', e.target.value)}
+                          data-testid={`input-child-dob-${index}`}
                         />
                       </div>
                       <div>

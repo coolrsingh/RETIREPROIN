@@ -217,12 +217,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Create income item
+      await storage.createIncomeItem({
+        scenarioId: scenario.id,
+        type: 'salary',
+        amount: (planData.monthlyIncomeTotal * 12).toString(),
+        frequency: 'annual',
+        start: new Date().getFullYear(),
+        end: new Date(planData.dob).getFullYear() + planData.retirementAge,
+      });
+
       // Create basic expense from monthly total
       await storage.createExpenseItem({
         scenarioId: scenario.id,
         type: 'core',
         amountMonthly: planData.monthlyExpenseTotal.toString(),
       });
+
+      // Create current assets
+      if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {
+        await storage.createAsset({
+          scenarioId: scenario.id,
+          kind: 'equity',
+          value: planData.assetsLumpSum.toString(),
+          expectedReturnPre: planData.preRetirementReturn?.toString() || crmDefaults.returnPre,
+          expectedReturnPost: planData.postRetirementReturn?.toString() || crmDefaults.returnPost,
+        });
+      }
 
       // Create assets if provided
       if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {

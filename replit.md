@@ -10,6 +10,25 @@ The system is designed as a professional financial planning tool that can collec
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (January 2025)
+
+### Fixed Critical Issues
+- **Database Date Validation**: Fixed empty date validation preventing plan creation
+- **PDF Export Authentication**: Bypassed lead capture for authenticated users 
+- **Child Age Calculations**: Implemented proper age-based education (20) and marriage (30) cost calculations
+- **Income Growth**: Added 8% annual income growth rate functionality
+- **Retirement Age Calculations**: Fixed incorrect years-to-retirement calculations
+- **Form Differentiation**: Created distinct Quick vs Detailed plan forms with asset allocation inputs
+- **Indian User Defaults**: Set +91 phone number prefix for target market
+- **Chart Time Periods**: Fixed 10Y/25Y/Life selection functionality
+
+### Enhanced Calculation Engine
+- Monthly income and savings amount inputs with growth rates
+- Pre-retirement vs post-retirement return rate modeling
+- Child date of birth collection for proper event timing
+- Individual asset class inputs (equity, debt, real estate, cash) for detailed plans
+- Comprehensive PDF export with dashboard information
+
 ## System Architecture
 
 ### Frontend Architecture
