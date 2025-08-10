@@ -155,8 +155,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quick plan creation with limit check
   app.post('/api/plan/quick', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("=== PLAN CREATION DEBUG ===");
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      console.log("User claims:", req.user?.claims);
+      
       const userId = req.user.claims.sub;
+      console.log("User ID:", userId);
+      
       const user = await storage.getUser(userId);
+      console.log("User from storage:", user);
       
       // Check plan limit for non-premium users
       if (!user?.isPremium && (user?.planCount || 0) >= 10) {
@@ -167,7 +174,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log("Attempting to parse plan data...");
       const planData = quickPlanSchema.parse(req.body);
+      console.log("Plan data parsed successfully:", planData);
 
       // Create scenario
       const scenario = await storage.createScenario({

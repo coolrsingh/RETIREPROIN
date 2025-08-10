@@ -51,8 +51,12 @@ export default function PlanForm() {
 
   const createPlanMutation = useMutation({
     mutationFn: async (data: QuickPlan) => {
-      console.log("Submitting plan data:", data);
-      return await apiRequest("/api/plan/quick", "POST", data);
+      console.log("=== CLIENT SIDE DEBUG ===");
+      console.log("Form data being submitted:", JSON.stringify(data, null, 2));
+      console.log("Children array:", data.children);
+      const response = await apiRequest("/api/plan/quick", "POST", data);
+      console.log("Response received:", response);
+      return response;
     },
     onSuccess: async (response) => {
       const scenario = await response.json();
