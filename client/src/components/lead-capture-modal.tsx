@@ -36,7 +36,7 @@ export default function LeadCaptureModal({ isOpen, onClose, scenarioId, onSucces
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
+      phone: "+91",
       consent: false,
     },
   });

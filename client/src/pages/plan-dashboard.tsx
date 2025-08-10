@@ -21,6 +21,7 @@ export default function PlanDashboard() {
   const { toast } = useToast();
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [chartTimeRange, setChartTimeRange] = useState("25Y");
 
   const { data: scenario, isLoading: scenarioLoading } = useQuery({
     queryKey: ["/api/scenarios", params?.id],
@@ -55,11 +56,10 @@ export default function PlanDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   const handleExportPDF = () => {
-    if (scenario?.leadId) {
-      // Direct download if lead already captured
+    // Authenticated users bypass lead capture, guests need lead capture or existing leadId
+    if (isAuthenticated || scenario?.leadId) {
       window.open(`/api/export/pdf/${params?.id}`, '_blank');
     } else {
-      // Show lead capture modal
       setShowLeadModal(true);
     }
   };
@@ -192,15 +192,39 @@ export default function PlanDashboard() {
                 <div className="flex items-center justify-between">
                   <CardTitle>Net Worth Projection</CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" disabled data-testid="button-chart-10y">10Y</Button>
-                    <Button variant="outline" size="sm" className="bg-primary-100 text-primary-700" data-testid="button-chart-25y">25Y</Button>
-                    <Button variant="outline" size="sm" disabled data-testid="button-chart-life">Life</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={chartTimeRange === "10Y" ? "bg-primary-100 text-primary-700" : ""}
+                      onClick={() => setChartTimeRange("10Y")}
+                      data-testid="button-chart-10y"
+                    >
+                      10Y
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={chartTimeRange === "25Y" ? "bg-primary-100 text-primary-700" : ""}
+                      onClick={() => setChartTimeRange("25Y")}
+                      data-testid="button-chart-25y"
+                    >
+                      25Y
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={chartTimeRange === "Life" ? "bg-primary-100 text-primary-700" : ""}
+                      onClick={() => setChartTimeRange("Life")}
+                      data-testid="button-chart-life"
+                    >
+                      Life
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {calculations && !calculationsLoading ? (
-                  <PlanChart calculations={calculations} />
+                  <PlanChart calculations={calculations} timeRange={chartTimeRange} />
                 ) : (
                   <div className="h-80 flex items-center justify-center">
                     <div className="text-center">

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ChartLine, ArrowLeft, Plus, Trash2, Zap } from "lucide-react";
+import { ChartLine, ArrowLeft, Plus, Trash2, Zap, List } from "lucide-react";
 import { Link } from "wouter";
 
 export default function PlanForm() {
@@ -180,10 +180,24 @@ export default function PlanForm() {
             </Link>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center">
-            <Zap className="mr-3 h-8 w-8 text-primary-600" />
-            Quick Retirement Plan
+            {mode === 'quick' ? (
+              <>
+                <Zap className="mr-3 h-8 w-8 text-primary-600" />
+                Quick Retirement Plan
+              </>
+            ) : (
+              <>
+                <List className="mr-3 h-8 w-8 text-success-600" />
+                Detailed Retirement Plan
+              </>
+            )}
           </h1>
-          <p className="text-slate-600 mt-2">Get your retirement plan ready in under 60 seconds with smart defaults</p>
+          <p className="text-slate-600 mt-2">
+            {mode === 'quick' 
+              ? 'Get your retirement plan ready in under 60 seconds with smart defaults'
+              : 'Comprehensive planning with detailed asset allocation and investment strategies'
+            }
+          </p>
         </div>
 
         <Form {...form}>
@@ -302,32 +316,96 @@ export default function PlanForm() {
                     )}
                   />
                   
-                  <FormField
-                    control={form.control}
-                    name="assetsLumpSum"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Assets Value</FormLabel>
-                        <FormControl>
+                  {mode === 'quick' ? (
+                    <FormField
+                      control={form.control}
+                      name="assetsLumpSum"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Assets Value</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2 text-slate-500">₹</span>
+                              <Input 
+                                type="number" 
+                                min="0"
+                                placeholder="10,00,000"
+                                className="pl-8"
+                                {...field}
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                data-testid="input-assets"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>Total value of all investments, savings, property</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ) : (
+                    <div className="col-span-2">
+                      <h4 className="font-medium text-slate-900 mb-4">Asset Allocation</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Equity Investments</Label>
                           <div className="relative">
                             <span className="absolute left-3 top-2 text-slate-500">₹</span>
                             <Input 
                               type="number" 
                               min="0"
-                              placeholder="10,00,000"
+                              placeholder="5,00,000"
                               className="pl-8"
-                              {...field}
-                              value={field.value || ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                              data-testid="input-assets"
+                              data-testid="input-equity"
                             />
                           </div>
-                        </FormControl>
-                        <FormDescription>Investments, savings, property value</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <p className="text-xs text-slate-500 mt-1">Stocks, mutual funds, SIP</p>
+                        </div>
+                        <div>
+                          <Label>Debt Investments</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-2 text-slate-500">₹</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="3,00,000"
+                              className="pl-8"
+                              data-testid="input-debt"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">FDs, bonds, debt funds</p>
+                        </div>
+                        <div>
+                          <Label>Real Estate</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-2 text-slate-500">₹</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="50,00,000"
+                              className="pl-8"
+                              data-testid="input-real-estate"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">Property, REITs</p>
+                        </div>
+                        <div>
+                          <Label>Cash & Others</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-2 text-slate-500">₹</span>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              placeholder="2,00,000"
+                              className="pl-8"
+                              data-testid="input-cash"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">Bank accounts, gold</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

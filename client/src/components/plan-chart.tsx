@@ -5,6 +5,7 @@ interface PlanChartProps {
     netWorthSeries: { year: number; value: number }[];
     markers: { year: number; type: string; label: string }[];
   };
+  timeRange?: string;
 }
 
 const markerColors = {
@@ -80,10 +81,24 @@ const CustomMarker = (props: any) => {
   );
 };
 
-export default function PlanChart({ calculations }: PlanChartProps) {
-  // Combine net worth data with markers
-  const chartData = calculations.netWorthSeries.map(item => {
-    const marker = calculations.markers.find(m => m.year === item.year);
+export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChartProps) {
+  // Filter data based on time range
+  const currentYear = new Date().getFullYear();
+  let maxYear = currentYear + 25; // Default 25 years
+  
+  if (timeRange === "10Y") {
+    maxYear = currentYear + 10;
+  } else if (timeRange === "Life") {
+    maxYear = Math.max(...calculations.netWorthSeries.map(item => item.year));
+  }
+  
+  // Filter net worth series and markers based on time range
+  const filteredNetWorth = calculations.netWorthSeries.filter(item => item.year <= maxYear);
+  const filteredMarkers = calculations.markers.filter(marker => marker.year <= maxYear);
+  
+  // Combine filtered net worth data with markers
+  const chartData = filteredNetWorth.map(item => {
+    const marker = filteredMarkers.find(m => m.year === item.year);
     return {
       ...item,
       marker,
@@ -118,8 +133,8 @@ export default function PlanChart({ calculations }: PlanChartProps) {
             dot={false}
             activeDot={{ r: 6, fill: "#3b82f6" }}
           />
-          {/* Render markers */}
-          {calculations.markers.map(marker => {
+          {/* Render filtered markers */}
+          {filteredMarkers.map(marker => {
             const dataPoint = chartData.find(d => d.year === marker.year);
             if (!dataPoint) return null;
             

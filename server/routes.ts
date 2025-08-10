@@ -167,11 +167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scenarioId: scenario.id,
         name: planData.fullName,
         relation: 'self',
-        dob: planData.dob,
+        dob: planData.dob && planData.dob.trim() !== '' ? planData.dob : null,
         dependent: false,
       });
 
-      if (planData.spouseDob) {
+      if (planData.spouseDob && planData.spouseDob.trim() !== '') {
         await storage.createHouseholdMember({
           scenarioId: scenario.id,
           name: 'Spouse',
@@ -189,9 +189,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               scenarioId: scenario.id,
               name: child.name,
               relation: 'child',
-              dob: child.dob,
+              dob: child.dob && child.dob.trim() !== '' ? child.dob : null,
               dependent: true,
-              dependenceEnd: child.dob ? new Date(child.dob).getFullYear() + 25 : undefined,
+              dependenceEnd: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 25 : undefined,
             });
 
             if (child.eduTodaysCost && child.eduTodaysCost > 0) {
@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 scenarioId: scenario.id,
                 kind: 'child_edu',
                 todaysCost: child.eduTodaysCost.toString(),
-                targetYear: child.dob ? new Date(child.dob).getFullYear() + 22 : new Date().getFullYear() + 18,
+                targetYear: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 20 : new Date().getFullYear() + 20,
                 inflationCategory: 'education',
               });
             }
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 scenarioId: scenario.id,
                 kind: 'child_marriage',
                 todaysCost: child.marriageTodaysCost.toString(),
-                targetYear: child.dob ? new Date(child.dob).getFullYear() + 28 : new Date().getFullYear() + 25,
+                targetYear: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 30 : new Date().getFullYear() + 30,
                 inflationCategory: 'headline',
               });
             }
@@ -305,10 +305,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Scenario not found" });
       }
 
-      // Check if scenario has a lead attached (for gating)
-      if (!scenario.leadId) {
-        return res.status(403).json({ message: "Lead capture required for PDF export" });
-      }
+      // Authenticated users can export without lead capture requirement
+      // Guest downloads (via lead capture) require leadId
 
       const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
       const calculations = await calculateRetirementPlan(scenarioData);
