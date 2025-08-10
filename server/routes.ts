@@ -179,11 +179,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Plan data parsed successfully:", planData);
 
       // Create scenario
+      console.log("Creating scenario...");
       const scenario = await storage.createScenario({
         userId,
         name: `${planData.fullName}'s Retirement Plan`,
         mode: 'quick',
       });
+      console.log("Scenario created:", scenario.id);
 
       // Get CRM defaults for missing assumptions
       const crmDefaults = await storage.getCrmDefaults();
@@ -257,6 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create income item
+      console.log("Creating income item...");
       await storage.createIncomeItem({
         scenarioId: scenario.id,
         type: 'salary',
@@ -265,6 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         start: new Date().getFullYear(),
         end: new Date(planData.dob).getFullYear() + planData.retirementAge,
       });
+      console.log("Income item created successfully");
 
       // Create basic expense from monthly total
       await storage.createExpenseItem({

@@ -315,7 +315,7 @@ export default function PlanForm() {
                               className="pl-8"
                               {...field}
                               value={field.value || ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                               data-testid="input-monthly-income"
                             />
                           </div>
@@ -342,7 +342,7 @@ export default function PlanForm() {
                               className="pl-8"
                               {...field}
                               value={field.value || ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                               data-testid="input-monthly-expenses"
                             />
                           </div>
@@ -369,7 +369,7 @@ export default function PlanForm() {
                               className="pl-8"
                               {...field}
                               value={field.value || ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                               data-testid="input-monthly-savings"
                             />
                           </div>
