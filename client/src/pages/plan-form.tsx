@@ -16,12 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ChartLine, ArrowLeft, Plus, Trash2, Zap, List } from "lucide-react";
 import { Link } from "wouter";
+import PlanLimitModal from "@/components/plan-limit-modal";
 
 export default function PlanForm() {
   const [location, navigate] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
   const [children, setChildren] = useState<any[]>([]);
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const queryClient = useQueryClient();
 
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
@@ -53,7 +55,7 @@ export default function PlanForm() {
 
   const createPlanMutation = useMutation({
     mutationFn: async (data: QuickPlan) => {
-      return await apiRequest("POST", "/api/plan/quick", data);
+      return await apiRequest("/api/plan/quick", "POST", data);
     },
     onSuccess: async (response) => {
       const scenario = await response.json();
@@ -78,6 +80,13 @@ export default function PlanForm() {
         }, 500);
         return;
       }
+      
+      // Check for plan limit error (402 status)
+      if (error.message.includes('402') || error.message.includes('Plan limit reached')) {
+        setShowPlanLimitModal(true);
+        return;
+      }
+      
       toast({
         title: "Error",
         description: "Failed to create plan. Please try again.",
@@ -730,6 +739,13 @@ export default function PlanForm() {
           </form>
         </Form>
       </main>
+      
+      {/* Plan Limit Modal */}
+      <PlanLimitModal 
+        isOpen={showPlanLimitModal}
+        onClose={() => setShowPlanLimitModal(false)}
+        planCount={user?.planCount || 0}
+      />
     </div>
   );
 }

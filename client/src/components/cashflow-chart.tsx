@@ -54,8 +54,8 @@ export default function CashflowChart({ calculations }: CashflowChartProps) {
   const retirementYear = calculations.markers.find(m => m.type === 'retirement')?.year;
 
   const handleExportPDF = () => {
-    // This would export the cash flow chart as PDF
-    console.log("Exporting cashflow chart as PDF");
+    // Export the cashflow chart as PDF - this will be included in overall PDF export
+    window.print();
   };
 
   const ChartComponent = chartType === "line" ? LineChart : BarChart;

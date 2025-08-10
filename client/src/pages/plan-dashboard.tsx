@@ -253,9 +253,6 @@ export default function PlanDashboard() {
                 <Button variant="outline" size="sm" className="bg-primary-100 text-primary-700" data-testid="button-cashflow-income">
                   Income vs Expenses
                 </Button>
-                <Button variant="outline" size="sm" disabled data-testid="button-cashflow-surplus">
-                  Surplus Trend
-                </Button>
               </div>
             </div>
           </CardHeader>

@@ -43,6 +43,7 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserPlanCount(userId: string, count: number): Promise<User>;
   
   // Scenario operations
   getScenario(id: string): Promise<Scenario | undefined>;
@@ -127,6 +128,15 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       })
+      .returning();
+    return user;
+  }
+
+  async updateUserPlanCount(userId: string, count: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ planCount: count, updatedAt: new Date() })
+      .where(eq(users.id, userId))
       .returning();
     return user;
   }

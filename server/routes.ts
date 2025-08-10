@@ -5,7 +5,9 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { calculateRetirementPlan } from "./calculations";
 import { generatePDF } from "./pdf";
 import { z } from "zod";
-import { quickPlanSchema, insertScenarioSchema, insertLeadSchema } from "@shared/schema";
+import { quickPlanSchema, insertScenarioSchema, insertLeadSchema, users, scenarios } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -83,12 +85,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/scenarios', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check plan limit for non-premium users
+      if (!user?.isPremium && (user?.planCount || 0) >= 10) {
+        return res.status(402).json({ 
+          message: "Plan limit reached. Upgrade to premium for unlimited plans.",
+          requiresPayment: true,
+          planCount: user?.planCount || 0
+        });
+      }
+      
       const scenarioData = insertScenarioSchema.parse({
         ...req.body,
         userId,
       });
 
       const scenario = await storage.createScenario(scenarioData);
+      
+      // Increment plan count
+      if (user) {
+        await storage.updateUserPlanCount(userId, (user.planCount || 0) + 1);
+      }
+      
       res.json(scenario);
     } catch (error) {
       console.error("Error creating scenario:", error);
@@ -133,10 +152,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Quick plan creation
+  // Quick plan creation with limit check
   app.post('/api/plan/quick', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Check plan limit for non-premium users
+      if (!user?.isPremium && (user?.planCount || 0) >= 10) {
+        return res.status(402).json({ 
+          message: "Plan limit reached. Upgrade to premium for unlimited plans.",
+          requiresPayment: true,
+          planCount: user?.planCount || 0
+        });
+      }
+      
       const planData = quickPlanSchema.parse(req.body);
 
       // Create scenario
@@ -158,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         returnPre: planData.assumptions?.returnPre?.toString() || crmDefaults.returnPre,
         returnPost: planData.assumptions?.returnPost?.toString() || crmDefaults.returnPost,
         lifeExpectancy: crmDefaults.lifeExpectancy,
-        taxRegime: crmDefaults.taxRegime,
+
         source: planData.assumptions ? 'user' : 'crm',
       });
 
@@ -265,6 +295,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Increment plan count for the user
+      if (user) {
+        await storage.updateUserPlanCount(userId, (user.planCount || 0) + 1);
+      }
+
       res.json(scenario);
     } catch (error) {
       console.error("Error creating quick plan:", error);
@@ -316,7 +351,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF export
+  // PDF export - both GET and POST routes for flexibility
+  app.get('/api/export/pdf/:scenarioId', async (req, res) => {
+    try {
+      const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
+      if (!scenarioData) {
+        return res.status(404).json({ message: "Scenario not found" });
+      }
+
+      const calculations = await calculateRetirementPlan(scenarioData);
+      const pdfBuffer = await generatePDF(scenarioData, calculations);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="retirement-plan-${scenarioData.name}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
   app.post('/api/export/pdf/:scenarioId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -325,9 +379,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!scenario || scenario.userId !== userId) {
         return res.status(404).json({ message: "Scenario not found" });
       }
-
-      // Authenticated users can export without lead capture requirement
-      // Guest downloads (via lead capture) require leadId
 
       const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
       const calculations = await calculateRetirementPlan(scenarioData);
@@ -340,6 +391,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // Analytics and reporting endpoint for daily emails
+  app.get('/api/analytics/daily', async (req, res) => {
+    try {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      // Get daily stats
+      const allUsers = await db.select().from(users);
+      const allScenarios = await db.select().from(scenarios);
+      
+      const newUsersToday = allUsers.filter(u => 
+        new Date(u.createdAt).toDateString() === today.toDateString()
+      ).length;
+      
+      const newPlansToday = allScenarios.filter(s => 
+        new Date(s.createdAt).toDateString() === today.toDateString()
+      ).length;
+      
+      const totalUsers = allUsers.length;
+      const totalPlans = allScenarios.length;
+      
+      const analytics = {
+        date: today.toISOString().split('T')[0],
+        newUsers: newUsersToday,
+        totalUsers,
+        newPlans: newPlansToday,
+        totalPlans,
+        avgPlansPerUser: totalUsers > 0 ? (totalPlans / totalUsers).toFixed(2) : 0,
+        message: `Daily Analytics Report - ${newUsersToday} new users, ${newPlansToday} new retirement plans created`,
+        premiumUsers: allUsers.filter(u => u.isPremium).length,
+        revenueGenerated: allUsers.filter(u => u.isPremium).length * 2 // $2 per premium user
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error generating analytics:", error);
+      res.status(500).json({ message: "Failed to generate analytics" });
+    }
+  });
+
+  // Payment upgrade endpoint for premium plans
+  app.post('/api/upgrade/premium', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // In a real implementation, this would integrate with Stripe/Razorpay
+      const { paymentToken } = req.body;
+      
+      if (!paymentToken) {
+        return res.status(400).json({ message: "Payment token required for premium upgrade" });
+      }
+      
+      // Simulate payment processing for $2 USD
+      // await processPayment(paymentToken, 200); // 200 cents = $2
+      
+      // Update user to premium status
+      const [updatedUser] = await db
+        .update(users)
+        .set({ isPremium: true, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      res.json({ 
+        message: "Successfully upgraded to premium! You now have unlimited retirement plans.",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error upgrading to premium:", error);
+      res.status(500).json({ message: "Failed to upgrade to premium" });
     }
   });
 

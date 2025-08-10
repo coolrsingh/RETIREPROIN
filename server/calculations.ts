@@ -70,6 +70,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   const cashflowSeries: { year: number; income: number; expenses: number; emi: number; surplus: number }[] = [];
   const markers: { year: number; type: string; label: string }[] = [];
 
+  // Starting values - use the actual current corpus entered by user
   let currentNetWorth = totalAssets;
   
   // Add children education and marriage markers individually
@@ -129,7 +130,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     // EMI payments (stop at retirement)
     const yearlyEMI = isPreRetirement ? monthlyEMI * 12 : 0;
     
-    // Calculate child age-based goal expenses for this year
+    // Calculate child age-based goal expenses for this year - WITH INDIVIDUAL CHILD COSTS
     let goalExpenses = 0;
     scenarioData.householdMembers.forEach(member => {
       if (member.relation === 'child' && member.dob) {
@@ -165,11 +166,11 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     if (isPreRetirement) {
       // Pre-retirement: Add systematic savings + returns on existing corpus
       const savingsContribution = Math.max(monthlySavings * 12, surplus * 0.3);
-      currentNetWorth = currentNetWorth * (1 + returnRate) + savingsContribution;
+      currentNetWorth = currentNetWorth * (1 + returnRate) + savingsContribution - goalExpenses;
     } else {
       // Post-retirement: Corpus grows at conservative rate but reduces for expenses
       const netWithdrawal = Math.max(totalExpenses - yearlyIncome, 0);
-      currentNetWorth = currentNetWorth * (1 + returnRate) - netWithdrawal;
+      currentNetWorth = currentNetWorth * (1 + returnRate) - netWithdrawal - goalExpenses;
     }
     
     // Ensure net worth doesn't go negative
