@@ -278,10 +278,6 @@ export const insertLiabilitySchema = createInsertSchema(liabilities).omit({
   id: true,
 });
 
-export const insertMiniRetirementSchema = createInsertSchema(miniRetirements).omit({
-  id: true,
-});
-
 export const insertLeadSchema = createInsertSchema(leads).omit({
   id: true,
   createdAt: true,
@@ -320,12 +316,7 @@ export const quickPlanSchema = z.object({
     returnPost: z.number().min(0).max(30).optional(),
     inflationHeadline: z.number().min(0).max(20).optional(),
   }).optional(),
-  miniRetirement: z.object({
-    start: z.number().min(2024).max(2070).optional(),
-    months: z.number().min(1).max(60).optional(),
-    incomeDuring: z.number().min(0).optional(),
-    expenseDeltaPct: z.number().min(-50).max(200).optional(),
-  }).optional(),
+
 });
 
 // Types

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartLine, ArrowLeft, Download, Settings } from "lucide-react";
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
+import CashflowChart from "@/components/cashflow-chart";
 import KpiCards from "@/components/kpi-cards";
 import AssumptionsPanel from "@/components/assumptions-panel";
 import LeadCaptureModal from "@/components/lead-capture-modal";
@@ -259,13 +260,16 @@ export default function PlanDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-64 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center">
-              <div className="text-center">
-                <ChartLine className="h-12 w-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-500">Annual Cashflow Breakdown</p>
-                <p className="text-xs text-slate-400 mt-1">Stacked bars showing income, expenses, EMI, and surplus</p>
+            {calculations && !calculationsLoading ? (
+              <CashflowChart calculations={calculations} />
+            ) : (
+              <div className="h-64 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center">
+                <div className="text-center">
+                  <ChartLine className="h-12 w-12 text-slate-300 mx-auto mb-2" />
+                  <p className="text-slate-500">Loading cashflow analysis...</p>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </main>

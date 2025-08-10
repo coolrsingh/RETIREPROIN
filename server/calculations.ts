@@ -9,7 +9,7 @@ interface ScenarioData {
   goals: any[];
   assets: any[];
   liabilities: any[];
-  miniRetirements: any[];
+
 }
 
 interface CalculationResult {
@@ -21,6 +21,7 @@ interface CalculationResult {
     projectedCorpusAtRetirement: number;
     gap: number;
     retirementYear: number;
+    sipRequired?: number; // Monthly SIP required if there's a gap
   };
 }
 
@@ -71,35 +72,35 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
 
   let currentNetWorth = totalAssets;
   
-  // Add goal markers
-  scenarioData.goals.forEach(goal => {
-    const targetYear = parseInt(goal.targetYear);
-    let markerType = 'other';
-    let label = goal.kind;
-    
-    if (goal.kind === 'child_edu') {
-      markerType = 'education';
-      label = 'Child Education';
-    } else if (goal.kind === 'child_marriage') {
-      markerType = 'marriage';
-      label = 'Child Marriage';
-    }
-    
-    markers.push({
-      year: targetYear,
-      type: markerType,
-      label,
+  // Add children education and marriage markers individually
+  scenarioData.householdMembers
+    .filter(member => member.relation === 'child')
+    .forEach((child, index) => {
+      if (child.dob) {
+        const childBirthYear = new Date(child.dob).getFullYear();
+        const childName = child.name || `Child ${index + 1}`;
+        
+        // Education at age 20
+        const educationYear = childBirthYear + 20;
+        if (educationYear >= currentYear) {
+          markers.push({
+            year: educationYear,
+            type: 'education',
+            label: `${childName}'s Education`
+          });
+        }
+        
+        // Marriage at age 30
+        const marriageYear = childBirthYear + 30;
+        if (marriageYear >= currentYear) {
+          markers.push({
+            year: marriageYear,
+            type: 'marriage',
+            label: `${childName}'s Marriage`
+          });
+        }
+      }
     });
-  });
-
-  // Add mini retirement markers
-  scenarioData.miniRetirements.forEach(mini => {
-    markers.push({
-      year: parseInt(mini.start),
-      type: 'mini',
-      label: `Mini Retirement (${mini.months} months)`,
-    });
-  });
 
   // Add retirement marker
   markers.push({
@@ -154,16 +155,6 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         }
       }
     });
-    
-    // Also include existing goal expenses
-    scenarioData.goals.forEach(goal => {
-      if (parseInt(goal.targetYear) === year) {
-        const todaysCost = parseFloat(goal.todaysCost || '0');
-        const inflationRate = goal.inflationCategory === 'education' ? inflationEdu : inflationHeadline;
-        const futureValue = todaysCost * Math.pow(1 + inflationRate, yearsFromNow);
-        goalExpenses += futureValue;
-      }
-    });
 
     const totalExpenses = inflatedExpenses + goalExpenses;
     const surplus = yearlyIncome - totalExpenses - yearlyEMI;
@@ -207,6 +198,19 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   const projectedCorpusAtRetirement = retirementData?.value || 0;
   
   const gap = Math.max(0, requiredCorpusAtRetirement - projectedCorpusAtRetirement);
+  
+  // Calculate SIP required if there's a gap
+  let sipRequired = 0;
+  if (gap > 0) {
+    const yearsToRetirement = retirementYear - currentYear;
+    const monthsToRetirement = yearsToRetirement * 12;
+    const monthlyReturn = returnPre / 12;
+    
+    // PMT calculation for SIP required to bridge the gap
+    if (monthsToRetirement > 0 && monthlyReturn > 0) {
+      sipRequired = gap * monthlyReturn / (Math.pow(1 + monthlyReturn, monthsToRetirement) - 1);
+    }
+  }
 
   return {
     netWorthSeries,
@@ -217,6 +221,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
       projectedCorpusAtRetirement: Math.round(projectedCorpusAtRetirement),
       gap: Math.round(gap),
       retirementYear,
+      sipRequired: Math.round(sipRequired),
     },
   };
 }

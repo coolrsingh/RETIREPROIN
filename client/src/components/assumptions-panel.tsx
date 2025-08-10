@@ -85,22 +85,10 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
             <span className="text-sm text-slate-600">Life Expectancy</span>
             <div className="text-right">
               <span className="text-sm font-medium" data-testid="assumption-life-expectancy">
-                {assumptions?.lifeExpectancy || 85} years
+                {assumptions?.lifeExpectancy || 'Consider general'} {assumptions?.lifeExpectancy ? 'years' : ''}
               </span>
               <span className="text-xs text-slate-400 block">
-                {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-slate-600">Tax Regime</span>
-            <div className="text-right">
-              <span className="text-sm font-medium capitalize" data-testid="assumption-tax-regime">
-                {assumptions?.taxRegime || 'New'} Regime
-              </span>
-              <span className="text-xs text-slate-400 block">
-                {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
+                {assumptions?.lifeExpectancy ? (isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)') : '(recommended)'}
               </span>
             </div>
           </div>

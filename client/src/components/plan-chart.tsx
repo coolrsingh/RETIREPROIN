@@ -11,7 +11,6 @@ interface PlanChartProps {
 const markerColors = {
   education: "#3b82f6",
   marriage: "#ec4899", 
-  mini: "#f59e0b",
   retirement: "#10b981",
   other: "#6366f1",
 };
@@ -19,7 +18,6 @@ const markerColors = {
 const markerEmojis = {
   education: "🎓",
   marriage: "💍", 
-  mini: "⏸",
   retirement: "🧓",
   other: "📍",
 };
@@ -96,12 +94,17 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
   const filteredNetWorth = calculations.netWorthSeries.filter(item => item.year <= maxYear);
   const filteredMarkers = calculations.markers.filter(marker => marker.year <= maxYear);
   
-  // Combine filtered net worth data with markers
+  // Find retirement year to differentiate pre/post retirement
+  const retirementYear = calculations.markers.find(m => m.type === 'retirement')?.year;
+  
+  // Combine filtered net worth data with markers and retirement status
   const chartData = filteredNetWorth.map(item => {
     const marker = filteredMarkers.find(m => m.year === item.year);
+    const isPostRetirement = retirementYear && item.year > retirementYear;
     return {
       ...item,
       marker,
+      isPostRetirement,
     };
   });
 
@@ -130,7 +133,21 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             dataKey="value"
             stroke="#3b82f6"
             strokeWidth={3}
-            dot={false}
+            dot={(props: any) => {
+              if (props.payload?.isPostRetirement) {
+                return (
+                  <circle
+                    cx={props.cx}
+                    cy={props.cy}
+                    r={2}
+                    fill="#f59e0b"
+                    stroke="#f59e0b"
+                    strokeWidth={1}
+                  />
+                );
+              }
+              return null;
+            }}
             activeDot={{ r: 6, fill: "#3b82f6" }}
           />
           {/* Render filtered markers */}
@@ -167,10 +184,7 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
           <div className="w-3 h-3 bg-pink-500 rounded-full mr-2"></div>
           <span>Marriage</span>
         </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-          <span>Mini Retirement</span>
-        </div>
+
         <div className="flex items-center">
           <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
           <span>Retirement</span>

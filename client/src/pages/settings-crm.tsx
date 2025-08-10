@@ -23,7 +23,6 @@ const crmDefaultsSchema = z.object({
   returnPre: z.number().min(0).max(30),
   returnPost: z.number().min(0).max(30),
   lifeExpectancy: z.number().min(60).max(100),
-  taxRegime: z.enum(['old', 'new']),
 });
 
 type CrmDefaults = z.infer<typeof crmDefaultsSchema>;
@@ -47,7 +46,6 @@ export default function SettingsCrm() {
       returnPre: 10.0,
       returnPost: 7.0,
       lifeExpectancy: 85,
-      taxRegime: 'new',
     },
   });
 

@@ -5,6 +5,7 @@ interface KpiCardsProps {
       projectedCorpusAtRetirement: number;
       gap: number;
       retirementYear: number;
+      sipRequired?: number;
     };
   };
 }
@@ -28,7 +29,7 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
   const yearsToRetirement = calculateYearsToRetirement(summary.retirementYear);
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-required-corpus">
         <div className="flex items-center justify-between">
           <div>
@@ -100,6 +101,26 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
           <span className="text-sm text-slate-500">Time to build your corpus</span>
         </div>
       </div>
+
+      {/* SIP Required Card - only show if there's a gap */}
+      {summary.gap > 0 && summary.sipRequired && (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-sip-required">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">SIP Required</p>
+              <p className="text-2xl font-bold text-amber-600 mt-1">
+                ₹{(summary.sipRequired / 1000).toFixed(0)}K/month
+              </p>
+            </div>
+            <div className="p-3 bg-amber-100 rounded-lg">
+              <div className="w-6 h-6 text-amber-600">💰</div>
+            </div>
+          </div>
+          <div className="flex items-center mt-4">
+            <span className="text-sm text-slate-500">To bridge funding gap</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
