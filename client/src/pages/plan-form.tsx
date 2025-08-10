@@ -36,7 +36,9 @@ export default function PlanForm() {
       dob: "",
       retirementAge: undefined as any,
       spouseDob: "",
+      monthlyIncomeTotal: undefined as any,
       monthlyExpenseTotal: undefined as any,
+      monthlySavings: undefined as any,
       children: [],
       assetsLumpSum: undefined as any,
       assumptions: {
@@ -44,17 +46,12 @@ export default function PlanForm() {
         returnPost: 7,
         inflationHeadline: 6,
       },
-      miniRetirement: {
-        start: undefined,
-        months: 12,
-        incomeDuring: 0,
-        expenseDeltaPct: 0,
-      },
     },
   });
 
   const createPlanMutation = useMutation({
     mutationFn: async (data: QuickPlan) => {
+      console.log("Submitting plan data:", data);
       return await apiRequest("/api/plan/quick", "POST", data);
     },
     onSuccess: async (response) => {

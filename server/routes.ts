@@ -285,10 +285,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(scenario);
     } catch (error) {
       console.error("Error creating quick plan:", error);
+      console.error("Error stack:", error.stack);
       if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create plan" });
+      res.status(500).json({ message: "Failed to create plan. Please try again." });
     }
   });
 
