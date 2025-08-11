@@ -175,6 +175,7 @@ export default function PlanForm() {
           </p>
         </div>
 
+        {console.log("Plan form mode from URL:", mode)}
         <EnhancedPlanForm 
           onSubmit={onSubmit}
           isLoading={createPlanMutation.isPending}

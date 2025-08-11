@@ -19,6 +19,7 @@ interface EnhancedPlanFormProps {
 }
 
 export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: EnhancedPlanFormProps) {
+  console.log("EnhancedPlanForm rendered with mode:", mode);
   const [shortTermGoals, setShortTermGoals] = useState<any[]>([]);
   const [existingLoans, setExistingLoans] = useState<any[]>([]);
   const [children, setChildren] = useState<any[]>([]);
@@ -350,6 +351,7 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
         {/* Asset Allocation - Only for Detailed Plans */}
         {mode === 'detailed' && (
           <>
+            {console.log("Rendering Asset Allocation section for detailed mode")}
             <Card data-testid="card-asset-allocation">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
