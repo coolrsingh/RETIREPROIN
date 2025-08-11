@@ -54,8 +54,10 @@ export default function PlanForm() {
       console.log("=== CLIENT SIDE DEBUG ===");
       console.log("Form data being submitted:", JSON.stringify(data, null, 2));
       console.log("Children array:", data.children);
-      const response = await apiRequest("/api/plan/quick", "POST", data);
+      console.log("Making API request to /api/plan/quick...");
+      const response = await apiRequest("POST", "/api/plan/quick", data);
       console.log("Response received:", response);
+      console.log("Response status:", response.status);
       return response;
     },
     onSuccess: async (response) => {
