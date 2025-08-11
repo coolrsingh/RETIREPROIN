@@ -189,67 +189,69 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
               />
             </div>
 
-            {/* Joint Retirement */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="isJointRetirement"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        data-testid="checkbox-joint-retirement"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2">
-                        <Heart className="h-4 w-4" />
-                        Joint Retirement Planning with Spouse
-                      </FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
+            {/* Joint Retirement - Only for Detailed Plans */}
+            {mode === 'detailed' && (
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="isJointRetirement"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-joint-retirement"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          <Heart className="h-4 w-4" />
+                          Joint Retirement Planning with Spouse
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              {isJointRetirement && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
-                  <FormField
-                    control={form.control}
-                    name="spouseDob"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Spouse Date of Birth</FormLabel>
-                        <FormControl>
-                          <Input type="date" data-testid="input-spouse-dob" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="spouseRetirementAge"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Spouse Retirement Age</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="60" 
-                            data-testid="input-spouse-retirement-age"
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-            </div>
+                {isJointRetirement && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
+                    <FormField
+                      control={form.control}
+                      name="spouseDob"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Spouse Date of Birth</FormLabel>
+                          <FormControl>
+                            <Input type="date" data-testid="input-spouse-dob" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="spouseRetirementAge"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Spouse Retirement Age</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="60" 
+                              data-testid="input-spouse-retirement-age"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -341,9 +343,9 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
           </CardContent>
         </Card>
 
+        {/* Asset Allocation - Only for Detailed Plans */}
         {mode === 'detailed' && (
           <>
-            {/* Asset Allocation */}
             <Card data-testid="card-asset-allocation">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1059,6 +1061,7 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
               />
             </div>
 
+            {/* Enhanced Equity/Debt Mix - Only for Detailed Plans */}
             {mode === 'detailed' && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <FormField

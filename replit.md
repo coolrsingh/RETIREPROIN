@@ -29,6 +29,18 @@ Preferred communication style: Simple, everyday language.
 - Individual asset class inputs (equity, debt, real estate, cash) for detailed plans
 - Comprehensive PDF export with dashboard information
 
+### Major Feature Enhancement (January 2025)
+- **Enhanced Planning Features**: Implemented 6 advanced features exclusively for Detailed Plan mode:
+  1. **Equity/Debt Mix Customization**: User-defined allocation with 14% equity, 8% debt defaults
+  2. **User-Entered Inflation Rates**: Custom inflation assumptions instead of fixed defaults
+  3. **Joint Retirement Planning**: Spouse information, retirement age, and joint planning options
+  4. **Multiple Asset Classes**: Equity/Debt/Real Estate/Gold/Cash with individual expected returns
+  5. **Short-Term Goals Tracking**: Goal name, type, target month/year, estimated cost
+  6. **Existing Loan Management**: Loan details with tenure, interest rates, and EMI calculations
+- **PDF Export System Dependencies**: Fixed browser launch issues with comprehensive system packages
+- **Database Schema Enhancement**: Added support for goals, loans, asset allocation, and joint planning
+- **Form Mode Separation**: Quick Plan remains simple, Detailed Plan shows all advanced features
+
 ## System Architecture
 
 ### Frontend Architecture
