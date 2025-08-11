@@ -216,6 +216,89 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
     </body>
     </html>`;
 
-  // Convert HTML to buffer (in a real app, use Puppeteer or similar)
-  return Buffer.from(html, 'utf-8');
+  console.log("Generated HTML for PDF, length:", html.length);
+  
+  // Create a proper PDF structure (basic PDF format)
+  const pdfHeader = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length ${html.length}
+>>
+stream
+BT
+/F1 12 Tf
+50 720 Td
+(${scenarioData.name}) Tj
+0 -20 Td
+(Retirement Plan Report) Tj
+0 -20 Td
+(Generated: ${new Date().toLocaleDateString()}) Tj
+0 -30 Td
+(Current Net Worth: ₹${((calculations?.netWorthSeries?.[0]?.value || 0) / 100000).toFixed(1)}L) Tj
+0 -15 Td
+(Target Retirement: ${calculations?.summary?.retirementYear || 'TBD'}) Tj
+0 -15 Td
+(Years to Retirement: ${calculations?.summary?.yearsToRetirement || 'TBD'}) Tj
+0 -30 Td
+(For detailed analysis and charts, please use the web dashboard.) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000274 00000 n 
+0000000824 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+882
+%%EOF`;
+
+  console.log("Created PDF buffer, size:", pdfHeader.length);
+  return Buffer.from(pdfHeader, 'utf-8');
 }

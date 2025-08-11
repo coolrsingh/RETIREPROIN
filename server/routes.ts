@@ -175,7 +175,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log("Attempting to parse plan data...");
-      const planData = quickPlanSchema.parse(req.body);
+      console.log("Schema validation starting...");
+      
+      // Add detailed validation logging
+      const validationResult = quickPlanSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        console.log("VALIDATION FAILED:");
+        console.log("Validation errors:", JSON.stringify(validationResult.error.issues, null, 2));
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.issues 
+        });
+      }
+      
+      const planData = validationResult.data;
       console.log("Plan data parsed successfully:", planData);
 
       // Create scenario

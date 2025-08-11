@@ -70,6 +70,9 @@ export default function PlanForm() {
       navigate("/");
     },
     onError: (error) => {
+      console.error("Plan creation error:", error);
+      console.error("Error message:", error.message);
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -88,9 +91,14 @@ export default function PlanForm() {
         return;
       }
       
+      // Show specific validation errors if available
+      const errorMessage = error.message.includes('Validation failed') 
+        ? "Please check all required fields and try again."
+        : "Failed to create plan. Please try again.";
+      
       toast({
         title: "Error",
-        description: "Failed to create plan. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
