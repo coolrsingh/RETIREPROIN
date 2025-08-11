@@ -89,6 +89,15 @@ const CustomMarker = (props: any) => {
 };
 
 export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChartProps) {
+  // Check if calculations data exists
+  if (!calculations || !calculations.netWorthSeries || !calculations.markers) {
+    return (
+      <div className="w-full h-80 flex items-center justify-center" data-testid="chart-net-worth">
+        <p className="text-slate-500">Loading chart data...</p>
+      </div>
+    );
+  }
+
   // Filter data based on time range
   const currentYear = new Date().getFullYear();
   let maxYear = currentYear + 25; // Default 25 years
@@ -96,7 +105,9 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
   if (timeRange === "10Y") {
     maxYear = currentYear + 10;
   } else if (timeRange === "Life") {
-    maxYear = Math.max(...calculations.netWorthSeries.map(item => item.year));
+    maxYear = calculations.netWorthSeries.length > 0 ? 
+      Math.max(...calculations.netWorthSeries.map(item => item.year)) : 
+      currentYear + 25;
   }
   
   // Filter net worth series and markers based on time range

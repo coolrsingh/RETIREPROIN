@@ -265,7 +265,7 @@ export default function PlanForm() {
                     render={({ field }) => {
                       // Calculate current age from DOB
                       const dobValue = form.watch('dob');
-                      let currentAge = 30; // Default minimum
+                      let currentAge = 18; // Default minimum
                       
                       if (dobValue) {
                         const birthDate = new Date(dobValue);
@@ -277,7 +277,7 @@ export default function PlanForm() {
                         }
                       }
                       
-                      const minRetirementAge = Math.max(currentAge, 18);
+                      const minRetirementAge = currentAge;
                       
                       return (
                         <FormItem>
@@ -295,7 +295,7 @@ export default function PlanForm() {
                             />
                           </FormControl>
                           <FormDescription>
-                            Must be at least {minRetirementAge} years (your current age or 18, whichever is higher)
+                            Must be at least {minRetirementAge} years (your current age)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
