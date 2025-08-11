@@ -155,8 +155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quick plan creation with limit check
   app.post('/api/plan/quick', isAuthenticated, async (req: any, res) => {
     try {
-      console.log("=== PLAN CREATION DEBUG ===");
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      console.log("=== PLAN CREATION START ===");
+      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      console.log("Content-Type:", req.headers['content-type']);
       console.log("User claims:", req.user?.claims);
       
       const userId = req.user.claims.sub;
@@ -178,10 +179,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Schema validation starting...");
       
       // Add detailed validation logging
+      console.log("Starting validation with schema...");
       const validationResult = quickPlanSchema.safeParse(req.body);
+      console.log("Validation result success:", validationResult.success);
+      
       if (!validationResult.success) {
-        console.log("VALIDATION FAILED:");
+        console.log("=== VALIDATION FAILED ===");
         console.log("Validation errors:", JSON.stringify(validationResult.error.issues, null, 2));
+        validationResult.error.issues.forEach((issue, index) => {
+          console.log(`Error ${index + 1}: Field '${issue.path.join('.')}' - ${issue.message} (received: ${issue.received})`);
+        });
         return res.status(400).json({ 
           message: "Validation failed", 
           errors: validationResult.error.issues 
@@ -310,13 +317,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(scenario);
     } catch (error) {
-      console.error("Error creating quick plan:", error);
+      console.error("=== PLAN CREATION ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
       if (error instanceof z.ZodError) {
         console.error("Zod validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create plan. Please try again." });
+      res.status(500).json({ 
+        message: "Failed to create plan. Please try again.",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
