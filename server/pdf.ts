@@ -9,7 +9,10 @@ interface PDFData {
 export async function generatePDF(scenarioData: any, calculations: any): Promise<Buffer> {
   // Enhanced multi-page PDF with RetirePro watermarks and comprehensive layout
   
-  const self = scenarioData.householdMembers?.find((m: any) => m.relation === 'self');
+  try {
+    const puppeteer = await import('puppeteer');
+    
+    const self = scenarioData.householdMembers?.find((m: any) => m.relation === 'self');
   const currentYear = new Date().getFullYear();
   const birthYear = self?.dob ? new Date(self.dob).getFullYear() : currentYear - 35;
   const currentAge = currentYear - birthYear;
@@ -280,13 +283,18 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
     </html>
   `;
 
-  try {
-    const puppeteer = await import('puppeteer');
     console.log('Generated HTML for PDF, length:', html.length);
     
     const browser = await puppeteer.default.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
+      ]
     });
     
     const page = await browser.newPage();

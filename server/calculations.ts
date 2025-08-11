@@ -206,11 +206,14 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   if (gap > 0) {
     const yearsToRetirement = retirementYear - currentYear;
     const monthsToRetirement = yearsToRetirement * 12;
-    const monthlyReturn = returnPre / 12;
+    const monthlyReturn = returnPre / 100 / 12; // Convert percentage to decimal
+    
+    console.log(`SIP calculation: gap=${gap}, yearsToRetirement=${yearsToRetirement}, monthsToRetirement=${monthsToRetirement}, monthlyReturn=${monthlyReturn}`);
     
     // PMT calculation for SIP required to bridge the gap
     if (monthsToRetirement > 0 && monthlyReturn > 0) {
       sipRequired = gap * monthlyReturn / (Math.pow(1 + monthlyReturn, monthsToRetirement) - 1);
+      console.log(`Calculated SIP Required: ${sipRequired}`);
     }
   }
 
