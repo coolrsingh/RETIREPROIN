@@ -173,15 +173,65 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             dot={false}
             activeDot={{ r: 6, fill: "#3b82f6" }}
           />
+          {/* Add markers for lifecycle events */}
+          {filteredMarkers.map(marker => {
+            const dataPoint = chartData.find(d => d.year === marker.year);
+            if (!dataPoint) return null;
+            
+            return (
+              <ReferenceDot
+                key={`marker-${marker.year}-${marker.type}`}
+                x={marker.year}
+                y={dataPoint.value}
+                r={8}
+                fill={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
+                stroke="white"
+                strokeWidth={2}
+                label={{
+                  value: marker.type === 'education' ? `Education: ${marker.label}` :
+                         marker.type === 'marriage' ? `Marriage: ${marker.label}` :
+                         marker.type === 'retirement' ? 'Retirement' :
+                         marker.label || marker.type,
+                  position: 'top',
+                  fontSize: 10,
+                  fill: markerColors[marker.type as keyof typeof markerColors] || markerColors.other
+                }}
+              />
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
       
-      {/* Simplified Legend */}
-      <div className="mt-4 flex items-center text-sm">
+      {/* Enhanced Legend with Colors */}
+      <div className="mt-4 flex flex-wrap gap-4 text-sm">
         <div className="flex items-center">
           <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
           <span>Net Worth Projection</span>
         </div>
+        {filteredMarkers.some(m => m.type === 'education') && (
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-blue-600 rounded-full mr-2"></div>
+            <span>Child Education</span>
+          </div>
+        )}
+        {filteredMarkers.some(m => m.type === 'marriage') && (
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-pink-500 rounded-full mr-2"></div>
+            <span>Child Marriage</span>
+          </div>
+        )}
+        {filteredMarkers.some(m => m.type === 'retirement') && (
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+            <span>Retirement</span>
+          </div>
+        )}
+        {filteredMarkers.some(m => m.type === 'mini_retirement') && (
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+            <span>Mini Retirement</span>
+          </div>
+        )}
       </div>
     </div>
   );
