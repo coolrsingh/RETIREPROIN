@@ -164,9 +164,10 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     const returnRate = isPreRetirement ? returnPre : returnPost;
     
     if (isPreRetirement) {
-      // Pre-retirement: Add systematic savings + returns on existing corpus
-      const savingsContribution = Math.max(monthlySavings * 12, surplus * 0.3);
-      currentNetWorth = currentNetWorth * (1 + returnRate) + savingsContribution - goalExpenses;
+      // Pre-retirement: Use actual monthly savings (income - expenses) correctly
+      const actualMonthlySavings = (yearlyIncome - inflatedExpenses) / 12;
+      const annualSavings = actualMonthlySavings * 12;
+      currentNetWorth = currentNetWorth * (1 + returnRate) + Math.max(0, annualSavings) - goalExpenses;
     } else {
       // Post-retirement: Corpus grows at conservative rate but reduces for expenses
       const netWithdrawal = Math.max(totalExpenses - yearlyIncome, 0);

@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot, ReferenceLine, Legend } from "recharts";
 
 interface PlanChartProps {
   calculations: {
@@ -35,13 +35,22 @@ const formatValue = (value: number) => {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const value = payload[0].value;
+    const data = payload[0].payload;
+    const marker = data.marker;
+    
     return (
       <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3">
         <p className="font-medium text-slate-900">Year {label}</p>
         <p className="text-primary-600">
-          Net Worth: {formatValue(value)}
+          Net Worth: {formatValue(data.value)}
         </p>
+        {marker && (
+          <div className="mt-2 p-2 rounded" style={{backgroundColor: `${markerColors[marker.type as keyof typeof markerColors]}20`}}>
+            <p className="text-sm font-medium" style={{color: markerColors[marker.type as keyof typeof markerColors]}}>
+              {markerEmojis[marker.type as keyof typeof markerEmojis]} {marker.label}
+            </p>
+          </div>
+        )}
       </div>
     );
   }
@@ -133,21 +142,7 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             dataKey="value"
             stroke="#3b82f6"
             strokeWidth={3}
-            dot={(props: any) => {
-              if (props.payload?.isPostRetirement) {
-                return (
-                  <circle
-                    cx={props.cx}
-                    cy={props.cy}
-                    r={2}
-                    fill="#f59e0b"
-                    stroke="#f59e0b"
-                    strokeWidth={1}
-                  />
-                );
-              }
-              return null;
-            }}
+            dot={false}
             activeDot={{ r: 6, fill: "#3b82f6" }}
           />
           {/* Render filtered markers */}
@@ -156,15 +151,22 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             if (!dataPoint) return null;
             
             return (
-              <ReferenceDot
-                key={`${marker.year}-${marker.type}`}
-                x={marker.year}
-                y={dataPoint.value}
-                r={12}
-                fill={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
-                stroke="white"
-                strokeWidth={2}
-              />
+              <g key={`marker-${marker.year}-${marker.type}`}>
+                <ReferenceDot
+                  x={marker.year}
+                  y={dataPoint.value}
+                  r={12}
+                  fill={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
+                  stroke="white"
+                  strokeWidth={2}
+                />
+                <ReferenceLine
+                  x={marker.year}
+                  stroke={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
+                  strokeDasharray="5 5"
+                  strokeOpacity={0.6}
+                />
+              </g>
             );
           })}
         </LineChart>
