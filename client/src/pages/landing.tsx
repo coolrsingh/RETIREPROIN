@@ -1,8 +1,20 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartLine, Zap, FileText, Shield } from "lucide-react";
+import { RetirementPopup } from "@/components/retirement-popup";
 
 export default function Landing() {
+  const [showPopup, setShowPopup] = useState(true);
+
+  const handleCreatePlan = () => {
+    window.location.href = '/api/login';
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
       {/* Header */}
@@ -140,6 +152,14 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Retirement Planning Popup */}
+      {showPopup && (
+        <RetirementPopup 
+          onClose={handleClosePopup}
+          onCreatePlan={handleCreatePlan}
+        />
+      )}
     </div>
   );
 }

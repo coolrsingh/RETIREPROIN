@@ -281,10 +281,10 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
   `;
 
   try {
-    const puppeteer = require('puppeteer');
+    const puppeteer = await import('puppeteer');
     console.log('Generated HTML for PDF, length:', html.length);
     
-    const browser = await puppeteer.launch({
+    const browser = await puppeteer.default.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
