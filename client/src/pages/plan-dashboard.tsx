@@ -164,7 +164,13 @@ export default function PlanDashboard() {
                   {scenario.mode === 'quick' ? 'Quick Plan' : 'Detailed Plan'}
                 </Badge>
                 <span className="text-slate-600">
-                  Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN')}
+                  Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </span>
               </div>
             </div>
