@@ -262,25 +262,45 @@ export default function PlanForm() {
                   <FormField
                     control={form.control}
                     name="retirementAge"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Planned Retirement Age *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="18" 
-                            max="100"
-                            placeholder="60"
-                            {...field}
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                            data-testid="input-retirement-age"
-                          />
-                        </FormControl>
-                        <FormDescription>Any age from 18-100 years</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      // Calculate current age from DOB
+                      const dobValue = form.watch('dob');
+                      let currentAge = 30; // Default minimum
+                      
+                      if (dobValue) {
+                        const birthDate = new Date(dobValue);
+                        const today = new Date();
+                        currentAge = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                          currentAge--;
+                        }
+                      }
+                      
+                      const minRetirementAge = Math.max(currentAge, 18);
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel>Planned Retirement Age *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min={minRetirementAge.toString()} 
+                              max="100"
+                              placeholder="60"
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              data-testid="input-retirement-age"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Must be at least {minRetirementAge} years (your current age or 18, whichever is higher)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                   
                   <FormField

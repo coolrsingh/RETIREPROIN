@@ -117,6 +117,15 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
     };
   });
 
+  // Ensure we have valid data before rendering
+  if (!chartData || chartData.length === 0) {
+    return (
+      <div className="w-full h-80 flex items-center justify-center" data-testid="chart-net-worth">
+        <p className="text-slate-500">No data available for chart</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-80" data-testid="chart-net-worth">
       <ResponsiveContainer width="100%" height="100%">
