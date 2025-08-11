@@ -38,23 +38,23 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
       incomeGrowthRate: 8,
       children: [],
       assetsLumpSum: 0,
-      assetAllocation: {
+      assetAllocation: mode === 'detailed' ? {
         equity: 50,
         debt: 30,
         realEstate: 15,
         gold: 5,
         cash: 0
-      },
-      expectedReturns: {
+      } : undefined,
+      expectedReturns: mode === 'detailed' ? {
         equity: 14,
         debt: 8,
         realEstate: 10,
         gold: 6,
         cash: 4
-      },
-      shortTermGoals: [],
-      existingLoans: [],
-      assumptions: {
+      } : undefined,
+      shortTermGoals: mode === 'detailed' ? [] : undefined,
+      existingLoans: mode === 'detailed' ? [] : undefined,
+      assumptions: mode === 'detailed' ? {
         returnPre: 12,
         returnPost: 8,
         inflationHeadline: 7,
@@ -62,6 +62,10 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
         debtAllocation: 30,
         equityReturn: 14,
         debtReturn: 8
+      } : {
+        returnPre: 12,
+        returnPost: 8,
+        inflationHeadline: 7
       }
     },
   });
@@ -114,8 +118,8 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
     const newChild = {
       name: "",
       dob: "",
-      eduTodaysCost: 2000000,
-      marriageTodaysCost: 2000000
+      eduTodaysCost: 0,
+      marriageTodaysCost: 0
     };
     const updatedChildren = [...children, newChild];
     setChildren(updatedChildren);
@@ -917,10 +921,11 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
                   <Label>Education Cost Today (₹)</Label>
                   <Input 
                     type="number"
-                    value={child.eduTodaysCost}
+                    placeholder="2000000"
+                    value={child.eduTodaysCost || ''}
                     onChange={(e) => {
                       const updated = [...children];
-                      updated[index].eduTodaysCost = Number(e.target.value);
+                      updated[index].eduTodaysCost = Number(e.target.value) || 0;
                       setChildren(updated);
                       form.setValue("children", updated);
                     }}
@@ -932,10 +937,11 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
                     <Label>Marriage Cost Today (₹)</Label>
                     <Input 
                       type="number"
-                      value={child.marriageTodaysCost}
+                      placeholder="2000000"
+                      value={child.marriageTodaysCost || ''}
                       onChange={(e) => {
                         const updated = [...children];
-                        updated[index].marriageTodaysCost = Number(e.target.value);
+                        updated[index].marriageTodaysCost = Number(e.target.value) || 0;
                         setChildren(updated);
                         form.setValue("children", updated);
                       }}
