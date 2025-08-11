@@ -90,7 +90,7 @@ const CustomMarker = (props: any) => {
 
 export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChartProps) {
   // Check if calculations data exists
-  if (!calculations || !calculations.netWorthSeries || !calculations.markers) {
+  if (!calculations || !calculations.netWorthSeries || !Array.isArray(calculations.netWorthSeries)) {
     return (
       <div className="w-full h-80 flex items-center justify-center" data-testid="chart-net-worth">
         <p className="text-slate-500">Loading chart data...</p>
@@ -98,31 +98,33 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
     );
   }
 
+  // Ensure markers array exists
+  const markers = calculations.markers || [];
+
   // Filter data based on time range
   const currentYear = new Date().getFullYear();
   let maxYear = currentYear + 25; // Default 25 years
   
   if (timeRange === "10Y") {
     maxYear = currentYear + 10;
-  } else if (timeRange === "Life") {
-    maxYear = calculations.netWorthSeries.length > 0 ? 
-      Math.max(...calculations.netWorthSeries.map(item => item.year)) : 
-      currentYear + 25;
+  } else if (timeRange === "Life" && calculations.netWorthSeries.length > 0) {
+    maxYear = Math.max(...calculations.netWorthSeries.map(item => item.year));
   }
   
   // Filter net worth series and markers based on time range
   const filteredNetWorth = calculations.netWorthSeries.filter(item => item.year <= maxYear);
-  const filteredMarkers = calculations.markers.filter(marker => marker.year <= maxYear);
+  const filteredMarkers = markers.filter(marker => marker.year <= maxYear);
   
   // Find retirement year to differentiate pre/post retirement
-  const retirementYear = calculations.markers.find(m => m.type === 'retirement')?.year;
+  const retirementYear = markers.find(m => m.type === 'retirement')?.year;
   
   // Combine filtered net worth data with markers and retirement status
   const chartData = filteredNetWorth.map(item => {
     const marker = filteredMarkers.find(m => m.year === item.year);
     const isPostRetirement = retirementYear && item.year > retirementYear;
     return {
-      ...item,
+      year: item.year,
+      value: item.value,
       marker,
       isPostRetirement,
     };
@@ -140,7 +142,10 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
   return (
     <div className="w-full h-80" data-testid="chart-net-worth">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <LineChart 
+          data={chartData} 
+          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis 
             dataKey="year" 
@@ -148,6 +153,8 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             fontSize={12}
             tickLine={false}
             axisLine={false}
+            type="number"
+            domain={['dataMin', 'dataMax']}
           />
           <YAxis 
             stroke="#64748b"
@@ -155,6 +162,7 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             tickLine={false}
             axisLine={false}
             tickFormatter={formatValue}
+            type="number"
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
@@ -165,51 +173,14 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
             dot={false}
             activeDot={{ r: 6, fill: "#3b82f6" }}
           />
-          {/* Render filtered markers */}
-          {filteredMarkers.map(marker => {
-            const dataPoint = chartData.find(d => d.year === marker.year);
-            if (!dataPoint) return null;
-            
-            return (
-              <g key={`marker-${marker.year}-${marker.type}`}>
-                <ReferenceDot
-                  x={marker.year}
-                  y={dataPoint.value}
-                  r={12}
-                  fill={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
-                  stroke="white"
-                  strokeWidth={2}
-                />
-                <ReferenceLine
-                  x={marker.year}
-                  stroke={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
-                  strokeDasharray="5 5"
-                  strokeOpacity={0.6}
-                />
-              </g>
-            );
-          })}
         </LineChart>
       </ResponsiveContainer>
       
-      {/* Chart Legend */}
-      <div className="mt-4 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-primary-500 rounded-full mr-2"></div>
-          <span>Net Worth</span>
-        </div>
+      {/* Simplified Legend */}
+      <div className="mt-4 flex items-center text-sm">
         <div className="flex items-center">
           <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-          <span>Education</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-pink-500 rounded-full mr-2"></div>
-          <span>Marriage</span>
-        </div>
-
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-          <span>Retirement</span>
+          <span>Net Worth Projection</span>
         </div>
       </div>
     </div>
