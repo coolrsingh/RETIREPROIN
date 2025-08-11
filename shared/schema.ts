@@ -59,7 +59,10 @@ export const assumptions = pgTable("assumptions", {
   returnPre: decimal("return_pre", { precision: 5, scale: 2 }),
   returnPost: decimal("return_post", { precision: 5, scale: 2 }),
   lifeExpectancy: integer("life_expectancy"),
-
+  equityAllocation: decimal("equity_allocation", { precision: 5, scale: 2 }).default('70'),
+  debtAllocation: decimal("debt_allocation", { precision: 5, scale: 2 }).default('30'),
+  equityReturn: decimal("equity_return", { precision: 5, scale: 2 }).default('14'),
+  debtReturn: decimal("debt_return", { precision: 5, scale: 2 }).default('8'),
   source: varchar("source", { enum: ['crm', 'user'] }).default('crm'),
 });
 
@@ -67,10 +70,12 @@ export const householdMembers = pgTable("household_members", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   scenarioId: varchar("scenario_id").notNull(),
   name: varchar("name").notNull(),
-  relation: varchar("relation").notNull(),
+  relation: varchar("relation", { enum: ['self', 'spouse', 'child', 'parent'] }).notNull(),
   dob: date("dob"),
   dependent: boolean("dependent").default(false),
   dependenceEnd: integer("dependence_end"),
+  isJointRetirement: boolean("is_joint_retirement").default(false),
+  retirementAge: integer("retirement_age"),
 });
 
 export const incomeItems = pgTable("income_items", {
@@ -93,8 +98,10 @@ export const expenseItems = pgTable("expense_items", {
 export const goals = pgTable("goals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   scenarioId: varchar("scenario_id").notNull(),
-  kind: varchar("kind", { enum: ['child_edu', 'child_marriage', 'home', 'other'] }).notNull(),
+  kind: varchar("kind", { enum: ['child_edu', 'child_marriage', 'home', 'car', 'bike', 'tour', 'other'] }).notNull(),
+  name: varchar("name"),
   todaysCost: decimal("todays_cost", { precision: 15, scale: 2 }).notNull(),
+  targetMonth: integer("target_month"),
   targetYear: integer("target_year").notNull(),
   inflationCategory: varchar("inflation_category", { enum: ['headline', 'education', 'health'] }).default('headline'),
 });
@@ -111,9 +118,14 @@ export const assets = pgTable("assets", {
 export const liabilities = pgTable("liabilities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   scenarioId: varchar("scenario_id").notNull(),
+  name: varchar("name"),
+  type: varchar("type", { enum: ['home_loan', 'personal_loan', 'car_loan', 'education_loan', 'other'] }),
   principalLeft: decimal("principal_left", { precision: 15, scale: 2 }).notNull(),
   rate: decimal("rate", { precision: 5, scale: 2 }).notNull(),
   emi: decimal("emi", { precision: 15, scale: 2 }).notNull(),
+  tenureYears: integer("tenure_years"),
+  tenureMonths: integer("tenure_months").default(0),
+  startDate: date("start_date"),
   endDate: date("end_date").notNull(),
 });
 
@@ -317,8 +329,45 @@ export const quickPlanSchema = z.object({
     returnPre: z.number().min(0).max(30).optional(),
     returnPost: z.number().min(0).max(30).optional(),
     inflationHeadline: z.number().min(0).max(20).optional(),
+    equityAllocation: z.number().min(0).max(100).default(70),
+    debtAllocation: z.number().min(0).max(100).default(30),
+    equityReturn: z.number().min(0).max(50).default(14),
+    debtReturn: z.number().min(0).max(50).default(8)
   }).optional(),
-
+  // Enhanced features
+  isJointRetirement: z.boolean().default(false),
+  spouseRetirementAge: z.number().min(18).max(100).optional(),
+  assetAllocation: z.object({
+    equity: z.number().min(0).max(100).default(50),
+    debt: z.number().min(0).max(100).default(30),
+    realEstate: z.number().min(0).max(100).default(15),
+    gold: z.number().min(0).max(100).default(5),
+    cash: z.number().min(0).max(100).default(0)
+  }).optional(),
+  expectedReturns: z.object({
+    equity: z.number().min(0).max(50).default(14),
+    debt: z.number().min(0).max(50).default(8),
+    realEstate: z.number().min(0).max(50).default(10),
+    gold: z.number().min(0).max(50).default(6),
+    cash: z.number().min(0).max(50).default(4)
+  }).optional(),
+  shortTermGoals: z.array(z.object({
+    name: z.string().min(1),
+    type: z.enum(['car', 'bike', 'tour', 'other']),
+    targetMonth: z.number().min(1).max(12),
+    targetYear: z.number().min(2024),
+    estimatedCost: z.number().min(0)
+  })).optional(),
+  existingLoans: z.array(z.object({
+    name: z.string().min(1),
+    type: z.enum(['home_loan', 'personal_loan', 'car_loan', 'education_loan', 'other']),
+    principalLeft: z.number().min(0),
+    interestRate: z.number().min(0).max(50),
+    tenureYears: z.number().min(0).max(50),
+    tenureMonths: z.number().min(0).max(11).default(0),
+    startDate: z.string(),
+    emi: z.number().min(0)
+  })).optional()
 });
 
 // Types
