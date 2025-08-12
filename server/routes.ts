@@ -389,7 +389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="retirement-plan-${scenarioData.name}.pdf"`);
-      res.send(pdfBuffer);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer);
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Failed to generate PDF" });
@@ -415,7 +416,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${scenarioData.name}.pdf"`);
-      res.send(pdfBuffer);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer);
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Failed to generate PDF" });

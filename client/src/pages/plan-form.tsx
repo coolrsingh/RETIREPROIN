@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { quickPlanSchema, type QuickPlan } from "@shared/schema";
 import EnhancedPlanForm from "@/components/enhanced-plan-form";
+import QuickPlanForm from "@/components/quick-plan-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -33,13 +34,24 @@ export default function PlanForm() {
       return response;
     },
     onSuccess: async (response) => {
-      const scenario = await response.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
-      toast({
-        title: "Plan Created Successfully",
-        description: "Your retirement plan has been created and calculated.",
-      });
-      navigate("/");
+      try {
+        const scenario = await response.json();
+        queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
+        toast({
+          title: "Plan Created Successfully",
+          description: "Your retirement plan has been created and calculated.",
+        });
+        navigate("/");
+      } catch (error) {
+        console.error("Error parsing response JSON:", error);
+        // If JSON parsing fails, just navigate anyway since plan was created
+        queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
+        toast({
+          title: "Plan Created Successfully",
+          description: "Your retirement plan has been created and calculated.",
+        });
+        navigate("/");
+      }
     },
     onError: (error) => {
       console.error("Plan creation error:", error);
@@ -176,11 +188,18 @@ export default function PlanForm() {
         </div>
 
         {console.log("Plan form mode from URL:", mode)}
-        <EnhancedPlanForm 
-          onSubmit={onSubmit}
-          isLoading={createPlanMutation.isPending}
-          mode={mode as 'quick' | 'detailed'}
-        />
+        {mode === 'quick' ? (
+          <QuickPlanForm 
+            onSubmit={onSubmit}
+            isLoading={createPlanMutation.isPending}
+          />
+        ) : (
+          <EnhancedPlanForm 
+            onSubmit={onSubmit}
+            isLoading={createPlanMutation.isPending}
+            mode={mode as 'quick' | 'detailed'}
+          />
+        )}
       </main>
       
       {/* Plan Limit Modal */}
