@@ -21,7 +21,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
-          <Route path="/plan/new" component={PlanForm} />
+          <Route path="/plan" component={PlanForm} />
           <Route path="/plan/:id" component={PlanDashboard} />
           <Route path="/settings/crm" component={SettingsCrm} />
         </>

@@ -102,7 +102,7 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href="/plan/new?mode=quick">
+              <Link href="/plan?mode=quick">
                 <Button className="w-full" data-testid="button-create-quick-plan">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Quick Plan
@@ -122,7 +122,7 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href="/plan/new?mode=detailed">
+              <Link href="/plan?mode=detailed">
                 <Button variant="outline" className="w-full border-success-600 text-success-700 hover:bg-success-100" data-testid="button-create-detailed-plan">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Detailed Plan

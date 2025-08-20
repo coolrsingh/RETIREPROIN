@@ -188,7 +188,6 @@ export default function PlanForm() {
           </p>
         </div>
 
-        {console.log("Plan form mode from URL:", mode)}
         {mode === 'quick' ? (
           <QuickPlanForm 
             onSubmit={onSubmit}
