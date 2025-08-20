@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { quickPlanSchema, type QuickPlan } from "@shared/schema";
 import EnhancedPlanForm from "@/components/enhanced-plan-form";
 import QuickPlanForm from "@/components/quick-plan-form";
+import ComingSoonDetailed from "@/components/coming-soon-detailed";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChartLine, ArrowLeft, Zap, List } from "lucide-react";
 import { Link } from "wouter";
-import PlanLimitModal from "@/components/plan-limit-modal";
+import ModernPlanLimitModal from "@/components/modern-plan-limit-modal";
 
 export default function PlanForm() {
   const [location, navigate] = useLocation();
@@ -194,19 +195,14 @@ export default function PlanForm() {
             isLoading={createPlanMutation.isPending}
           />
         ) : (
-          <EnhancedPlanForm 
-            onSubmit={onSubmit}
-            isLoading={createPlanMutation.isPending}
-            mode={mode as 'quick' | 'detailed'}
-          />
+          <ComingSoonDetailed />
         )}
       </main>
       
       {/* Plan Limit Modal */}
-      <PlanLimitModal 
+      <ModernPlanLimitModal 
         isOpen={showPlanLimitModal}
         onClose={() => setShowPlanLimitModal(false)}
-        planCount={user?.planCount || 0}
       />
     </div>
   );

@@ -221,7 +221,7 @@ export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProp
           </CardHeader>
           <CardContent className="space-y-4">
             {children.map((child, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
+              <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-lg">
                 <div>
                   <Label>Child Name</Label>
                   <Input 
@@ -263,6 +263,21 @@ export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProp
                       form.setValue("children", updated);
                     }}
                     data-testid={`input-child-edu-cost-${index}`}
+                  />
+                </div>
+                <div>
+                  <Label>Marriage Cost Today (₹)</Label>
+                  <Input 
+                    type="number"
+                    placeholder="Enter amount"
+                    value={child.marriageTodaysCost || ''}
+                    onChange={(e) => {
+                      const updated = [...children];
+                      updated[index].marriageTodaysCost = Number(e.target.value) || 0;
+                      setChildren(updated);
+                      form.setValue("children", updated);
+                    }}
+                    data-testid={`input-child-marriage-cost-${index}`}
                   />
                 </div>
                 <div className="flex items-end gap-2">
