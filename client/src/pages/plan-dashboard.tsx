@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartLine, ArrowLeft, Download, Settings } from "lucide-react";
+import { ChartLine, ArrowLeft, Download, Settings, Star } from "lucide-react";
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
@@ -102,10 +102,12 @@ export default function PlanDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <ChartLine className="text-primary-600 h-8 w-8" />
-                <span className="text-xl font-bold text-slate-800">RetirePro</span>
-              </div>
+              <Link href="/">
+                <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+                  <ChartLine className="text-primary-600 h-8 w-8" />
+                  <span className="text-xl font-bold text-slate-800">RetirePro</span>
+                </div>
+              </Link>
               <nav className="hidden md:flex space-x-6">
                 <Link href="/" className="text-slate-600 hover:text-primary-600 font-medium">
                   <a data-testid="link-dashboard">Dashboard</a>
@@ -174,14 +176,20 @@ export default function PlanDashboard() {
                 </span>
               </div>
             </div>
-            <Button 
-              onClick={handleExportPDF}
-              className="bg-primary-600 hover:bg-primary-700"
-              data-testid="button-export-pdf"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export PDF
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md">
+                <Star className="h-3 w-3 mr-1" />
+                PREMIUM
+              </Badge>
+              <Button 
+                onClick={handleExportPDF}
+                className="bg-primary-600 hover:bg-primary-700"
+                data-testid="button-export-pdf"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -197,7 +205,13 @@ export default function PlanDashboard() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Net Worth Projection</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <CardTitle>Net Worth Projection</CardTitle>
+                    <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md text-xs">
+                      <Star className="h-3 w-3 mr-1" />
+                      EXPORT
+                    </Badge>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <Button 
                       variant="outline" 

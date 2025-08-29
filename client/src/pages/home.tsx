@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChartLine, Plus, FileText, Settings, Zap, List } from "lucide-react";
+import { ChartLine, Plus, FileText, Settings, Zap, List, Star } from "lucide-react";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -50,10 +50,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <ChartLine className="text-primary-600 h-8 w-8" />
-                <span className="text-xl font-bold text-slate-800">RetirePro</span>
-              </div>
+              <Link href="/">
+                <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+                  <ChartLine className="text-primary-600 h-8 w-8" />
+                  <span className="text-xl font-bold text-slate-800">RetirePro</span>
+                </div>
+              </Link>
               <nav className="hidden md:flex space-x-6">
                 <span className="text-primary-600 font-medium">Dashboard</span>
                 <Link href="/settings/crm" className="text-slate-600 hover:text-primary-600 font-medium">
@@ -111,11 +113,17 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-success-200 bg-success-50">
+          <Card className="border-success-200 bg-success-50 relative">
             <CardHeader>
-              <CardTitle className="flex items-center text-success-700">
-                <List className="mr-2 h-5 w-5" />
-                Detailed Plan
+              <CardTitle className="flex items-center justify-between text-success-700">
+                <div className="flex items-center">
+                  <List className="mr-2 h-5 w-5" />
+                  Detailed Plan
+                </div>
+                <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md">
+                  <Star className="h-3 w-3 mr-1" />
+                  PREMIUM
+                </Badge>
               </CardTitle>
               <CardDescription>
                 Comprehensive planning with all your financial details
@@ -180,17 +188,27 @@ export default function Home() {
               <CardContent>
                 <ChartLine className="h-16 w-16 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">No plans yet</h3>
-                <p className="text-slate-600 mb-6">
+                <p className="text-slate-600 mb-4">
                   Get started by creating your first retirement plan
                 </p>
+                
+                {/* Retirement Facts */}
+                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-blue-900 mb-2">💡 Did you know?</h4>
+                  <p className="text-blue-800 text-sm">
+                    Starting to save for retirement at age 25 vs 35 can result in 2x more wealth at retirement, 
+                    thanks to the power of compound interest. Every year matters!
+                  </p>
+                </div>
+                
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/plan/new?mode=quick">
+                  <Link href="/plan?mode=quick">
                     <Button data-testid="button-first-quick-plan">
                       <Zap className="mr-2 h-4 w-4" />
                       Create Quick Plan
                     </Button>
                   </Link>
-                  <Link href="/plan/new?mode=detailed">
+                  <Link href="/plan?mode=detailed">
                     <Button variant="outline" data-testid="button-first-detailed-plan">
                       <List className="mr-2 h-4 w-4" />
                       Create Detailed Plan
