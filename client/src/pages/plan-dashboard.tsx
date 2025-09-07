@@ -176,20 +176,6 @@ export default function PlanDashboard() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md">
-                <Star className="h-3 w-3 mr-1" />
-                PREMIUM
-              </Badge>
-              <Button 
-                onClick={handleExportPDF}
-                className="bg-primary-600 hover:bg-primary-700"
-                data-testid="button-export-pdf"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
-            </div>
           </div>
         </div>
 

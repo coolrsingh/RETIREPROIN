@@ -54,15 +54,6 @@ export default function Landing() {
               <Zap className="mr-2 h-5 w-5" />
               Create Quick Plan
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="text-lg px-8 py-3"
-              data-testid="button-learn-more"
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              Learn More
-            </Button>
           </div>
         </div>
 

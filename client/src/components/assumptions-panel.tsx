@@ -29,7 +29,10 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValues, setEditValues] = useState({
     inflationHeadline: assumptions?.inflationHeadline || '6.0',
+    inflationEdu: assumptions?.inflationEdu || '8.0',
+    returnPre: assumptions?.returnPre || '10.0',
     returnPost: assumptions?.returnPost || '7.0',
+    lifeExpectancy: assumptions?.lifeExpectancy || 85,
   });
 
   const updateAssumptionsMutation = useMutation({
@@ -67,7 +70,10 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
   const handleCancel = () => {
     setEditValues({
       inflationHeadline: assumptions?.inflationHeadline || '6.0',
+      inflationEdu: assumptions?.inflationEdu || '8.0',
+      returnPre: assumptions?.returnPre || '10.0',
       returnPost: assumptions?.returnPost || '7.0',
+      lifeExpectancy: assumptions?.lifeExpectancy || 85,
     });
     setIsEditing(false);
   };
@@ -153,24 +159,60 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
           <div className="flex justify-between items-center">
             <span className="text-sm text-slate-600">Education Inflation</span>
             <div className="text-right">
-              <span className="text-sm font-medium" data-testid="assumption-inflation-edu">
-                {formatPercentage(assumptions?.inflationEdu, '8.0')}
-              </span>
-              <span className="text-xs text-slate-400 block">
-                {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
-              </span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="20"
+                    value={editValues.inflationEdu}
+                    onChange={(e) => setEditValues(prev => ({ ...prev, inflationEdu: e.target.value }))}
+                    className="w-20 h-8 text-right"
+                    data-testid="input-inflation-edu"
+                  />
+                  <span className="text-sm">%</span>
+                </div>
+              ) : (
+                <>
+                  <span className="text-sm font-medium" data-testid="assumption-inflation-edu">
+                    {formatPercentage(assumptions?.inflationEdu, '8.0')}
+                  </span>
+                  <span className="text-xs text-slate-400 block">
+                    {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-sm text-slate-600">Return (Pre-retirement)</span>
             <div className="text-right">
-              <span className="text-sm font-medium" data-testid="assumption-return-pre">
-                {formatPercentage(assumptions?.returnPre, '10.0')}
-              </span>
-              <span className="text-xs text-blue-600 block">
-                {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
-              </span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="30"
+                    value={editValues.returnPre}
+                    onChange={(e) => setEditValues(prev => ({ ...prev, returnPre: e.target.value }))}
+                    className="w-20 h-8 text-right"
+                    data-testid="input-return-pre"
+                  />
+                  <span className="text-sm">%</span>
+                </div>
+              ) : (
+                <>
+                  <span className="text-sm font-medium" data-testid="assumption-return-pre">
+                    {formatPercentage(assumptions?.returnPre, '10.0')}
+                  </span>
+                  <span className="text-xs text-blue-600 block">
+                    {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -207,12 +249,30 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
           <div className="flex justify-between items-center">
             <span className="text-sm text-slate-600">Life Expectancy</span>
             <div className="text-right">
-              <span className="text-sm font-medium" data-testid="assumption-life-expectancy">
-                {assumptions?.lifeExpectancy || 85} years
-              </span>
-              <span className="text-xs text-slate-400 block">
-                {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
-              </span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="1"
+                    min="60"
+                    max="120"
+                    value={editValues.lifeExpectancy}
+                    onChange={(e) => setEditValues(prev => ({ ...prev, lifeExpectancy: parseInt(e.target.value) || 85 }))}
+                    className="w-20 h-8 text-right"
+                    data-testid="input-life-expectancy"
+                  />
+                  <span className="text-sm">years</span>
+                </div>
+              ) : (
+                <>
+                  <span className="text-sm font-medium" data-testid="assumption-life-expectancy">
+                    {assumptions?.lifeExpectancy || 85} years
+                  </span>
+                  <span className="text-xs text-slate-400 block">
+                    {isFromCrm(assumptions?.source) ? '(from CRM)' : '(user set)'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

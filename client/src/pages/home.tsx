@@ -120,9 +120,8 @@ export default function Home() {
                   <List className="mr-2 h-5 w-5" />
                   Detailed Plan
                 </div>
-                <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md">
-                  <Star className="h-3 w-3 mr-1" />
-                  PREMIUM
+                <Badge className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white shadow-md">
+                  COMING SOON
                 </Badge>
               </CardTitle>
               <CardDescription>
@@ -130,12 +129,10 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href="/plan?mode=detailed">
-                <Button variant="outline" className="w-full border-success-600 text-success-700 hover:bg-success-100" data-testid="button-create-detailed-plan">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Detailed Plan
-                </Button>
-              </Link>
+              <Button variant="outline" className="w-full border-success-600 text-success-700 opacity-50 cursor-not-allowed" disabled data-testid="button-create-detailed-plan">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Detailed Plan
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -175,9 +172,6 @@ export default function Home() {
                           View Plan
                         </Button>
                       </Link>
-                      <Button variant="outline" size="sm" data-testid={`button-edit-${scenario.id}`}>
-                        <Settings className="h-4 w-4" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
