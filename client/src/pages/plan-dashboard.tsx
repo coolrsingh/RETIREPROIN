@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartLine, ArrowLeft, Download, Settings, Star } from "lucide-react";
+import { ChartLine, ArrowLeft, FileSpreadsheet } from "lucide-react";
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
@@ -176,6 +176,14 @@ export default function PlanDashboard() {
                 </span>
               </div>
             </div>
+            <a
+              href={`/api/export/excel/${scenario.id}`}
+              download
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Download Excel
+            </a>
           </div>
         </div>
 

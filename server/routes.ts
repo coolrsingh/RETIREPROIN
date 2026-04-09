@@ -8,6 +8,7 @@ import { z } from "zod";
 import { quickPlanSchema, insertScenarioSchema, insertLeadSchema, users, scenarios } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import * as XLSX from "xlsx";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -447,6 +448,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // Excel export endpoint
+  app.get('/api/export/excel/:scenarioId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const scenario = await storage.getScenario(req.params.scenarioId);
+      
+      if (!scenario || scenario.userId !== userId) {
+        return res.status(404).json({ message: "Scenario not found" });
+      }
+
+      const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
+      if (!scenarioData) {
+        return res.status(404).json({ message: "Scenario data not found" });
+      }
+      
+      const calculations = await calculateRetirementPlan(scenarioData);
+
+      const wb = XLSX.utils.book_new();
+
+      // Summary Sheet
+      const summaryRows = [
+        ["Retirement Plan Summary", "", "", ""],
+        ["Plan Name", scenarioData.name, "", ""],
+        ["Generated On", new Date().toLocaleDateString('en-IN'), "", ""],
+        ["", "", "", ""],
+        ["Metric", "Value", "", ""],
+        ["Projected Corpus at Retirement", `₹${(calculations.summary.projectedCorpusAtRetirement / 10000000).toFixed(2)} Cr`, "", ""],
+        ["Required Corpus at Retirement", `₹${(calculations.summary.requiredCorpusAtRetirement / 10000000).toFixed(2)} Cr`, "", ""],
+        ["Surplus / Gap", calculations.summary.gap > 0 ? `-₹${(calculations.summary.gap / 10000000).toFixed(2)} Cr (Shortfall)` : "Surplus — on track!", "", ""],
+        ["Retirement Year", calculations.summary.retirementYear.toString(), "", ""],
+        ["SIP Required to Close Gap", calculations.summary.sipRequired && calculations.summary.sipRequired > 0 ? `₹${calculations.summary.sipRequired.toLocaleString('en-IN')} / month` : "None — no gap!", "", ""],
+      ];
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+      summarySheet['!cols'] = [{ wch: 35 }, { wch: 30 }, { wch: 20 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+
+      // Year-by-Year Detail Sheet
+      const headers = [
+        "Year", "Age", "Annual Income (₹)", "Regular Expenses (₹)",
+        "EMI Payments (₹)", "Goal Expenses (₹)", "Total Outflow (₹)",
+        "Net Surplus / Deficit (₹)", "Portfolio Return (₹)", "Net Worth (₹)", "Notes & Events"
+      ];
+      
+      const detailRows = [headers, ...calculations.yearlyDetail.map(row => [
+        row.year,
+        row.age,
+        row.income,
+        row.regularExpenses,
+        row.emiExpenses,
+        row.goalExpenses,
+        row.totalExpenses,
+        row.netSavings,
+        row.portfolioReturn,
+        row.netWorth,
+        row.notes.join('; ')
+      ])];
+
+      const detailSheet = XLSX.utils.aoa_to_sheet(detailRows);
+      detailSheet['!cols'] = [
+        { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 22 },
+        { wch: 18 }, { wch: 20 }, { wch: 20 },
+        { wch: 24 }, { wch: 20 }, { wch: 18 }, { wch: 60 }
+      ];
+      XLSX.utils.book_append_sheet(wb, detailSheet, "Year-by-Year Projections");
+
+      // Assumptions Sheet
+      const assumptionRows = [
+        ["Planning Assumptions Used", ""],
+        ["Inflation (General)", `${scenarioData.assumptions?.inflationHeadline || '6.0'}%`],
+        ["Inflation (Education)", `${scenarioData.assumptions?.inflationEdu || '8.0'}%`],
+        ["Pre-retirement Return", `${scenarioData.assumptions?.returnPre || '10.0'}%`],
+        ["Post-retirement Return", `${scenarioData.assumptions?.returnPost || '7.0'}%`],
+        ["Life Expectancy", `${scenarioData.assumptions?.lifeExpectancy || 85} years`],
+        ["Income Growth Rate", "8% per annum"],
+      ];
+      const assumptionSheet = XLSX.utils.aoa_to_sheet(assumptionRows);
+      assumptionSheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, assumptionSheet, "Assumptions");
+
+      const excelBuffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      
+      const safeName = scenarioData.name.replace(/[^a-zA-Z0-9 ]/g, '');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName} - Retirement Plan.xlsx"`);
+      res.setHeader('Content-Length', excelBuffer.length);
+      res.end(excelBuffer);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+      res.status(500).json({ message: "Failed to generate Excel" });
     }
   });
 
