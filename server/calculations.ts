@@ -9,7 +9,7 @@ interface ScenarioData {
   goals: any[];
   assets: any[];
   liabilities: any[];
-
+  miniRetirements?: any[];
 }
 
 interface CalculationResult {
@@ -60,10 +60,10 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
 
   const monthlySavings = monthlyIncome - monthlyExpenses;
 
-  const monthlyEMI = scenarioData.liabilities.reduce((sum, liability) => 
+  const totalMonthlyEMI = scenarioData.liabilities.reduce((sum, liability) => 
     sum + parseFloat(liability.emi || '0'), 0);
 
-  const monthlySurplus = monthlyIncome - monthlyExpenses - monthlyEMI;
+  const monthlySurplus = monthlyIncome - monthlyExpenses - totalMonthlyEMI;
 
   // Build year-by-year projections
   const netWorthSeries: { year: number; value: number }[] = [];
@@ -73,6 +73,19 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   // Starting values - use the actual current corpus entered by user
   let currentNetWorth = totalAssets;
   
+  // Pre-process mini retirements
+  const miniRetirements = (scenarioData.miniRetirements || []).map((mr: any) => ({
+    startYear: mr.start,
+    endYear: mr.start + Math.ceil((mr.months || 0) / 12),
+    months: mr.months || 0,
+  }));
+
+  // Pre-process EMI with end dates
+  const emiItems = scenarioData.liabilities.map((l: any) => ({
+    monthlyEMI: parseFloat(l.emi || '0'),
+    endYear: l.endDate ? new Date(l.endDate).getFullYear() : null,
+  }));
+
   // Add children education and marriage markers individually
   scenarioData.householdMembers
     .filter(member => member.relation === 'child')
@@ -117,18 +130,33 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   for (let year = currentYear; year <= lifeExpectancy + birthYear; year++) {
     const yearsFromNow = year - currentYear;
     const isPreRetirement = year < retirementYear;
+
+    // Check if this year falls in a mini retirement period
+    const isMiniRetirement = miniRetirements.some(
+      (mr) => year >= mr.startYear && year < mr.endYear
+    );
+
+    // Add mini retirement markers
+    if (miniRetirements.some((mr) => year === mr.startYear)) {
+      markers.push({ year, type: 'mini_retirement', label: 'Mini Retirement' });
+    }
     
-    // Calculate income with growth (stops at retirement)
+    // Calculate income with growth (stops at retirement or during mini retirement)
     let yearlyIncome = 0;
-    if (isPreRetirement) {
+    if (isPreRetirement && !isMiniRetirement) {
       yearlyIncome = baseAnnualIncome * Math.pow(1 + incomeGrowthRate, yearsFromNow);
     }
     
     // Adjust expenses for inflation
     const inflatedExpenses = monthlyExpenses * Math.pow(1 + inflationHeadline, yearsFromNow) * 12;
     
-    // EMI payments (stop at retirement)
-    const yearlyEMI = isPreRetirement ? monthlyEMI * 12 : 0;
+    // EMI payments - only during pre-retirement and only while tenure has not expired
+    const activeEMIMonthly = emiItems.reduce((sum, emi) => {
+      if (!isPreRetirement) return sum;
+      if (emi.endYear !== null && year >= emi.endYear) return sum;
+      return sum + emi.monthlyEMI;
+    }, 0);
+    const yearlyEMI = activeEMIMonthly * 12;
     
     // Calculate child age-based goal expenses for this year - WITH INDIVIDUAL CHILD COSTS
     let goalExpenses = 0;
@@ -164,10 +192,15 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     const returnRate = isPreRetirement ? returnPre : returnPost;
     
     if (isPreRetirement) {
-      // Pre-retirement: Use actual monthly savings (income - expenses) correctly
-      const actualMonthlySavings = (yearlyIncome - inflatedExpenses) / 12;
-      const annualSavings = actualMonthlySavings * 12;
-      currentNetWorth = currentNetWorth * (1 + returnRate) + Math.max(0, annualSavings) - goalExpenses;
+      if (isMiniRetirement) {
+        // During mini retirement: no new savings, only portfolio appreciation
+        currentNetWorth = currentNetWorth * (1 + returnRate) - inflatedExpenses - goalExpenses;
+      } else {
+        // Normal pre-retirement: Use actual monthly savings (income - expenses - EMI)
+        const actualMonthlySavings = (yearlyIncome - inflatedExpenses - yearlyEMI) / 12;
+        const annualSavings = actualMonthlySavings * 12;
+        currentNetWorth = currentNetWorth * (1 + returnRate) + Math.max(0, annualSavings) - goalExpenses;
+      }
     } else {
       // Post-retirement: Corpus grows at conservative rate but reduces for expenses
       const netWithdrawal = Math.max(totalExpenses - yearlyIncome, 0);

@@ -367,7 +367,15 @@ export const quickPlanSchema = z.object({
     tenureMonths: z.number().min(0).max(11).default(0),
     startDate: z.string(),
     emi: z.number().min(0)
-  })).optional()
+  })).optional(),
+  miniRetirement: z.object({
+    startYear: z.number().min(2024).max(2100),
+    durationMonths: z.number().min(1).max(120),
+  }).optional(),
+  existingEMI: z.object({
+    emiAmount: z.number().min(0),
+    tenureRemainingMonths: z.number().min(0),
+  }).optional(),
 });
 
 // Types
@@ -389,7 +397,11 @@ export type Asset = typeof assets.$inferSelect;
 export type InsertAsset = z.infer<typeof insertAssetSchema>;
 export type Liability = typeof liabilities.$inferSelect;
 export type InsertLiability = z.infer<typeof insertLiabilitySchema>;
-// Mini-retirement feature removed as requested
+export const insertMiniRetirementSchema = createInsertSchema(miniRetirements).omit({
+  id: true,
+});
+export type MiniRetirement = typeof miniRetirements.$inferSelect;
+export type InsertMiniRetirement = z.infer<typeof insertMiniRetirementSchema>;
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type CrmDefaults = typeof crmDefaults.$inferSelect;

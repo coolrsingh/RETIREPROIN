@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Trash2, Zap, Coffee, CreditCard } from "lucide-react";
 
 interface QuickPlanFormProps {
   onSubmit: (data: QuickPlan) => void;
@@ -16,6 +17,8 @@ interface QuickPlanFormProps {
 
 export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProps) {
   const [children, setChildren] = useState<any[]>([]);
+  const [hasMiniRetirement, setHasMiniRetirement] = useState(false);
+  const [hasExistingEMI, setHasExistingEMI] = useState(false);
 
   const form = useForm<QuickPlan>({
     resolver: zodResolver(quickPlanSchema),
@@ -62,7 +65,9 @@ export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProp
   const handleSubmit = (data: QuickPlan) => {
     const cleanedData = {
       ...data,
-      children
+      children,
+      miniRetirement: hasMiniRetirement ? data.miniRetirement : undefined,
+      existingEMI: hasExistingEMI ? data.existingEMI : undefined,
     };
     onSubmit(cleanedData);
   };
@@ -75,7 +80,7 @@ export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProp
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-blue-600" />
-              Quick Plan - Basic Information
+              Basic Information
             </CardTitle>
             <CardDescription>Get started with the essentials for your retirement planning</CardDescription>
           </CardHeader>
@@ -328,6 +333,143 @@ export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProp
               )}
             />
           </CardContent>
+        </Card>
+
+        {/* Mini Retirement Section */}
+        <Card data-testid="card-mini-retirement">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Coffee className="h-5 w-5 text-amber-600" />
+                  Mini Retirement (Optional)
+                </CardTitle>
+                <CardDescription>Planning a career break or sabbatical? During this period, no new savings will be added — your portfolio will only grow through investment returns.</CardDescription>
+              </div>
+              <Switch
+                checked={hasMiniRetirement}
+                onCheckedChange={setHasMiniRetirement}
+                data-testid="toggle-mini-retirement"
+              />
+            </div>
+          </CardHeader>
+          {hasMiniRetirement && (
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="miniRetirement.startYear"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Year</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder={String(new Date().getFullYear() + 5)}
+                          data-testid="input-mini-retirement-start"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="miniRetirement.durationMonths"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (months)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="12"
+                          min={1}
+                          max={120}
+                          data-testid="input-mini-retirement-duration"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <p className="text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded p-2">
+                During a mini retirement, your investments continue to grow but no monthly savings are added to the corpus.
+              </p>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Existing EMI Section */}
+        <Card data-testid="card-existing-emi">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-rose-600" />
+                  Existing EMI (Optional)
+                </CardTitle>
+                <CardDescription>Do you have an ongoing loan? This EMI will reduce your monthly savings capacity until the tenure ends.</CardDescription>
+              </div>
+              <Switch
+                checked={hasExistingEMI}
+                onCheckedChange={setHasExistingEMI}
+                data-testid="toggle-existing-emi"
+              />
+            </div>
+          </CardHeader>
+          {hasExistingEMI && (
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="existingEMI.emiAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Monthly EMI Amount (₹)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="25000"
+                          data-testid="input-emi-amount"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="existingEMI.tenureRemainingMonths"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tenure Remaining (months)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="60"
+                          min={0}
+                          data-testid="input-emi-tenure"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <p className="text-xs text-slate-500 bg-rose-50 border border-rose-200 rounded p-2">
+                The EMI will be deducted from your monthly surplus for the specified tenure and then automatically stops.
+              </p>
+            </CardContent>
+          )}
         </Card>
 
         {/* Basic Assumptions */}

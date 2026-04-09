@@ -308,7 +308,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Mini-retirement feature removed as requested
+      // Save mini retirement if provided
+      if (planData.miniRetirement?.startYear && planData.miniRetirement?.durationMonths) {
+        await storage.createMiniRetirement({
+          scenarioId: scenario.id,
+          start: planData.miniRetirement.startYear,
+          months: planData.miniRetirement.durationMonths,
+          incomeDuring: '0',
+          expenseDeltaPct: '0',
+        });
+      }
+
+      // Save existing EMI as a liability if provided
+      if (planData.existingEMI?.emiAmount && planData.existingEMI?.tenureRemainingMonths) {
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + planData.existingEMI.tenureRemainingMonths);
+        await storage.createLiability({
+          scenarioId: scenario.id,
+          name: 'Existing EMI',
+          type: 'other',
+          principalLeft: '0',
+          rate: '0',
+          emi: planData.existingEMI.emiAmount.toString(),
+          tenureMonths: planData.existingEMI.tenureRemainingMonths % 12,
+          tenureYears: Math.floor(planData.existingEMI.tenureRemainingMonths / 12),
+          endDate: endDate.toISOString().split('T')[0],
+        });
+      }
 
       // Increment plan count for the user
       if (user) {

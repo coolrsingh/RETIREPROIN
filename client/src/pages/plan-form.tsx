@@ -10,7 +10,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ChartLine, ArrowLeft, Zap, List } from "lucide-react";
 import { Link } from "wouter";
 import ModernPlanLimitModal from "@/components/modern-plan-limit-modal";
@@ -140,9 +139,6 @@ export default function PlanForm() {
                     Detailed Plan
                   </Button>
                 </Link>
-                <Badge variant={mode === 'quick' ? 'default' : 'secondary'}>
-                  {mode === 'quick' ? 'Quick Plan' : 'Detailed Plan'}
-                </Badge>
               </nav>
             </div>
             <Button 
