@@ -41,10 +41,10 @@ export default function PlanForm() {
           title: "Plan Created Successfully",
           description: "Your retirement plan has been created and calculated.",
         });
-        navigate("/");
+        navigate(`/plan/${scenario.id}`);
       } catch (error) {
         console.error("Error parsing response JSON:", error);
-        // If JSON parsing fails, just navigate anyway since plan was created
+        // If JSON parsing fails, navigate to home since we don't have the ID
         queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
         toast({
           title: "Plan Created Successfully",
