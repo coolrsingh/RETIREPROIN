@@ -54,7 +54,7 @@ export default function PlanForm() {
         return;
       }
       
-      if (error.message.includes("Plan limit exceeded")) {
+      if ((error as any).status === 402 || error.message.toLowerCase().includes("plan limit")) {
         setShowPlanLimitModal(true);
         return;
       }

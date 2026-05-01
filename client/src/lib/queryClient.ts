@@ -11,10 +11,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-): Promise<Response> {
-  console.log(`=== API REQUEST: ${method} ${url} ===`);
-  console.log("Request data:", data);
-  
+): Promise<any> {
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -22,15 +19,29 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  console.log("Response status:", res.status);
-  console.log("Response headers:", Object.fromEntries(res.headers.entries()));
-
   if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Error response body:", errorText);
+    // Read body once for the error message
+    let errorMessage = res.statusText;
+    try {
+      const errorBody = await res.json();
+      errorMessage = errorBody.message || errorMessage;
+    } catch {
+      try {
+        errorMessage = await res.text() || errorMessage;
+      } catch {
+        // body unreadable, use statusText
+      }
+    }
+    const err = new Error(errorMessage) as any;
+    err.status = res.status;
+    throw err;
   }
 
-  await throwIfResNotOk(res);
+  // Success — parse and return JSON
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return res.json();
+  }
   return res;
 }
 
