@@ -203,32 +203,28 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     // Apply investment returns and savings
     const returnRate = isPreRetirement ? returnPre : returnPost;
     const portfolioReturn = currentNetWorth * returnRate;
+    const totalOutflow = inflatedExpenses + goalExpenses + yearlyEMI;
+    const totalInflows = yearlyIncome;
     
-    let netSavings = 0;
+    let netSavings = totalInflows - totalOutflow;
     if (isPreRetirement) {
       if (isMiniRetirement) {
-        // During mini retirement: no new savings, only portfolio appreciation, still pay expenses
-        netSavings = -(inflatedExpenses + goalExpenses);
-        currentNetWorth = currentNetWorth * (1 + returnRate) - inflatedExpenses - goalExpenses;
+        // During mini retirement: no new savings, only portfolio appreciation
+        currentNetWorth = currentNetWorth * (1 + returnRate) - totalOutflow;
+        netSavings = -totalOutflow;
       } else {
-        // Normal pre-retirement: savings = income - expenses - EMI - goal expenses
-        const annualSurplus = yearlyIncome - inflatedExpenses - yearlyEMI;
-        netSavings = annualSurplus - goalExpenses;
-        currentNetWorth = currentNetWorth * (1 + returnRate) + Math.max(0, annualSurplus) - goalExpenses;
+        currentNetWorth = currentNetWorth * (1 + returnRate) + netSavings;
       }
     } else {
-      // Post-retirement: corpus draws down for living expenses (no double-counting)
-      const livingExpenses = inflatedExpenses + goalExpenses;
-      const netWithdrawal = Math.max(livingExpenses - yearlyIncome, 0);
-      netSavings = -(netWithdrawal);
-      currentNetWorth = currentNetWorth * (1 + returnRate) - netWithdrawal;
+      // Post-retirement: corpus grows at conservative rate and is reduced by full yearly deficit
+      currentNetWorth = currentNetWorth * (1 + returnRate) + netSavings;
     }
     
     // Ensure net worth doesn't go negative
     currentNetWorth = Math.max(currentNetWorth, 0);
 
-    const totalExpensesForYear = inflatedExpenses + goalExpenses + yearlyEMI;
-    const surplus = yearlyIncome - totalExpensesForYear;
+    const totalExpensesForYear = totalOutflow;
+    const surplus = netSavings;
 
     netWorthSeries.push({ year, value: Math.round(currentNetWorth) });
     cashflowSeries.push({
