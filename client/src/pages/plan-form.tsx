@@ -26,30 +26,17 @@ export default function PlanForm() {
 
   const createPlanMutation = useMutation({
     mutationFn: async (data: QuickPlan) => {
-      console.log("=== CLIENT SIDE DEBUG ===");
-      console.log("Form data being submitted:", JSON.stringify(data, null, 2));
-      console.log("Making API request to /api/plan/quick...");
-      const response = await apiRequest("POST", "/api/plan/quick", data);
-      console.log("Response received:", response);
-      return response;
+      return await apiRequest("POST", "/api/plan/quick", data);
     },
-    onSuccess: async (response) => {
-      try {
-        const scenario = await response.json();
-        queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
-        toast({
-          title: "Plan Created Successfully",
-          description: "Your retirement plan has been created and calculated.",
-        });
+    onSuccess: (scenario: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
+      toast({
+        title: "Plan Created Successfully",
+        description: "Your retirement plan has been created and calculated.",
+      });
+      if (scenario?.id) {
         navigate(`/plan/${scenario.id}`);
-      } catch (error) {
-        console.error("Error parsing response JSON:", error);
-        // If JSON parsing fails, navigate to home since we don't have the ID
-        queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
-        toast({
-          title: "Plan Created Successfully",
-          description: "Your retirement plan has been created and calculated.",
-        });
+      } else {
         navigate("/");
       }
     },
