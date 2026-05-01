@@ -5,7 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { calculateRetirementPlan } from "./calculations";
 import { generatePDF } from "./pdf";
 import { z } from "zod";
-import { quickPlanSchema, insertScenarioSchema, insertLeadSchema, users, scenarios } from "@shared/schema";
+import { quickPlanSchema, insertScenarioSchema, insertLeadSchema, users, scenarios, leads } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import * as XLSX from "xlsx";
@@ -400,6 +400,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid lead data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create lead" });
+    }
+  });
+
+  // Get all leads (authenticated users only)
+  app.get('/api/leads', isAuthenticated, async (req: any, res) => {
+    try {
+      const allLeads = await db.select().from(leads).orderBy(leads.createdAt);
+      res.json(allLeads);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ message: "Failed to fetch leads" });
     }
   });
 

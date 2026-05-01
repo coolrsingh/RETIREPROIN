@@ -9,6 +9,8 @@ import Home from "@/pages/home";
 import PlanForm from "@/pages/plan-form";
 import PlanDashboard from "@/pages/plan-dashboard";
 import SettingsCrm from "@/pages/settings-crm";
+import AdLanding from "@/pages/ad-landing";
+import LeadsAdmin from "@/pages/leads-admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +18,9 @@ function Router() {
 
   return (
     <Switch>
+      {/* Always-public ad landing page */}
+      <Route path="/go" component={AdLanding} />
+
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -24,6 +29,7 @@ function Router() {
           <Route path="/plan" component={PlanForm} />
           <Route path="/plan/:id" component={PlanDashboard} />
           <Route path="/settings/crm" component={SettingsCrm} />
+          <Route path="/leads" component={LeadsAdmin} />
         </>
       )}
       <Route component={NotFound} />

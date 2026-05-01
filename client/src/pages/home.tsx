@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChartLine, Plus, FileText, Zap, List } from "lucide-react";
+import { ChartLine, Plus, FileText, Zap, List, Users } from "lucide-react";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +58,10 @@ export default function Home() {
               </Link>
               <nav className="hidden md:flex space-x-6">
                 <span className="text-primary-600 font-medium">Dashboard</span>
+                <Link href="/leads" className="text-slate-600 hover:text-primary-600 font-medium flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  Ad Leads
+                </Link>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
