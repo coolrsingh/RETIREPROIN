@@ -8,6 +8,7 @@ import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import ProfileMenu from "@/components/profile-menu";
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,8 @@ export default function Home() {
     );
   }
 
+  const isAdmin = (user as any)?.role === 'admin';
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -58,24 +61,16 @@ export default function Home() {
               </Link>
               <nav className="hidden md:flex space-x-6">
                 <span className="text-primary-600 font-medium">Dashboard</span>
-                <Link href="/leads" className="text-slate-600 hover:text-primary-600 font-medium flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  Ad Leads
-                </Link>
+                {isAdmin && (
+                  <Link href="/leads" className="text-slate-600 hover:text-primary-600 font-medium flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    Ad Leads
+                  </Link>
+                )}
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-slate-600" data-testid="text-username">
-                {user?.firstName || user?.email || 'User'}
-              </span>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => window.location.href = '/api/logout'}
-                data-testid="button-logout"
-              >
-                Sign Out
-              </Button>
+            <div className="flex items-center space-x-3">
+              <ProfileMenu user={user} isAdmin={isAdmin} />
             </div>
           </div>
         </div>
@@ -85,7 +80,7 @@ export default function Home() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Welcome back, {user?.firstName || 'there'}!
+            Welcome back, {(user as any)?.firstName || 'there'}!
           </h1>
           <p className="text-slate-600">
             Manage your retirement plans and track your financial goals
@@ -187,7 +182,6 @@ export default function Home() {
                   Get started by creating your first retirement plan
                 </p>
                 
-                {/* Retirement Facts */}
                 <div className="bg-blue-50 rounded-lg p-4 mb-6">
                   <h4 className="font-semibold text-blue-900 mb-2">💡 Did you know?</h4>
                   <p className="text-blue-800 text-sm">

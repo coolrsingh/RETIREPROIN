@@ -373,6 +373,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!scenarioData) {
         return res.status(404).json({ message: "Scenario data not found" });
       }
+
+      // Support live rate overrides from the dashboard without saving
+      const { overrideReturnPre, overrideReturnPost } = req.body || {};
+      if ((overrideReturnPre || overrideReturnPost) && scenarioData.assumptions) {
+        if (overrideReturnPre) scenarioData.assumptions.returnPre = String(overrideReturnPre);
+        if (overrideReturnPost) scenarioData.assumptions.returnPost = String(overrideReturnPost);
+      }
+
       const calculations = await calculateRetirementPlan(scenarioData);
       
       res.json(calculations);
@@ -403,9 +411,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all leads (authenticated users only)
+  // User profile routes
+  app.get('/api/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.put('/api/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const allowed = ['phone','dob','retirementAge','monthlyIncome','monthlyExpenses','monthlySavings','incomeGrowthRate','currentAssets','firstName','lastName'];
+      const profile: any = {};
+      for (const key of allowed) {
+        if (req.body[key] !== undefined) profile[key] = req.body[key];
+      }
+      const user = await storage.updateUserProfile(userId, profile);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Share tracking
+  app.post('/api/share', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.incrementShareCount(userId);
+      res.json({ shareCount: user.shareCount });
+    } catch (error) {
+      console.error("Error recording share:", error);
+      res.status(500).json({ message: "Failed to record share" });
+    }
+  });
+
+  // Get all leads (admin only)
   app.get('/api/leads', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
       const allLeads = await db.select().from(leads).orderBy(leads.createdAt);
       res.json(allLeads);
     } catch (error) {

@@ -44,6 +44,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPlanCount(userId: string, count: number): Promise<User>;
+  updateUserProfile(userId: string, profile: Partial<UpsertUser>): Promise<User>;
+  incrementShareCount(userId: string): Promise<User>;
   
   // Scenario operations
   getScenario(id: string): Promise<Scenario | undefined>;
@@ -136,6 +138,26 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ planCount: count, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(userId: string, profile: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...profile, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async incrementShareCount(userId: string): Promise<User> {
+    const existing = await this.getUser(userId);
+    const newCount = (existing?.shareCount || 0) + 1;
+    const [user] = await db
+      .update(users)
+      .set({ shareCount: newCount, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
     return user;

@@ -36,6 +36,16 @@ export const users = pgTable("users", {
   role: varchar("role", { enum: ['client', 'admin'] }).default('client'),
   planCount: integer("plan_count").default(0),
   isPremium: boolean("is_premium").default(false),
+  // Financial profile fields
+  phone: varchar("phone"),
+  dob: date("dob"),
+  retirementAge: integer("retirement_age"),
+  monthlyIncome: decimal("monthly_income", { precision: 15, scale: 2 }),
+  monthlyExpenses: decimal("monthly_expenses", { precision: 15, scale: 2 }),
+  monthlySavings: decimal("monthly_savings", { precision: 15, scale: 2 }),
+  incomeGrowthRate: decimal("income_growth_rate", { precision: 5, scale: 2 }),
+  currentAssets: decimal("current_assets", { precision: 15, scale: 2 }),
+  shareCount: integer("share_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

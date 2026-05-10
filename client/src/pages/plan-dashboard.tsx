@@ -1,28 +1,36 @@
 import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartLine, ArrowLeft, FileSpreadsheet, Star } from "lucide-react";
+import { ChartLine, ArrowLeft, FileSpreadsheet, Star, RefreshCw } from "lucide-react";
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
 import KpiCards from "@/components/kpi-cards";
 import AssumptionsPanel from "@/components/assumptions-panel";
 import LeadCaptureModal from "@/components/lead-capture-modal";
+import ProfileMenu from "@/components/profile-menu";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function PlanDashboard() {
   const [match, params] = useRoute("/plan/:id");
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [chartTimeRange, setChartTimeRange] = useState("25Y");
+
+  // Live return rate override (user can tweak without saving a new plan)
+  const [liveRates, setLiveRates] = useState<{ pre: string; post: string } | null>(null);
 
   const { data: scenario, isLoading: scenarioLoading } = useQuery({
     queryKey: ["/api/scenarios", params?.id],
@@ -30,17 +38,32 @@ export default function PlanDashboard() {
   });
 
   const { data: calculations, isLoading: calculationsLoading } = useQuery({
-    queryKey: ["/api/calc", params?.id],
+    queryKey: ["/api/calc", params?.id, liveRates],
     queryFn: async () => {
+      const body = liveRates
+        ? { overrideReturnPre: liveRates.pre, overrideReturnPost: liveRates.post }
+        : {};
       const response = await fetch(`/api/calc/${params?.id}`, {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
       if (!response.ok) throw new Error("Failed to calculate");
       return response.json();
     },
     enabled: !!scenario,
   });
+
+  // Initialise live rate inputs from loaded assumptions
+  useEffect(() => {
+    if (scenario?.assumptions && !liveRates) {
+      setLiveRates({
+        pre: String(scenario.assumptions.returnPre ?? 12),
+        post: String(scenario.assumptions.returnPost ?? 8),
+      });
+    }
+  }, [scenario]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -57,12 +80,16 @@ export default function PlanDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   const handleExportPDF = () => {
-    // Authenticated users bypass lead capture, guests need lead capture or existing leadId
     if (isAuthenticated || scenario?.leadId) {
       window.open(`/api/export/pdf/${params?.id}`, '_blank');
     } else {
       setShowLeadModal(true);
     }
+  };
+
+  const handleRecalculate = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/calc", params?.id, liveRates] });
+    toast({ title: "Recalculated", description: "Projections updated with your new return rates." });
   };
 
   if (isLoading || scenarioLoading) {
@@ -95,6 +122,8 @@ export default function PlanDashboard() {
     );
   }
 
+  const isAdmin = (user as any)?.role === 'admin';
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -115,14 +144,7 @@ export default function PlanDashboard() {
                 <span className="text-primary-600 font-medium">My Plans</span>
               </nav>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/api/logout'}
-              data-testid="button-logout"
-            >
-              Sign Out
-            </Button>
+            <ProfileMenu user={user} isAdmin={isAdmin} />
           </div>
         </div>
       </header>
@@ -186,6 +208,56 @@ export default function PlanDashboard() {
             </a>
           </div>
         </div>
+
+        {/* Live Return Rate Adjuster */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Adjust Return Rates &amp; Recalculate
+            </CardTitle>
+            <CardDescription className="text-blue-700 text-xs">
+              Change the expected rates of return below to instantly see how it impacts your retirement outlook.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs text-blue-700">Pre-retirement Return (%)</Label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min={0}
+                  max={30}
+                  className="w-36 bg-white border-blue-300"
+                  value={liveRates?.pre ?? ""}
+                  onChange={e => setLiveRates(r => ({ pre: e.target.value, post: r?.post ?? "8" }))}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs text-blue-700">Post-retirement Return (%)</Label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min={0}
+                  max={30}
+                  className="w-36 bg-white border-blue-300"
+                  value={liveRates?.post ?? ""}
+                  onChange={e => setLiveRates(r => ({ pre: r?.pre ?? "12", post: e.target.value }))}
+                />
+              </div>
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleRecalculate}
+                disabled={calculationsLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-1 ${calculationsLoading ? "animate-spin" : ""}`} />
+                Recalculate
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPI Cards */}
         {calculations && (

@@ -5,7 +5,7 @@ import { quickPlanSchema, type QuickPlan } from "@shared/schema";
 import EnhancedPlanForm from "@/components/enhanced-plan-form";
 import QuickPlanForm from "@/components/quick-plan-form";
 import ComingSoonDetailed from "@/components/coming-soon-detailed";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChartLine, ArrowLeft, Zap, List } from "lucide-react";
 import { Link } from "wouter";
 import ModernPlanLimitModal from "@/components/modern-plan-limit-modal";
+import ProfileMenu from "@/components/profile-menu";
 
 export default function PlanForm() {
   const [location, navigate] = useLocation();
@@ -23,6 +24,12 @@ export default function PlanForm() {
 
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
   const mode = searchParams.get('mode') || 'quick';
+
+  // Fetch saved profile to pre-fill the form
+  const { data: profile } = useQuery<any>({
+    queryKey: ["/api/profile"],
+    enabled: isAuthenticated,
+  });
 
   const createPlanMutation = useMutation({
     mutationFn: async (data: QuickPlan) => {
@@ -72,7 +79,6 @@ export default function PlanForm() {
     createPlanMutation.mutate(data);
   };
 
-  // Redirect to login if not loading and not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -99,8 +105,22 @@ export default function PlanForm() {
   }
 
   if (!isAuthenticated) {
-    return null; // Will redirect in useEffect
+    return null;
   }
+
+  const isAdmin = (user as any)?.role === 'admin';
+
+  // Build profile-based defaults
+  const profileDefaults = profile ? {
+    fullName: profile.firstName ? `${profile.firstName}${profile.lastName ? " " + profile.lastName : ""}` : "",
+    dob: profile.dob || "",
+    retirementAge: profile.retirementAge || 60,
+    monthlyIncomeTotal: profile.monthlyIncome ? Number(profile.monthlyIncome) : 0,
+    monthlyExpenseTotal: profile.monthlyExpenses ? Number(profile.monthlyExpenses) : 0,
+    monthlySavings: profile.monthlySavings ? Number(profile.monthlySavings) : 0,
+    incomeGrowthRate: profile.incomeGrowthRate ? Number(profile.incomeGrowthRate) : 8,
+    assetsLumpSum: profile.currentAssets ? Number(profile.currentAssets) : 0,
+  } : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -112,7 +132,7 @@ export default function PlanForm() {
               <Link href="/">
                 <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
                   <ChartLine className="h-8 w-8 text-primary" />
-                  <span className="text-xl font-bold text-slate-900">RetirePlan</span>
+                  <span className="text-xl font-bold text-slate-900">RetirePro</span>
                 </div>
               </Link>
               <nav className="flex space-x-1">
@@ -128,14 +148,7 @@ export default function PlanForm() {
                 </Link>
               </nav>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/api/logout'}
-              data-testid="button-logout"
-            >
-              Sign Out
-            </Button>
+            <ProfileMenu user={user} isAdmin={isAdmin} />
           </div>
         </div>
       </header>
@@ -150,6 +163,13 @@ export default function PlanForm() {
               </Button>
             </Link>
           </div>
+
+          {profile && (profile.monthlyIncome || profile.dob) && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+              ✅ Your saved profile data has been pre-filled below. Review and adjust before creating your plan.
+            </div>
+          )}
+
           <h1 className="text-3xl font-bold text-slate-900 flex items-center">
             {mode === 'quick' ? (
               <>
@@ -175,13 +195,13 @@ export default function PlanForm() {
           <QuickPlanForm 
             onSubmit={onSubmit}
             isLoading={createPlanMutation.isPending}
+            profileDefaults={profileDefaults}
           />
         ) : (
           <ComingSoonDetailed />
         )}
       </main>
       
-      {/* Plan Limit Modal */}
       <ModernPlanLimitModal 
         isOpen={showPlanLimitModal}
         onClose={() => setShowPlanLimitModal(false)}

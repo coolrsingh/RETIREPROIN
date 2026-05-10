@@ -13,9 +13,19 @@ import { Plus, Trash2, Zap, Coffee, CreditCard } from "lucide-react";
 interface QuickPlanFormProps {
   onSubmit: (data: QuickPlan) => void;
   isLoading: boolean;
+  profileDefaults?: {
+    fullName?: string;
+    dob?: string;
+    retirementAge?: number;
+    monthlyIncomeTotal?: number;
+    monthlyExpenseTotal?: number;
+    monthlySavings?: number;
+    incomeGrowthRate?: number;
+    assetsLumpSum?: number;
+  };
 }
 
-export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProps) {
+export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: QuickPlanFormProps) {
   const [children, setChildren] = useState<any[]>([]);
   const [hasMiniRetirement, setHasMiniRetirement] = useState(false);
   const [hasExistingEMI, setHasExistingEMI] = useState(false);
@@ -23,18 +33,18 @@ export default function QuickPlanForm({ onSubmit, isLoading }: QuickPlanFormProp
   const form = useForm<QuickPlan>({
     resolver: zodResolver(quickPlanSchema),
     defaultValues: {
-      fullName: "",
-      dob: "",
-      retirementAge: 60,
+      fullName: profileDefaults?.fullName || "",
+      dob: profileDefaults?.dob || "",
+      retirementAge: profileDefaults?.retirementAge || 60,
       spouseDob: "",
       isJointRetirement: false,
       spouseRetirementAge: 60,
-      monthlyIncomeTotal: 0,
-      monthlyExpenseTotal: 0,
-      monthlySavings: 0,
-      incomeGrowthRate: 8,
+      monthlyIncomeTotal: profileDefaults?.monthlyIncomeTotal || 0,
+      monthlyExpenseTotal: profileDefaults?.monthlyExpenseTotal || 0,
+      monthlySavings: profileDefaults?.monthlySavings || 0,
+      incomeGrowthRate: profileDefaults?.incomeGrowthRate || 8,
       children: [],
-      assetsLumpSum: 0,
+      assetsLumpSum: profileDefaults?.assetsLumpSum || 0,
       assumptions: {
         returnPre: 12,
         returnPost: 8,
