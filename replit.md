@@ -1,119 +1,65 @@
-# Retirement Planning Web Application
+# RetirePro
 
-## Overview
+A retirement planning web app that helps users create personalized retirement plans with visual projections, financial calculations, and professional insights.
 
-This is a full-stack retirement planning web application built with React/Vite frontend and Express.js backend. The application helps users create personalized retirement plans through either Quick Plan or Detailed Plan modes. It features interactive visualizations, financial calculations, and lead capture functionality with PDF export capabilities.
+## Run & Operate
 
-The system is designed as a professional financial planning tool that can collect client data, perform retirement calculations, and generate visual reports. It includes authentication, role-based access control, and CRM integration capabilities.
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run build` — typecheck + build all packages
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
+- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- Required env: `DATABASE_URL` — Postgres connection string
 
-## User Preferences
+## Stack
 
-Preferred communication style: Simple, everyday language.
+- pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite, Tailwind v3, Wouter, React Query, Recharts
+- API: Express 5 with Replit Auth (OpenID Connect / passport)
+- DB: PostgreSQL + Drizzle ORM
+- Validation: Zod (`zod/v4`), `drizzle-zod`
+- Build: esbuild (ESM bundle)
 
-## Recent Changes (January 2025)
+## Where things live
 
-### Fixed Critical Issues
-- **Database Date Validation**: Fixed empty date validation preventing plan creation
-- **PDF Export Authentication**: Bypassed lead capture for authenticated users 
-- **Child Age Calculations**: Implemented proper age-based education (20) and marriage (30) cost calculations
-- **Income Growth**: Added 8% annual income growth rate functionality
-- **Retirement Age Calculations**: Fixed incorrect years-to-retirement calculations
-- **Form Differentiation**: Created distinct Quick vs Detailed plan forms with asset allocation inputs
-- **Indian User Defaults**: Set +91 phone number prefix for target market
-- **Chart Time Periods**: Fixed 10Y/25Y/Life selection functionality
+- `artifacts/retirepro-web/` — React/Vite frontend (previewPath: `/`)
+- `artifacts/api-server/` — Express API backend (previewPath: `/api`)
+- `lib/db/src/schema/schema.ts` — DB schema (source of truth for all tables)
+- `artifacts/api-server/src/routes/routes.ts` — all API route handlers
+- `artifacts/api-server/src/storage.ts` — DB storage layer
+- `artifacts/api-server/src/calculations.ts` — retirement calculation engine
+- `artifacts/retirepro-web/src/lib/sharedSchema.ts` — client-side zod schemas (quickPlanSchema)
 
-### Enhanced Calculation Engine
-- Monthly income and savings amount inputs with growth rates
-- Pre-retirement vs post-retirement return rate modeling
-- Child date of birth collection for proper event timing
-- Individual asset class inputs (equity, debt, real estate, cash) for detailed plans
-- Comprehensive PDF export with dashboard information
+## Architecture decisions
 
-### Major Feature Enhancement (January 2025)
-- **Enhanced Planning Features**: Implemented 6 advanced features exclusively for Detailed Plan mode:
-  1. **Equity/Debt Mix Customization**: User-defined allocation with 14% equity, 8% debt defaults
-  2. **User-Entered Inflation Rates**: Custom inflation assumptions instead of fixed defaults
-  3. **Joint Retirement Planning**: Spouse information, retirement age, and joint planning options
-  4. **Multiple Asset Classes**: Equity/Debt/Real Estate/Gold/Cash with individual expected returns
-  5. **Short-Term Goals Tracking**: Goal name, type, target month/year, estimated cost
-  6. **Existing Loan Management**: Loan details with tenure, interest rates, and EMI calculations
-- **PDF Export System Dependencies**: Fixed browser launch issues with comprehensive system packages
-- **Database Schema Enhancement**: Added support for goals, loans, asset allocation, and joint planning
-- **Form Mode Separation**: Quick Plan remains simple, Detailed Plan shows all advanced features
+- Routes use `registerRoutes(app)` pattern (not Express Router) because auth setup requires direct app-level middleware (passport, express-session)
+- `@shared/schema` alias in vite.config.ts points to `src/lib/sharedSchema.ts` — keeps zod schemas in the frontend without importing from `@workspace/db` (which triggers DB connection)
+- `memoizee` replaced with inline TTL memoize in `replitAuth.ts` (memoizee has a transitive dep blocked by Replit's package firewall)
+- `lib/db` uses `drizzle-orm/node-postgres` with `pg` package; api-server re-exports `db` and `pool` from `@workspace/db`
+- Tailwind v3 (not v4) — original app used `@tailwind base/components/utilities` directives
 
-## System Architecture
+## Product
 
-### Frontend Architecture
-The frontend is built using React with Vite as the build tool, implementing a component-based architecture with the following key design decisions:
+RetirePro lets users create retirement plans in under 60 seconds via a Quick Plan form. Features:
+- Quick Plan wizard with household, income, expenses, assets, children, loans
+- Detailed retirement projections with year-by-year charts (Recharts)
+- PDF + Excel export
+- Admin CRM with configurable planning defaults
+- Lead capture for advisor follow-up
+- Replit Auth (Google/GitHub login)
+- Premium upgrade flow with plan count limits
 
-- **Component Library**: Uses Radix UI primitives with shadcn/ui components for consistent, accessible UI design
-- **Styling**: TailwindCSS for utility-first styling with CSS custom properties for theming
-- **State Management**: React Query (TanStack Query) for server state management and caching
-- **Form Handling**: React Hook Form with Zod validation for type-safe form processing
-- **Routing**: Wouter for lightweight client-side routing
-- **Charts**: Recharts for financial data visualization and interactive charts
+## User preferences
 
-The application follows a professional light theme design with primary colors in blue and green, optimized for financial planning use cases.
+_Populate as you build — explicit user instructions worth remembering across sessions._
 
-### Backend Architecture
-The backend uses Express.js with TypeScript, implementing a RESTful API architecture:
+## Gotchas
 
-- **Database ORM**: Drizzle ORM for type-safe database operations with PostgreSQL
-- **Authentication**: Replit Auth integration with session-based authentication
-- **API Design**: RESTful endpoints with proper HTTP status codes and error handling
-- **Session Management**: PostgreSQL-backed session storage with express-session
-- **File Processing**: Server-side PDF generation for retirement plan reports
+- Do NOT import from `@workspace/db` in frontend code — it triggers the DB connection pool at import time
+- `pnpm run dev` at workspace root will fail — run workflows via `restart_workflow` instead
+- The api-server's `SESSION_SECRET` env var must be set for Replit Auth sessions to work in production
+- `zod/v4` subpath requires `zod` to be explicitly listed in the api-server's dependencies (not just in lib/db)
 
-### Data Architecture
-The system uses PostgreSQL as the primary database with the following key entities:
+## Pointers
 
-- **Users**: Authentication and profile management with role-based access (client/admin)
-- **Scenarios**: Retirement planning scenarios with quick/detailed modes
-- **Financial Data**: Income, expenses, assets, liabilities, and goals tracking
-- **Household Members**: Family member information for comprehensive planning
-- **CRM Defaults**: Configurable assumption defaults for financial calculations
-- **Leads**: Lead capture system for marketing and sales integration
-
-### Authentication & Authorization
-- **Authentication Provider**: Replit Auth with OpenID Connect integration
-- **Session Management**: Server-side sessions stored in PostgreSQL
-- **Role-Based Access**: Client and admin roles with different permission levels
-- **Route Protection**: Middleware-based route protection for authenticated endpoints
-
-### Business Logic
-The core retirement calculation engine processes:
-- **Financial Projections**: Net worth calculations over time with inflation adjustments
-- **Lifecycle Events**: Education costs, marriage expenses, mini-retirements
-- **Investment Returns**: Pre and post-retirement return rate modeling
-- **Tax Considerations**: Support for old and new tax regime calculations
-
-## External Dependencies
-
-### Database & Storage
-- **Neon Database**: PostgreSQL hosting service for production database
-- **Drizzle ORM**: Database toolkit and ORM for TypeScript
-- **connect-pg-simple**: PostgreSQL session store for Express sessions
-
-### Authentication & Security
-- **Replit Auth**: OpenID Connect authentication provider
-- **express-session**: Session management middleware
-- **passport**: Authentication middleware framework
-
-### UI & Visualization
-- **Radix UI**: Primitive component library for accessible UI components
-- **Recharts**: Chart library for financial data visualization
-- **Lucide React**: Icon library for consistent iconography
-- **TailwindCSS**: Utility-first CSS framework
-
-### Development & Build Tools
-- **Vite**: Frontend build tool and development server
-- **TypeScript**: Type safety across the entire application
-- **Zod**: Runtime type validation for forms and API data
-- **ESBuild**: Fast JavaScript bundler for production builds
-
-### External Services Integration
-- **CRM System**: Configurable defaults and lead capture integration
-- **PDF Generation**: Server-side PDF export for retirement reports
-- **Email/Phone Validation**: Form validation for lead capture
-
-The application is designed to be deployed on Replit with automatic database provisioning and authentication setup, but can be adapted for other hosting platforms with minimal configuration changes.
+- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
