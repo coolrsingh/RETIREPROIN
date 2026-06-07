@@ -2,33 +2,62 @@ const colors = {
   light: {
     text: "#0f172a",
     tint: "#2563eb",
-    background: "#f8fafc",
+
+    // Backgrounds
+    background: "#f1f5f9",
     foreground: "#0f172a",
+    surface: "#ffffff",
+
+    // Cards / elevated
     card: "#ffffff",
     cardForeground: "#0f172a",
+
+    // Hero / header gradient (use as gradient stops)
+    heroFrom: "#0f172a",
+    heroTo: "#1e3a5f",
+
+    // Primary
     primary: "#2563eb",
-    primaryDark: "#1d4ed8",
+    primaryLight: "#dbeafe",
     primaryForeground: "#ffffff",
+
+    // Secondary / subtle
     secondary: "#eff6ff",
     secondaryForeground: "#1e40af",
-    muted: "#e8f0fe",
+
+    // Muted
+    muted: "#f1f5f9",
     mutedForeground: "#64748b",
-    accent: "#eff6ff",
-    accentForeground: "#1e40af",
-    success: "#16a34a",
-    successLight: "#f0fdf4",
+
+    // Success / positive
+    success: "#10b981",
+    successLight: "#d1fae5",
     successForeground: "#ffffff",
-    destructive: "#ef4444",
-    destructiveForeground: "#ffffff",
+
+    // Warning
     warning: "#f59e0b",
-    warningLight: "#fffbeb",
+    warningLight: "#fef3c7",
+    warningForeground: "#ffffff",
+
+    // Danger / negative
+    danger: "#ef4444",
+    dangerLight: "#fee2e2",
+    dangerForeground: "#ffffff",
+
+    // Borders / inputs
     border: "#e2e8f0",
     input: "#e2e8f0",
-    ring: "#2563eb",
-    surfaceElevated: "#ffffff",
-    tabBar: "#ffffff",
+
+    // Accent (gold)
+    accent: "#f59e0b",
+    accentLight: "#fef3c7",
+    accentForeground: "#ffffff",
+
+    // Misc
+    destructive: "#ef4444",
+    destructiveForeground: "#ffffff",
   },
-  radius: 10,
+  radius: 16,
 };
 
 export default colors;

@@ -9,11 +9,19 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop, Line, Text as SvgText } from "react-native-svg";
+import Svg, {
+  Path,
+  Defs,
+  LinearGradient as SvgGradient,
+  Stop,
+  Text as SvgText,
+  Line,
+} from "react-native-svg";
 import { useColors } from "@/hooks/useColors";
 import { apiFetch } from "@/hooks/useApi";
 
@@ -50,39 +58,16 @@ interface Calculations {
 function formatInr(val?: number | null): string {
   if (val == null) return "—";
   const abs = Math.abs(val);
-  if (abs >= 1_00_00_000) return `₹${(val / 1_00_00_000).toFixed(1)}Cr`;
+  if (abs >= 1_00_00_000) return `₹${(val / 1_00_00_000).toFixed(2)}Cr`;
   if (abs >= 1_00_000) return `₹${(val / 1_00_000).toFixed(1)}L`;
   if (abs >= 1_000) return `₹${(val / 1_000).toFixed(1)}K`;
   return `₹${val.toFixed(0)}`;
 }
 
-interface KpiCardProps {
-  label: string;
-  value: string;
-  icon: string;
-  color: string;
-  bgColor: string;
-  sub?: string;
-}
+const CHART_HEIGHT = 190;
+const PAD = { top: 12, bottom: 28, left: 8, right: 8 };
 
-function KpiCard({ label, value, icon, color, bgColor, sub }: KpiCardProps) {
-  const colors = useColors();
-  return (
-    <View style={[styles.kpiCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={[styles.kpiIconBg, { backgroundColor: bgColor }]}>
-        <Ionicons name={icon as any} size={20} color={color} />
-      </View>
-      <Text style={[styles.kpiLabel, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[styles.kpiValue, { color }]}>{value}</Text>
-      {sub && <Text style={[styles.kpiSub, { color: colors.mutedForeground }]}>{sub}</Text>}
-    </View>
-  );
-}
-
-const CHART_HEIGHT = 180;
-const CHART_PADDING = { top: 16, bottom: 24, left: 8, right: 8 };
-
-function NetWorthChart({ data, colors }: { data: YearData[]; colors: ReturnType<typeof useColors> }) {
+function WealthChart({ data }: { data: YearData[] }) {
   const { width } = Dimensions.get("window");
   const chartWidth = width - 32;
 
@@ -92,48 +77,77 @@ function NetWorthChart({ data, colors }: { data: YearData[]; colors: ReturnType<
   const range = maxVal - minVal || 1;
 
   const toX = (i: number) =>
-    CHART_PADDING.left + (i / (data.length - 1)) * (chartWidth - CHART_PADDING.left - CHART_PADDING.right);
-
+    PAD.left + (i / Math.max(data.length - 1, 1)) * (chartWidth - PAD.left - PAD.right);
   const toY = (v: number) =>
-    CHART_PADDING.top + (1 - (v - minVal) / range) * (CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom);
+    PAD.top + (1 - (v - minVal) / range) * (CHART_HEIGHT - PAD.top - PAD.bottom);
 
-  const points = data.map((d, i) => `${toX(i)},${toY(d.netWorth)}`).join(" L ");
-  const linePath = `M ${points}`;
+  const pts = data.map((d, i) => `${toX(i)},${toY(d.netWorth)}`).join(" L ");
+  const linePath = `M ${pts}`;
+  const areaPath = `M ${toX(0)},${toY(data[0]?.netWorth ?? 0)} L ${pts} L ${toX(data.length - 1)},${CHART_HEIGHT - PAD.bottom} L ${toX(0)},${CHART_HEIGHT - PAD.bottom} Z`;
 
-  const areaPath = `M ${toX(0)},${toY(data[0]?.netWorth ?? 0)} L ${points} L ${toX(data.length - 1)},${CHART_HEIGHT - CHART_PADDING.bottom} L ${toX(0)},${CHART_HEIGHT - CHART_PADDING.bottom} Z`;
-
-  const labelStride = Math.max(1, Math.floor(data.length / 5));
-  const labelPoints = data.filter((_, i) => i % labelStride === 0 || i === data.length - 1);
+  const stride = Math.max(1, Math.floor(data.length / 5));
+  const labels = data.filter((_, i) => i === 0 || i % stride === 0 || i === data.length - 1);
 
   return (
-    <View style={styles.chartContainer}>
-      <Svg width={chartWidth} height={CHART_HEIGHT}>
-        <Defs>
-          <SvgGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor={colors.primary} stopOpacity="0.25" />
-            <Stop offset="100%" stopColor={colors.primary} stopOpacity="0.02" />
-          </SvgGradient>
-        </Defs>
-        <Path d={areaPath} fill="url(#grad)" />
-        <Path d={linePath} stroke={colors.primary} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        {labelPoints.map((d, i) => {
-          const idx = data.indexOf(d);
-          return (
-            <SvgText
-              key={i}
-              x={toX(idx)}
-              y={CHART_HEIGHT - 4}
-              textAnchor="middle"
-              fontSize={10}
-              fill={colors.mutedForeground}
-              fontFamily="Inter_400Regular"
-            >
-              {d.age ?? d.year}
-            </SvgText>
-          );
-        })}
-      </Svg>
-      <Text style={[styles.chartXLabel, { color: colors.mutedForeground }]}>Age</Text>
+    <Svg width={chartWidth} height={CHART_HEIGHT}>
+      <Defs>
+        <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0%" stopColor="#2563eb" stopOpacity="0.22" />
+          <Stop offset="100%" stopColor="#2563eb" stopOpacity="0.01" />
+        </SvgGradient>
+      </Defs>
+      <Line
+        x1={PAD.left}
+        y1={CHART_HEIGHT - PAD.bottom}
+        x2={chartWidth - PAD.right}
+        y2={CHART_HEIGHT - PAD.bottom}
+        stroke="#e2e8f0"
+        strokeWidth={1}
+      />
+      <Path d={areaPath} fill="url(#areaGrad)" />
+      <Path
+        d={linePath}
+        stroke="#2563eb"
+        strokeWidth={2.5}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {labels.map((d, i) => {
+        const idx = data.indexOf(d);
+        return (
+          <SvgText
+            key={i}
+            x={toX(idx)}
+            y={CHART_HEIGHT - 6}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#94a3b8"
+            fontFamily="Inter_400Regular"
+          >
+            {d.age ?? d.year}
+          </SvgText>
+        );
+      })}
+    </Svg>
+  );
+}
+
+function StatRow({
+  label,
+  value,
+  color,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={[styles.statRow, highlight && styles.statRowHighlight]}>
+      <Text style={styles.statRowLabel}>{label}</Text>
+      <Text style={[styles.statRowValue, color ? { color } : {}]}>{value}</Text>
     </View>
   );
 }
@@ -153,7 +167,8 @@ export default function PlanDetailScreen() {
 
   const { data: calc, isLoading: calcLoading } = useQuery<Calculations>({
     queryKey: ["calc", id],
-    queryFn: () => apiFetch<Calculations>(`/api/calc/${id}`, { method: "POST", body: JSON.stringify({}) }),
+    queryFn: () =>
+      apiFetch<Calculations>(`/api/calc/${id}`, { method: "POST", body: JSON.stringify({}) }),
     enabled: !!scenario,
   });
 
@@ -167,110 +182,159 @@ export default function PlanDetailScreen() {
 
   const chartData = useMemo(() => {
     const raw = calc?.yearByYear ?? [];
-    if (raw.length > 100) {
-      return raw.filter((_, i) => i % 2 === 0);
-    }
-    return raw;
+    return raw.length > 100 ? raw.filter((_, i) => i % 2 === 0) : raw;
   }, [calc]);
 
+  const heroBgColors: [string, string] = isSurplus
+    ? ["#064e3b", "#065f46"]
+    : gap != null
+    ? ["#0f172a", "#1e3a5f"]
+    : ["#0f172a", "#1e3a5f"];
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={colors.foreground} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>
-          {scenario?.name ?? "Plan Details"}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={[styles.fill, { backgroundColor: "#f1f5f9" }]}>
+      <LinearGradient colors={heroBgColors} style={[styles.hero, { paddingTop: topPad + 8 }]}>
+        <View style={styles.heroNav}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={22} color="#f8fafc" />
+          </TouchableOpacity>
+          <Text style={styles.heroNavTitle} numberOfLines={1}>
+            {scenario?.name ?? "Plan Details"}
+          </Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        {!isLoading && (
+          <View style={styles.heroContent}>
+            <View style={styles.heroBadgeRow}>
+              <View
+                style={[
+                  styles.heroBadge,
+                  { backgroundColor: isSurplus ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)" },
+                ]}
+              >
+                <Ionicons
+                  name={isSurplus ? "checkmark-circle" : "alert-circle"}
+                  size={13}
+                  color={isSurplus ? "#34d399" : "#fbbf24"}
+                />
+                <Text
+                  style={[
+                    styles.heroBadgeText,
+                    { color: isSurplus ? "#34d399" : "#fbbf24" },
+                  ]}
+                >
+                  {isSurplus ? "On Track" : "Action Needed"}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.heroMetricLabel}>Projected Corpus at Retirement</Text>
+            <Text style={styles.heroMetricValue}>{formatInr(corpus)}</Text>
+
+            <View style={styles.heroChipRow}>
+              <View style={styles.heroChip}>
+                <Text style={styles.heroChipLabel}>Required</Text>
+                <Text style={styles.heroChipValue}>{formatInr(required)}</Text>
+              </View>
+              <View style={styles.heroChipDivider} />
+              <View style={styles.heroChip}>
+                <Text style={styles.heroChipLabel}>{isSurplus ? "Surplus" : "Gap"}</Text>
+                <Text
+                  style={[
+                    styles.heroChipValue,
+                    { color: isSurplus ? "#34d399" : "#fbbf24" },
+                  ]}
+                >
+                  {formatInr(Math.abs(gap ?? 0))}
+                </Text>
+              </View>
+              <View style={styles.heroChipDivider} />
+              <View style={styles.heroChip}>
+                <Text style={styles.heroChipLabel}>Monthly SIP</Text>
+                <Text style={styles.heroChipValue}>{formatInr(sip)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+      </LinearGradient>
 
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Calculating projections…</Text>
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Calculating projections…</Text>
         </View>
       ) : (
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 20 },
+            { paddingBottom: Platform.OS === "web" ? 40 : insets.bottom + 24 },
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.summaryBanner, { backgroundColor: isSurplus ? colors.successLight : "#fff7ed", borderColor: isSurplus ? colors.success : colors.warning }]}>
-            <Ionicons
-              name={isSurplus ? "checkmark-circle" : "alert-circle-outline"}
-              size={22}
-              color={isSurplus ? colors.success : colors.warning}
-            />
-            <Text style={[styles.summaryText, { color: isSurplus ? "#166534" : "#92400e" }]}>
-              {isSurplus
-                ? `On track! Projected surplus of ${formatInr(Math.abs(gap ?? 0))}`
-                : gap != null
-                ? `Corpus gap of ${formatInr(gap)}. Boost your SIP to stay on track.`
-                : "Retirement projections loaded."}
-            </Text>
-          </View>
-
-          <View style={styles.kpiGrid}>
-            <KpiCard
-              label="Corpus Required"
-              value={formatInr(required)}
-              icon="flag-outline"
-              color={colors.primary}
-              bgColor={colors.secondary}
-            />
-            <KpiCard
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionCardTitle}>CORPUS BREAKDOWN</Text>
+            <StatRow label="Corpus Required" value={formatInr(required)} />
+            <StatRow
               label="Projected Corpus"
               value={formatInr(corpus)}
-              icon="trending-up-outline"
-              color={colors.success}
-              bgColor={colors.successLight}
+              color="#2563eb"
+              highlight
             />
-            <KpiCard
-              label={isSurplus ? "Surplus" : "Corpus Gap"}
+            <StatRow
+              label={isSurplus ? "Surplus" : "Shortfall"}
               value={formatInr(Math.abs(gap ?? 0))}
-              icon={isSurplus ? "happy-outline" : "warning-outline"}
-              color={isSurplus ? colors.success : colors.warning}
-              bgColor={isSurplus ? colors.successLight : colors.warningLight}
-              sub={isSurplus ? "You're on track" : "Top-up needed"}
+              color={isSurplus ? "#10b981" : "#f59e0b"}
             />
-            <KpiCard
-              label="Monthly SIP"
+            <StatRow
+              label="Recommended Monthly SIP"
               value={formatInr(sip)}
-              icon="cash-outline"
-              color={colors.primary}
-              bgColor={colors.secondary}
-              sub="Recommended"
+              color="#2563eb"
             />
           </View>
 
           {chartData.length > 1 && (
-            <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.chartTitle, { color: colors.foreground }]}>Net Worth Projection</Text>
-              <Text style={[styles.chartSubtitle, { color: colors.mutedForeground }]}>
-                Corpus growth over time (₹ in Cr/L)
-              </Text>
-              <NetWorthChart data={chartData} colors={colors} />
+            <View style={styles.chartCard}>
+              <View style={styles.chartCardHeader}>
+                <View>
+                  <Text style={styles.chartCardTitle}>Wealth Projection</Text>
+                  <Text style={styles.chartCardSub}>
+                    Net worth growth by age — ₹ in Cr / L
+                  </Text>
+                </View>
+                <View style={styles.chartLegendDot} />
+              </View>
+              <WealthChart data={chartData} />
+              <Text style={styles.chartXAxisLabel}>Age →</Text>
             </View>
           )}
 
-          {scenario?.assumptions && (
-            <View style={[styles.assumptionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.assumptionsTitle, { color: colors.foreground }]}>Assumptions</Text>
+          {scenario?.assumptions && Object.keys(scenario.assumptions).length > 0 && (
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionCardTitle}>PLAN ASSUMPTIONS</Text>
               {Object.entries(scenario.assumptions).map(([k, v]) => (
-                <View key={k} style={[styles.assumRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.assumKey, { color: colors.mutedForeground }]}>
-                    {k.replace(/([A-Z])/g, " $1").trim()}
-                  </Text>
-                  <Text style={[styles.assumVal, { color: colors.foreground }]}>
-                    {typeof v === "number" && v < 1 ? `${(v * 100).toFixed(1)}%` : String(v)}
-                  </Text>
-                </View>
+                <StatRow
+                  key={k}
+                  label={k.replace(/([A-Z])/g, " $1").trim()}
+                  value={typeof v === "number" && v < 1 ? `${(v * 100).toFixed(1)}%` : String(v)}
+                />
               ))}
             </View>
           )}
+
+          <View style={[styles.tipCard]}>
+            <View style={styles.tipIconBox}>
+              <Ionicons name="bulb-outline" size={18} color="#f59e0b" />
+            </View>
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Smart Retirement Tip</Text>
+              <Text style={styles.tipBody}>
+                {isSurplus
+                  ? "You're ahead of schedule. Consider increasing equity allocation to maximise long-term growth."
+                  : "Increasing your monthly SIP by even ₹2,000 today could close the gap significantly over time."}
+              </Text>
+            </View>
+          </View>
         </ScrollView>
       )}
     </View>
@@ -278,76 +342,145 @@ export default function PlanDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  loadingText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  header: {
+  fill: { flex: 1 },
+
+  hero: { paddingHorizontal: 20, paddingBottom: 28, gap: 14 },
+  heroNav: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 8,
+    justifyContent: "space-between",
   },
-  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  headerTitle: { flex: 1, fontSize: 18, fontFamily: "Inter_700Bold", textAlign: "center" },
-  scroll: { padding: 16, gap: 16 },
-  summaryBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  summaryText: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium", lineHeight: 20 },
-  kpiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  kpiCard: {
-    flex: 1,
-    minWidth: "45%",
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    gap: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  kpiIconBg: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
-  kpiLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  kpiValue: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  kpiSub: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  chartCard: {
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
+  heroNavTitle: {
+    flex: 1,
+    textAlign: "center",
+    color: "#f8fafc",
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
   },
-  chartTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
-  chartSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 12 },
-  chartContainer: { gap: 4 },
-  chartXLabel: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 2 },
-  assumptionsCard: {
-    borderRadius: 16,
+
+  heroContent: { gap: 10 },
+  heroBadgeRow: {},
+  heroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  heroBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  heroMetricLabel: { color: "#94a3b8", fontSize: 12, fontFamily: "Inter_400Regular" },
+  heroMetricValue: { color: "#f8fafc", fontSize: 34, fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+
+  heroChipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.12)",
+    marginTop: 4,
+  },
+  heroChip: { flex: 1, alignItems: "center", gap: 2 },
+  heroChipLabel: { color: "#94a3b8", fontSize: 10, fontFamily: "Inter_400Regular" },
+  heroChipValue: { color: "#f8fafc", fontSize: 14, fontFamily: "Inter_700Bold" },
+  heroChipDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.12)" },
+
+  loadingState: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+  loadingText: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#64748b" },
+
+  scroll: { padding: 16, gap: 14 },
+
+  sectionCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingTop: 14,
-    paddingBottom: 6,
+    paddingBottom: 4,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  assumptionsTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
-  assumRow: {
+  sectionCardTitle: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: "#94a3b8",
+    letterSpacing: 1.2,
+    marginBottom: 10,
+  },
+
+  statRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    paddingVertical: 11,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#f1f5f9",
   },
-  assumKey: { fontSize: 13, fontFamily: "Inter_400Regular", textTransform: "capitalize" },
-  assumVal: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  statRowHighlight: { backgroundColor: "#f8fafc", marginHorizontal: -16, paddingHorizontal: 16 },
+  statRowLabel: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#64748b" },
+  statRowValue: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#0f172a" },
+
+  chartCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    gap: 10,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  chartCardHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  chartCardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#0f172a" },
+  chartCardSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#94a3b8", marginTop: 2 },
+  chartLegendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#2563eb",
+    marginTop: 4,
+  },
+  chartXAxisLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    color: "#94a3b8",
+    textAlign: "center",
+  },
+
+  tipCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    backgroundColor: "#fffbeb",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+  },
+  tipIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#fef3c7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tipContent: { flex: 1, gap: 4 },
+  tipTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#92400e" },
+  tipBody: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#78350f", lineHeight: 19 },
 });

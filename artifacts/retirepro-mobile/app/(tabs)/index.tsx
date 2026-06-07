@@ -9,8 +9,9 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -25,71 +26,42 @@ interface Scenario {
   updatedAt: string;
 }
 
-function PlanCard({ scenario, onPress }: { scenario: Scenario; onPress: () => void }) {
-  const colors = useColors();
-  const date = new Date(scenario.updatedAt).toLocaleDateString("en-IN", {
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+}
+
+function PlanCard({ scenario, onPress }: { scenario: Scenario; onPress: () => void }) {
+  const colors = useColors();
+  const accentColors = ["#2563eb", "#7c3aed", "#0891b2", "#059669", "#d97706"];
+  const accent = accentColors[scenario.id % accentColors.length];
 
   return (
-    <TouchableOpacity
-      style={[styles.planCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <View style={styles.planCardRow}>
-        <View style={[styles.planIconBg, { backgroundColor: colors.secondary }]}>
-          <Ionicons name="trending-up" size={20} color={colors.primary} />
+    <TouchableOpacity style={styles.planCard} onPress={onPress} activeOpacity={0.75}>
+      <View style={[styles.planAccentBar, { backgroundColor: accent }]} />
+      <View style={styles.planCardInner}>
+        <View style={styles.planCardTop}>
+          <View style={[styles.planIconCircle, { backgroundColor: accent + "18" }]}>
+            <Ionicons name="trending-up" size={18} color={accent} />
+          </View>
+          <View style={styles.planMeta}>
+            <Text style={styles.planCardTitle} numberOfLines={1}>{scenario.name}</Text>
+            <Text style={styles.planCardDate}>{formatDate(scenario.updatedAt)}</Text>
+          </View>
+          <View style={[styles.planBadge, { backgroundColor: accent + "15" }]}>
+            <Text style={[styles.planBadgeText, { color: accent }]}>
+              {scenario.mode === "quick" ? "Quick" : "Full"}
+            </Text>
+          </View>
         </View>
-        <View style={styles.planCardContent}>
-          <Text style={[styles.planCardTitle, { color: colors.foreground }]} numberOfLines={1}>
-            {scenario.name}
-          </Text>
-          <Text style={[styles.planCardDate, { color: colors.mutedForeground }]}>{date}</Text>
+        <View style={styles.planCardBottom}>
+          <Text style={styles.planCardCta}>View projections →</Text>
         </View>
-        <View style={[styles.planBadge, { backgroundColor: colors.secondary }]}>
-          <Text style={[styles.planBadgeText, { color: colors.primary }]}>
-            {scenario.mode === "quick" ? "Quick" : "Detailed"}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} style={{ marginLeft: 4 }} />
       </View>
     </TouchableOpacity>
-  );
-}
-
-function EmptyState({ onCreatePlan, colors }: { onCreatePlan: () => void; colors: ReturnType<typeof useColors> }) {
-  return (
-    <View style={styles.emptyContainer}>
-      <View style={[styles.emptyIconBg, { backgroundColor: colors.secondary }]}>
-        <Ionicons name="trending-up-outline" size={40} color={colors.primary} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No plans yet</Text>
-      <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
-        Create your first retirement plan to get started
-      </Text>
-      <TouchableOpacity
-        style={[styles.emptyButton, { backgroundColor: colors.primary }]}
-        onPress={onCreatePlan}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={18} color="#fff" />
-        <Text style={styles.emptyButtonText}>Create Quick Plan</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function GuestBanner({ colors }: { colors: ReturnType<typeof useColors> }) {
-  return (
-    <View style={[styles.guestBanner, { backgroundColor: colors.warningLight, borderColor: colors.warning }]}>
-      <Ionicons name="information-circle-outline" size={18} color={colors.warning} />
-      <Text style={[styles.guestText, { color: "#92400e" }]}>
-        Log in via the RetirePro web app to sync your plans here.
-      </Text>
-    </View>
   );
 }
 
@@ -120,50 +92,85 @@ export default function HomeScreen() {
   );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const firstName = user?.firstName ?? "there";
+  const planCount = scenarios?.length ?? 0;
 
   if (authLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
+      <View style={[styles.fill, { backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <View style={styles.headerBrand}>
-          <View style={[styles.brandIconBg, { backgroundColor: colors.primary }]}>
-            <Ionicons name="trending-up" size={18} color="#fff" />
+    <View style={[styles.fill, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={["#0f172a", "#1e3a5f"]}
+        style={[styles.hero, { paddingTop: topPad + 16 }]}
+      >
+        <View style={styles.heroTopRow}>
+          <View>
+            <Text style={styles.heroGreeting}>
+              {isAuthenticated ? `Good day, ${firstName} 👋` : "Welcome to RetirePro"}
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              {isAuthenticated
+                ? `You have ${planCount} retirement ${planCount === 1 ? "plan" : "plans"}`
+                : "Plan your retirement today"}
+            </Text>
           </View>
-          <Text style={[styles.brandName, { color: colors.foreground }]}>RetirePro</Text>
+          <View style={styles.heroBrandBadge}>
+            <Ionicons name="trending-up" size={16} color="#fff" />
+          </View>
         </View>
+
         {isAuthenticated && (
-          <TouchableOpacity
-            style={[styles.createBtn, { backgroundColor: colors.primary }]}
-            onPress={handleCreatePlan}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="add" size={20} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.heroStatsRow}>
+            <View style={styles.heroStatBox}>
+              <Text style={styles.heroStatNumber}>{planCount}</Text>
+              <Text style={styles.heroStatLabel}>Plans</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatBox}>
+              <Text style={styles.heroStatNumber}>
+                {user?.retirementAge ?? "—"}
+              </Text>
+              <Text style={styles.heroStatLabel}>Retire at</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatBox}>
+              <Text style={styles.heroStatNumber}>
+                {user?.monthlyIncome
+                  ? `₹${Math.round(user.monthlyIncome / 1000)}K`
+                  : "—"}
+              </Text>
+              <Text style={styles.heroStatLabel}>Monthly Income</Text>
+            </View>
+          </View>
         )}
-      </View>
 
-      {!isAuthenticated && <GuestBanner colors={colors} />}
+        {!isAuthenticated && (
+          <View style={styles.guestCard}>
+            <Ionicons name="lock-closed-outline" size={16} color="#93c5fd" />
+            <Text style={styles.guestCardText}>
+              Log in via the RetirePro web app to sync your plans.
+            </Text>
+          </View>
+        )}
 
-      {isAuthenticated && (
-        <View style={[styles.welcomeBar, { backgroundColor: colors.secondary, borderBottomColor: colors.border }]}>
-          <Text style={[styles.welcomeText, { color: colors.primary }]}>
-            Welcome back, {user?.firstName ?? "there"}
-          </Text>
-          <Text style={[styles.welcomeSub, { color: colors.mutedForeground }]}>
-            {scenarios?.length ?? 0} retirement {(scenarios?.length ?? 0) === 1 ? "plan" : "plans"}
-          </Text>
-        </View>
-      )}
+        <TouchableOpacity
+          style={styles.heroCreateBtn}
+          onPress={handleCreatePlan}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="add-circle" size={20} color="#0f172a" />
+          <Text style={styles.heroCreateBtnText}>New Retirement Plan</Text>
+        </TouchableOpacity>
+      </LinearGradient>
 
       {isLoading ? (
-        <View style={styles.center}>
+        <View style={[styles.fill, { alignItems: "center", justifyContent: "center" }]}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
@@ -172,9 +179,8 @@ export default function HomeScreen() {
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 16 },
+            { paddingBottom: Platform.OS === "web" ? 50 : insets.bottom + 24 },
           ]}
-          scrollEnabled={!!(scenarios?.length)}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -182,23 +188,33 @@ export default function HomeScreen() {
               tintColor={colors.primary}
             />
           }
+          ListHeaderComponent={
+            isAuthenticated && planCount > 0 ? (
+              <Text style={styles.listSectionLabel}>YOUR PLANS</Text>
+            ) : null
+          }
           renderItem={({ item }) => (
             <PlanCard scenario={item} onPress={() => handleViewPlan(item.id)} />
           )}
           ListEmptyComponent={
             isAuthenticated ? (
-              <EmptyState onCreatePlan={handleCreatePlan} colors={colors} />
-            ) : (
-              <View style={styles.emptyContainer}>
-                <View style={[styles.emptyIconBg, { backgroundColor: colors.secondary }]}>
-                  <Feather name="lock" size={36} color={colors.mutedForeground} />
+              <View style={styles.emptyState}>
+                <View style={[styles.emptyIconRing, { borderColor: colors.border }]}>
+                  <Ionicons name="bar-chart-outline" size={32} color={colors.mutedForeground} />
                 </View>
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign in required</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
-                  Visit the RetirePro web app to log in, then come back here to view your plans.
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No plans yet</Text>
+                <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
+                  Create your first plan and see your retirement projections in under 60 seconds.
                 </Text>
+                <TouchableOpacity
+                  style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
+                  onPress={handleCreatePlan}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.emptyBtnText}>Get Started</Text>
+                </TouchableOpacity>
               </View>
-            )
+            ) : null
           }
         />
       )}
@@ -207,93 +223,149 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  fill: { flex: 1 },
+
+  hero: {
     paddingHorizontal: 20,
-    paddingBottom: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 24,
+    gap: 16,
   },
-  headerBrand: { flexDirection: "row", alignItems: "center", gap: 10 },
-  brandIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
+  heroTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
-  brandName: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  createBtn: {
+  heroGreeting: {
+    color: "#f8fafc",
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+  },
+  heroSubtitle: {
+    color: "#94a3b8",
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
+  heroBrandBadge: {
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: "#2563eb",
     alignItems: "center",
     justifyContent: "center",
   },
-  welcomeBar: {
+
+  heroStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderRadius: 14,
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.12)",
   },
-  welcomeText: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  welcomeSub: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-  guestBanner: {
+  heroStatBox: { flex: 1, alignItems: "center" },
+  heroStatNumber: {
+    color: "#f8fafc",
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+  },
+  heroStatLabel: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
+  heroStatDivider: { width: 1, height: 30, backgroundColor: "rgba(255,255,255,0.12)" },
+
+  guestCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    margin: 16,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  guestText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular" },
-  list: { padding: 16, gap: 12 },
-  planCard: {
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  planCardRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  planIconBg: {
-    width: 40,
-    height: 40,
+    backgroundColor: "rgba(255,255,255,0.07)",
     borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.12)",
   },
-  planCardContent: { flex: 1 },
-  planCardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  planCardDate: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  planBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  planBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  emptyContainer: { alignItems: "center", paddingTop: 60, paddingHorizontal: 32 },
-  emptyIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
+  guestCardText: {
+    flex: 1,
+    color: "#94a3b8",
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
   },
-  emptyTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 8, textAlign: "center" },
-  emptySubtitle: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 21 },
-  emptyButton: {
+
+  heroCreateBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 24,
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 30,
+    paddingVertical: 13,
+  },
+  heroCreateBtnText: {
+    color: "#0f172a",
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  list: { paddingHorizontal: 16, paddingTop: 20, gap: 12 },
+  listSectionLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "#94a3b8",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+
+  planCard: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  planAccentBar: { width: 4 },
+  planCardInner: { flex: 1, paddingVertical: 14, paddingHorizontal: 14, gap: 10 },
+  planCardTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  planIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  planMeta: { flex: 1 },
+  planCardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#0f172a" },
+  planCardDate: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#64748b", marginTop: 1 },
+  planBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  planBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  planCardBottom: {},
+  planCardCta: { fontSize: 12, fontFamily: "Inter_500Medium", color: "#2563eb" },
+
+  emptyState: { alignItems: "center", paddingTop: 48, paddingHorizontal: 36 },
+  emptyIconRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 8 },
+  emptyBody: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 21 },
+  emptyBtn: {
+    marginTop: 24,
+    paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 30,
-    marginTop: 28,
   },
-  emptyButtonText: { color: "#fff", fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  emptyBtnText: { color: "#fff", fontSize: 15, fontFamily: "Inter_600SemiBold" },
 });
