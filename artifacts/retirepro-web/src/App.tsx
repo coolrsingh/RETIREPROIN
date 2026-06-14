@@ -11,6 +11,9 @@ import PlanDashboard from "@/pages/plan-dashboard";
 import SettingsCrm from "@/pages/settings-crm";
 import AdLanding from "@/pages/ad-landing";
 import LeadsAdmin from "@/pages/leads-admin";
+import BlogIndex from "@/pages/blog-index";
+import Blog1 from "@/pages/blog-1";
+import Blog2 from "@/pages/blog-2";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,8 +21,11 @@ function Router() {
 
   return (
     <Switch>
-      {/* Always-public ad landing page */}
+      {/* Always-public pages */}
       <Route path="/go" component={AdLanding} />
+      <Route path="/blog" component={BlogIndex} />
+      <Route path="/blog/why-indians-fail-retirement" component={Blog1} />
+      <Route path="/blog/nps-vs-ppf-vs-sip" component={Blog2} />
 
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />

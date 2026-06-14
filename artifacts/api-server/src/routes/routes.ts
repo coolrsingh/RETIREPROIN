@@ -153,6 +153,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Guest (no-auth) stateless plan calculation — no DB save, just compute and return
+  app.post('/api/plan/try', async (req, res) => {
+    try {
+      const validationResult = quickPlanSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ message: "Validation failed", errors: validationResult.error.issues });
+      }
+      const planData = validationResult.data;
+      const currentYear = new Date().getFullYear();
+      const birthYear = planData.dob ? new Date(planData.dob).getFullYear() : currentYear - 35;
+      const retirementYear = birthYear + planData.retirementAge;
+
+      const scenarioData = {
+        id: 'guest',
+        name: `${planData.fullName}'s Retirement Plan`,
+        mode: 'quick',
+        assumptions: {
+          inflationHeadline: planData.assumptions?.inflationHeadline?.toString() ?? '6.0',
+          inflationEdu: '8.0',
+          inflationHealth: '8.0',
+          returnPre: planData.assumptions?.returnPre?.toString() ?? '12.0',
+          returnPost: planData.assumptions?.returnPost?.toString() ?? '8.0',
+          lifeExpectancy: '85',
+        },
+        householdMembers: [
+          {
+            id: '1',
+            relation: 'self',
+            name: planData.fullName,
+            dob: planData.dob ?? `${currentYear - 35}-01-01`,
+            dependent: false,
+          },
+          ...(planData.spouseDob ? [{
+            id: '2',
+            relation: 'spouse',
+            name: 'Spouse',
+            dob: planData.spouseDob,
+            dependent: false,
+          }] : []),
+        ],
+        incomeItems: [
+          {
+            id: '1',
+            type: 'salary',
+            amount: String(planData.monthlyIncomeTotal * 12),
+            frequency: 'annual',
+            start: currentYear,
+            end: retirementYear,
+            growthRate: planData.incomeGrowthRate?.toString() ?? '8',
+          },
+        ],
+        expenseItems: [
+          {
+            id: '1',
+            type: 'core',
+            amountMonthly: String(planData.monthlyExpenseTotal),
+          },
+        ],
+        goals: (planData.children ?? []).flatMap((child, i) => {
+          const childBirth = child.dob ? new Date(child.dob).getFullYear() : currentYear + 5;
+          const goals: any[] = [];
+          if (child.eduTodaysCost && child.eduTodaysCost > 0) {
+            goals.push({ id: `edu-${i}`, kind: 'child_edu', todaysCost: String(child.eduTodaysCost), targetYear: childBirth + 20, inflationCategory: 'education' });
+          }
+          if (child.marriageTodaysCost && child.marriageTodaysCost > 0) {
+            goals.push({ id: `mar-${i}`, kind: 'child_marriage', todaysCost: String(child.marriageTodaysCost), targetYear: childBirth + 30, inflationCategory: 'headline' });
+          }
+          return goals;
+        }),
+        assets: planData.assetsLumpSum && planData.assetsLumpSum > 0 ? [{
+          id: '1',
+          kind: 'equity',
+          value: String(planData.assetsLumpSum),
+          expectedReturnPre: planData.assumptions?.returnPre?.toString() ?? '12',
+          expectedReturnPost: planData.assumptions?.returnPost?.toString() ?? '8',
+        }] : [],
+        liabilities: planData.existingEMI?.emiAmount ? [{
+          id: '1',
+          name: 'Existing EMI',
+          type: 'other',
+          principalLeft: '0',
+          rate: '0',
+          emi: String(planData.existingEMI.emiAmount),
+          tenureMonths: (planData.existingEMI.tenureRemainingMonths ?? 0) % 12,
+          tenureYears: Math.floor((planData.existingEMI.tenureRemainingMonths ?? 0) / 12),
+          endDate: (() => {
+            const d = new Date();
+            d.setMonth(d.getMonth() + (planData.existingEMI?.tenureRemainingMonths ?? 0));
+            return d.toISOString().split('T')[0];
+          })(),
+        }] : [],
+        miniRetirements: planData.miniRetirement?.startYear ? [{
+          id: '1',
+          start: planData.miniRetirement.startYear,
+          months: planData.miniRetirement.durationMonths,
+          incomeDuring: '0',
+          expenseDeltaPct: '0',
+        }] : [],
+      };
+
+      const calculations = await calculateRetirementPlan(scenarioData as any);
+      res.json(calculations);
+    } catch (error: any) {
+      console.error("Guest plan calculation error:", error);
+      res.status(500).json({ message: "Calculation failed", error: error.message });
+    }
+  });
+
   // Quick plan creation with limit check
   app.post('/api/plan/quick', isAuthenticated, async (req: any, res) => {
     try {

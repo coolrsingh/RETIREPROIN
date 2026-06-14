@@ -14,6 +14,7 @@ import { ChartLine, ArrowLeft, FileSpreadsheet, Star, RefreshCw } from "lucide-r
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
+import CashflowAdvisor from "@/components/cashflow-advisor";
 import KpiCards from "@/components/kpi-cards";
 import AssumptionsPanel from "@/components/assumptions-panel";
 import LeadCaptureModal from "@/components/lead-capture-modal";
@@ -68,14 +69,10 @@ export default function PlanDashboard() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Session expired",
+        description: "Please sign in to view and manage your saved plans.",
         variant: "destructive",
       });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
@@ -355,6 +352,15 @@ export default function PlanDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Cashflow Advisor — actionable gap-closing advice */}
+        {calculations && !calculationsLoading && (
+          <Card className="mt-2">
+            <CardContent className="pt-2">
+              <CashflowAdvisor calculations={calculations} />
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       {/* Lead Capture Modal */}
