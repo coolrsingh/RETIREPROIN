@@ -492,7 +492,7 @@ export default function Landing() {
         <section className="py-20 bg-white px-6">
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-              <h2 className="font-black text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700 }}>Why RetirePro?</h2>
+              <h2 className="font-bold text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>Why RetirePro?</h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto">Built for India. Designed for clarity.</p>
             </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -527,7 +527,7 @@ export default function Landing() {
               <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "#F15A24" }}>
                 Free · No Login · Instant
               </span>
-              <h2 className="font-black text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700 }}>
+              <h2 className="font-bold text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>
                 See Your Retirement Future in 30 Seconds.
                 <span className="block text-slate-500" style={{ fontSize: "28px", fontWeight: 600 }}>No account required.</span>
               </h2>
@@ -546,7 +546,7 @@ export default function Landing() {
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10 flex-wrap gap-4">
               <div>
-                <h2 className="font-black text-slate-900 mb-2" style={{ fontSize: "40px", fontWeight: 700 }}>Learn Before You Plan</h2>
+                <h2 className="font-bold text-slate-900 mb-2" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>Learn Before You Plan</h2>
                 <p className="text-lg text-slate-600">India-specific retirement guides, written in plain language.</p>
               </div>
               <Link href="/blog" className="hidden md:flex items-center gap-1 font-semibold hover:underline" style={{ color: "#F15A24" }}>
@@ -615,7 +615,7 @@ export default function Landing() {
               style={{ background: "rgba(241,90,36,0.08)", filter: "blur(64px)" }} />
           </div>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto text-center">
-            <h2 className="font-black text-white mb-6" style={{ fontSize: "clamp(36px, 5vw, 52px)", lineHeight: 1.15 }}>
+            <h2 className="font-bold text-white mb-6" style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15 }}>
               Your 65-year-old self<br />is counting on today's you.
             </h2>
             <p className="text-xl text-slate-300 mb-8">

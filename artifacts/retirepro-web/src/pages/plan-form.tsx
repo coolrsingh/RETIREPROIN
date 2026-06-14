@@ -22,6 +22,21 @@ export default function PlanForm() {
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const queryClient = useQueryClient();
 
+  // Read guest calculator data from sessionStorage once at mount (lazy init).
+  // If present, we pre-fill the Quick Plan form and clear the stored values.
+  const [guestFormData] = useState<Record<string, string> | null>(() => {
+    const raw = sessionStorage.getItem("guestCalcForm");
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      sessionStorage.removeItem("guestCalcForm");
+      sessionStorage.removeItem("guestCalcResult");
+      return parsed;
+    } catch {
+      return null;
+    }
+  });
+
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
   const mode = searchParams.get('mode') || 'quick';
 
@@ -122,6 +137,19 @@ export default function PlanForm() {
     assetsLumpSum: profile.currentAssets ? Number(profile.currentAssets) : 0,
   } : undefined;
 
+  // Guest calculator data (if present) overrides profile defaults so the user
+  // sees their preview numbers already filled in.
+  const effectiveDefaults = guestFormData ? {
+    fullName: guestFormData.fullName || profileDefaults?.fullName || "",
+    dob: guestFormData.dob || profileDefaults?.dob || "",
+    retirementAge: Number(guestFormData.retirementAge) || profileDefaults?.retirementAge || 60,
+    monthlyIncomeTotal: Number(guestFormData.monthlyIncomeTotal) || profileDefaults?.monthlyIncomeTotal || 0,
+    monthlyExpenseTotal: Number(guestFormData.monthlyExpenseTotal) || profileDefaults?.monthlyExpenseTotal || 0,
+    monthlySavings: Number(guestFormData.monthlySavings) || profileDefaults?.monthlySavings || 0,
+    assetsLumpSum: Number(guestFormData.assetsLumpSum) || profileDefaults?.assetsLumpSum || 0,
+    incomeGrowthRate: profileDefaults?.incomeGrowthRate || 8,
+  } : profileDefaults;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -164,7 +192,12 @@ export default function PlanForm() {
             </Link>
           </div>
 
-          {profile && (profile.monthlyIncome || profile.dob) && (
+          {guestFormData && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+              ✅ Your details from the preview calculator have been pre-filled below. Complete the optional sections and create your plan.
+            </div>
+          )}
+          {!guestFormData && profile && (profile.monthlyIncome || profile.dob) && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
               ✅ Your saved profile data has been pre-filled below. Review and adjust before creating your plan.
             </div>
@@ -195,7 +228,7 @@ export default function PlanForm() {
           <QuickPlanForm 
             onSubmit={onSubmit}
             isLoading={createPlanMutation.isPending}
-            profileDefaults={profileDefaults}
+            profileDefaults={effectiveDefaults}
           />
         ) : (
           <ComingSoonDetailed />

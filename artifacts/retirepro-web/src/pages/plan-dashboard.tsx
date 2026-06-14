@@ -125,7 +125,7 @@ export default function PlanDashboard() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <Link href="/">
@@ -148,7 +148,7 @@ export default function PlanDashboard() {
 
       {/* Navigation Tabs */}
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="h-auto p-0 bg-transparent">
               <TabsTrigger 
@@ -164,7 +164,7 @@ export default function PlanDashboard() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
         {/* Scenario Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">

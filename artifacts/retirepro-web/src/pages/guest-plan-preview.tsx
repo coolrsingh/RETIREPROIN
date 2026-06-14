@@ -224,7 +224,7 @@ export default function GuestPlanPreview() {
             </div>
           </CardHeader>
           <CardContent>
-            <CashflowChart calculations={calculations} />
+            <CashflowChart calculations={calculations} hideExportButton />
           </CardContent>
         </Card>
 

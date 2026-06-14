@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChartLine, Plus, FileText, Zap, List, Users } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -13,6 +13,7 @@ import ProfileMenu from "@/components/profile-menu";
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const { data: scenarios, isLoading: scenariosLoading } = useQuery({
     queryKey: ["/api/scenarios"],
@@ -32,6 +33,17 @@ export default function Home() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
+
+  // After login: if the user had filled the guest calculator, redirect to the
+  // Quick Plan form so we can pre-fill it with their data.
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      const raw = sessionStorage.getItem("guestCalcForm");
+      if (raw) {
+        navigate("/plan?mode=quick");
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   if (isLoading || scenariosLoading) {
     return (
