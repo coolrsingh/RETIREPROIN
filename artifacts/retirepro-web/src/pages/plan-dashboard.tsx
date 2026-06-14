@@ -135,8 +135,8 @@ export default function PlanDashboard() {
                 </div>
               </Link>
               <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-slate-600 hover:text-primary-600 font-medium">
-                  <a data-testid="link-dashboard">Dashboard</a>
+                <Link href="/" className="text-slate-600 hover:text-primary-600 font-medium" data-testid="link-dashboard">
+                  Dashboard
                 </Link>
                 <span className="text-primary-600 font-medium">My Plans</span>
               </nav>

@@ -14,6 +14,7 @@ import LeadsAdmin from "@/pages/leads-admin";
 import BlogIndex from "@/pages/blog-index";
 import Blog1 from "@/pages/blog-1";
 import Blog2 from "@/pages/blog-2";
+import GuestPlanPreview from "@/pages/guest-plan-preview";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/blog" component={BlogIndex} />
       <Route path="/blog/why-indians-fail-retirement" component={Blog1} />
       <Route path="/blog/nps-vs-ppf-vs-sip" component={Blog2} />
+      <Route path="/plan/preview" component={GuestPlanPreview} />
 
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />

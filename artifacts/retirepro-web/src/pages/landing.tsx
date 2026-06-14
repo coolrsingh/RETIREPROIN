@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ChartLine, Zap, Shield, BarChart3, ArrowRight, TrendingUp, Users, Clock,
-  CheckCircle, AlertTriangle, BookOpen, Star, Lock
+  AlertTriangle, BookOpen, Star, Lock
 } from "lucide-react";
+import dashboardImg from "@assets/retirepro.in_plan_58390e0d-7ccd-4950-a3d7-52a04338c489_1781421890049.png";
 
 // ─── Animated counter ────────────────────────────────────────────────────────
 function AnimatedNumber({ target, prefix = "", suffix = "" }: { target: number; prefix?: string; suffix?: string }) {
@@ -31,81 +32,40 @@ function AnimatedNumber({ target, prefix = "", suffix = "" }: { target: number; 
   return <span ref={ref}>{prefix}{displayed.toLocaleString("en-IN")}{suffix}</span>;
 }
 
-// ─── Floating 3D card ────────────────────────────────────────────────────────
-function FloatingCard() {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-0.5, 0.5], [8, -8]);
-  const rotateY = useTransform(x, [-0.5, 0.5], [-8, 8]);
-  const springX = useSpring(rotateX, { stiffness: 80, damping: 15 });
-  const springY = useSpring(rotateY, { stiffness: 80, damping: 15 });
-
-  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    x.set((e.clientX - rect.left) / rect.width - 0.5);
-    y.set((e.clientY - rect.top) / rect.height - 0.5);
+// ─── Feature card with 3D tilt ───────────────────────────────────────────────
+function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = ref.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transition = "none";
+    card.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale(1.03)`;
   };
-  const handleLeave = () => { x.set(0); y.set(0); };
-
+  const handleLeave = () => {
+    const card = ref.current;
+    if (!card) return;
+    card.style.transition = "transform 0.4s ease, box-shadow 0.4s ease";
+    card.style.transform = "perspective(600px) rotateY(0deg) rotateX(0deg) scale(1)";
+  };
   return (
-    <motion.div
-      style={{ perspective: 800 }}
-      onMouseMove={handleMouse}
+    <div
+      ref={ref}
+      onMouseMove={handleMove}
       onMouseLeave={handleLeave}
-      className="cursor-pointer"
-      animate={{ y: [0, -12, 0] }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      className={className}
+      style={{ willChange: "transform", transformStyle: "preserve-3d" }}
     >
-      <motion.div
-        style={{ rotateX: springX, rotateY: springY }}
-        className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl w-72"
-      >
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-            <TrendingUp className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-white/80 text-sm font-medium">Priya's Retirement Plan</span>
-        </div>
-        <div className="mb-4">
-          <div className="text-white/60 text-xs mb-0.5">Projected corpus at 60</div>
-          <div className="text-3xl font-black text-white">₹3.2 Cr</div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/10 rounded-xl p-3">
-            <div className="text-white/50 text-xs">Required</div>
-            <div className="text-white font-bold">₹4.5 Cr</div>
-          </div>
-          <div className="bg-amber-500/20 rounded-xl p-3">
-            <div className="text-amber-300 text-xs">Gap</div>
-            <div className="text-amber-300 font-bold">₹1.3 Cr</div>
-          </div>
-        </div>
-        <div className="mt-4 bg-blue-500/20 rounded-xl p-3 border border-blue-400/30">
-          <div className="text-blue-300 text-xs mb-0.5">Monthly SIP needed</div>
-          <div className="text-blue-200 font-bold text-lg">₹12,400/mo</div>
-        </div>
-      </motion.div>
-    </motion.div>
+      {children}
+    </div>
   );
 }
 
 // ─── Guest Calculator ─────────────────────────────────────────────────────────
-interface CalcResult {
-  corpusRequired: number;
-  projectedCorpus: number;
-  gap: number;
-  sipRequired: number;
-  isSurplus: boolean;
-}
-
-function fmt(val: number) {
-  if (Math.abs(val) >= 1_00_00_000) return `₹${(val / 1_00_00_000).toFixed(2)} Cr`;
-  if (Math.abs(val) >= 1_00_000) return `₹${(val / 1_00_000).toFixed(1)}L`;
-  return `₹${Math.round(val).toLocaleString("en-IN")}`;
-}
-
 function GuestCalculator() {
+  const [, navigate] = useLocation();
   const [form, setForm] = useState({
     fullName: "",
     dob: "",
@@ -117,7 +77,6 @@ function GuestCalculator() {
     returnPre: "12",
     inflationRate: "6",
   });
-  const [result, setResult] = useState<CalcResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -156,15 +115,9 @@ function GuestCalculator() {
       });
       if (!res.ok) throw new Error("Calculation failed. Please check your inputs.");
       const data = await res.json();
-      const gap = (data.summary?.gap ?? data.gap ?? 0);
-      setResult({
-        corpusRequired: data.summary?.requiredCorpusAtRetirement ?? data.corpusRequired ?? 0,
-        projectedCorpus: data.summary?.projectedCorpusAtRetirement ?? data.corpusBuildupAtRetirement ?? 0,
-        gap: Math.abs(gap),
-        sipRequired: data.summary?.sipRequired ?? data.sipRequired ?? 0,
-        isSurplus: gap < 0,
-      });
-      document.getElementById("calc-result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      sessionStorage.setItem("guestCalcResult", JSON.stringify(data));
+      sessionStorage.setItem("guestCalcForm", JSON.stringify(form));
+      navigate("/plan/preview");
     } catch (e: any) {
       setError(e.message ?? "Something went wrong.");
     } finally {
@@ -172,106 +125,104 @@ function GuestCalculator() {
     }
   };
 
+  const labelClass = "text-base font-medium text-slate-700 mb-2 block";
+  const inputClass = "h-12 text-base border-slate-300 focus:border-[#F15A24] focus:ring-[#F15A24]/20";
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-[1280px] mx-auto">
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
-          <h3 className="text-xl font-bold text-white mb-1">Free Retirement Calculator</h3>
-          <p className="text-blue-200 text-sm">No login required · Instant results · Takes 60 seconds</p>
-        </div>
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2 grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs text-slate-600 mb-1.5 block">Full Name</Label>
-              <Input placeholder="Rahul Sharma" value={form.fullName} onChange={e => set("fullName", e.target.value)} className="h-11" />
-            </div>
-            <div>
-              <Label className="text-xs text-slate-600 mb-1.5 block">Date of Birth</Label>
-              <Input placeholder="1985-06-15" value={form.dob} onChange={e => set("dob", e.target.value)} className="h-11" />
-            </div>
+        <div className="p-8 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+          <div>
+            <Label className={labelClass}>Full Name</Label>
+            <Input placeholder="Rahul Sharma" value={form.fullName} onChange={e => set("fullName", e.target.value)} className={inputClass} />
           </div>
           <div>
-            <Label className="text-xs text-slate-600 mb-1.5 block">Retirement Age</Label>
-            <Input type="number" placeholder="60" value={form.retirementAge} onChange={e => set("retirementAge", e.target.value)} className="h-11" />
+            <Label className={labelClass}>Date of Birth</Label>
+            <Input placeholder="1985-06-15 (YYYY-MM-DD)" value={form.dob} onChange={e => set("dob", e.target.value)} className={inputClass} />
           </div>
           <div>
-            <Label className="text-xs text-slate-600 mb-1.5 block">Monthly Income (₹)</Label>
-            <Input type="number" placeholder="75,000" value={form.monthlyIncomeTotal} onChange={e => set("monthlyIncomeTotal", e.target.value)} className="h-11" />
+            <Label className={labelClass}>Retirement Age</Label>
+            <Input type="number" placeholder="60" value={form.retirementAge} onChange={e => set("retirementAge", e.target.value)} className={inputClass} />
           </div>
           <div>
-            <Label className="text-xs text-slate-600 mb-1.5 block">Monthly Expenses (₹)</Label>
-            <Input type="number" placeholder="45,000" value={form.monthlyExpenseTotal} onChange={e => set("monthlyExpenseTotal", e.target.value)} className="h-11" />
+            <Label className={labelClass}>Monthly Income (₹)</Label>
+            <Input type="number" placeholder="75,000" value={form.monthlyIncomeTotal} onChange={e => set("monthlyIncomeTotal", e.target.value)} className={inputClass} />
           </div>
           <div>
-            <Label className="text-xs text-slate-600 mb-1.5 block">Monthly Savings / SIP (₹)</Label>
-            <Input type="number" placeholder="15,000" value={form.monthlySavings} onChange={e => set("monthlySavings", e.target.value)} className="h-11" />
+            <Label className={labelClass}>Monthly Expenses (₹)</Label>
+            <Input type="number" placeholder="45,000" value={form.monthlyExpenseTotal} onChange={e => set("monthlyExpenseTotal", e.target.value)} className={inputClass} />
           </div>
           <div>
-            <Label className="text-xs text-slate-600 mb-1.5 block">Existing Investments (₹)</Label>
-            <Input type="number" placeholder="5,00,000" value={form.assetsLumpSum} onChange={e => set("assetsLumpSum", e.target.value)} className="h-11" />
+            <Label className={labelClass}>Monthly Savings / SIP (₹)</Label>
+            <Input type="number" placeholder="15,000" value={form.monthlySavings} onChange={e => set("monthlySavings", e.target.value)} className={inputClass} />
           </div>
           <div>
-            <Label className="text-xs text-slate-600 mb-1.5 block">Expected Return (% p.a.)</Label>
-            <Input type="number" placeholder="12" value={form.returnPre} onChange={e => set("returnPre", e.target.value)} className="h-11" />
+            <Label className={labelClass}>Existing Investments (₹)</Label>
+            <Input type="number" placeholder="5,00,000" value={form.assetsLumpSum} onChange={e => set("assetsLumpSum", e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <Label className={labelClass}>Expected Return (% p.a.)</Label>
+            <Input type="number" placeholder="12" value={form.returnPre} onChange={e => set("returnPre", e.target.value)} className={inputClass} />
           </div>
           {error && (
-            <div className="sm:col-span-2 text-sm text-red-600 flex items-center gap-2">
+            <div className="sm:col-span-2 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-3">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" /> {error}
             </div>
           )}
           <div className="sm:col-span-2">
-            <Button type="submit" className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700 rounded-xl" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-60"
+              style={{
+                background: "#F15A24",
+                padding: "18px 24px",
+                fontSize: "18px",
+                animation: loading ? "none" : "orangePulse 2.5s ease-in-out infinite",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.animation = "none";
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.02)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(241,90,36,0.45)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.animation = "orangePulse 2.5s ease-in-out infinite";
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+              }}
+            >
               {loading ? (
-                <span className="flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Calculating…</span>
+                <><span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> Calculating your retirement plan…</>
               ) : (
-                <span className="flex items-center gap-2"><Zap className="h-4 w-4" /> Calculate My Retirement Number →</span>
+                <><Zap className="h-5 w-5" /> See My Retirement Future →</>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </form>
+    </div>
+  );
+}
 
-      <AnimatePresence>
-        {result && (
-          <motion.div
-            id="calc-result"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mt-6"
-          >
-            <div className={`rounded-3xl overflow-hidden border-2 ${result.isSurplus ? "border-emerald-400" : "border-amber-400"}`}>
-              <div className={`px-6 py-4 ${result.isSurplus ? "bg-emerald-600" : "bg-amber-600"} text-white flex items-center gap-2`}>
-                {result.isSurplus ? <CheckCircle className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
-                <span className="font-bold">{result.isSurplus ? "Great news — you're on track!" : "You have a funding gap to close"}</span>
-              </div>
-              <div className="bg-white p-6 grid grid-cols-2 md:grid-cols-4 gap-4 mb-0">
-                {[
-                  { label: "Corpus Required", value: fmt(result.corpusRequired), color: "text-slate-900" },
-                  { label: "Projected Corpus", value: fmt(result.projectedCorpus), color: "text-blue-700" },
-                  { label: result.isSurplus ? "Surplus" : "Funding Gap", value: fmt(result.gap), color: result.isSurplus ? "text-emerald-700" : "text-red-600" },
-                  { label: "Monthly SIP Needed", value: result.isSurplus ? "₹0" : fmt(result.sipRequired), color: result.isSurplus ? "text-emerald-700" : "text-amber-700" },
-                ].map(k => (
-                  <div key={k.label} className="text-center p-3 bg-slate-50 rounded-xl">
-                    <div className="text-xs text-slate-500 mb-1">{k.label}</div>
-                    <div className={`text-xl font-black ${k.color}`}>{k.value}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="bg-slate-900 p-5 text-center">
-                <p className="text-slate-300 text-sm mb-3">
-                  <Lock className="h-3.5 w-3.5 inline mr-1" />
-                  Sign in to save your plan, see year-by-year projections, and download your full report.
-                </p>
-                <Button onClick={() => { window.location.href = "/api/login"; }} className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-8 font-bold">
-                  Create Free Account to Save →
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+// ─── Ticker ───────────────────────────────────────────────────────────────────
+const TICKER_ITEMS = [
+  "NIFTY 50 ▲ 24,850", "SENSEX ▲ 81,200", "INFLATION 6.8%",
+  "AVG RETURN 12.4%", "RETIREMENT AGE 60", "LIFE EXPECTANCY 85 yrs",
+  "CORPUS TARGET ₹3.8 Cr", "EPF WITHDRAWAL 52L+", "SIP GROWTH 15%",
+  "NIFTY 50 ▲ 24,850", "SENSEX ▲ 81,200", "INFLATION 6.8%",
+  "AVG RETURN 12.4%", "RETIREMENT AGE 60", "LIFE EXPECTANCY 85 yrs",
+  "CORPUS TARGET ₹3.8 Cr", "EPF WITHDRAWAL 52L+", "SIP GROWTH 15%",
+];
+
+function DataTicker() {
+  return (
+    <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-white/5"
+      style={{ opacity: 0.18, fontFamily: "monospace", fontSize: "12px", color: "#fff", padding: "8px 0" }}
+      aria-hidden="true"
+    >
+      <div className="flex gap-12 whitespace-nowrap" style={{ animation: "tickerScroll 35s linear infinite" }}>
+        {TICKER_ITEMS.map((item, i) => <span key={i} className="flex-shrink-0">{item}</span>)}
+      </div>
     </div>
   );
 }
@@ -279,235 +230,448 @@ function GuestCalculator() {
 // ─── Landing Page ─────────────────────────────────────────────────────────────
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
-              <ChartLine className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-slate-900">RetirePro</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/blog" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Blog</Link>
-            <a href="#calculator" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Calculator</a>
-          </nav>
-          <Button onClick={() => { window.location.href = "/api/login"; }} className="bg-blue-600 hover:bg-blue-700 rounded-full px-5 h-9 text-sm" data-testid="button-login">
-            Sign In
-          </Button>
-        </div>
-      </header>
+    <>
+      {/* Global CSS for animations */}
+      <style>{`
+        @keyframes orangePulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(241, 90, 36, 0.4); }
+          50%       { box-shadow: 0 0 0 12px rgba(241, 90, 36, 0); }
+        }
+        @keyframes tickerScroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        @keyframes floatA {
+          0%, 100% { transform: translateY(0px) rotate(-3deg); }
+          50%       { transform: translateY(-14px) rotate(-3deg); }
+        }
+        @keyframes floatB {
+          0%, 100% { transform: translateY(0px) rotate(2.5deg); }
+          50%       { transform: translateY(-10px) rotate(2.5deg); }
+        }
+        @keyframes floatC {
+          0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+          50%       { transform: translateY(-18px) rotate(-1.5deg); }
+        }
+        .preview-card-float-a { animation: floatA 5s ease-in-out infinite; }
+        .preview-card-float-b { animation: floatB 6s ease-in-out infinite; animation-delay: 1.5s; }
+        .preview-card-float-c { animation: floatC 4.5s ease-in-out infinite; animation-delay: 3s; }
+        .preview-card-shadow {
+          border-radius: 12px;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07);
+        }
+        html { scroll-behavior: smooth; }
+        @media (prefers-reduced-motion: reduce) {
+          .preview-card-float-a, .preview-card-float-b, .preview-card-float-c { animation: none !important; }
+        }
+      `}</style>
 
-      {/* Hero */}
-      <section className="relative min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 pt-16 flex items-center overflow-hidden">
-        {/* Animated orbs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div animate={{ x: [0, 40, 0], y: [0, -30, 0] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-          <motion.div animate={{ x: [0, -30, 0], y: [0, 40, 0] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl" />
-          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-600/15 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm font-medium px-4 py-2 rounded-full mb-6">
-              <Star className="h-3.5 w-3.5 fill-blue-400 text-blue-400" />
-              Free. No login required. 60 seconds.
-            </motion.div>
-            <h1 className="text-5xl md:text-7xl font-black text-white leading-none mb-6">
-              Plan Your
-              <span className="block bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent">
-                Retirement
-              </span>
-              Free.
-            </h1>
-            <p className="text-xl text-slate-300 leading-relaxed mb-8 max-w-lg">
-              Calculate your retirement corpus in 60 seconds. See your funding gap. Know exactly what SIP you need. India-specific. No login required.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-8 h-13 text-base font-bold shadow-lg shadow-white/10"
-                onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth" })}
-                data-testid="button-get-started">
-                <Zap className="mr-2 h-5 w-5 text-blue-600" />
-                Try Free Calculator
-              </Button>
-              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-full px-8 h-13 text-base"
-                onClick={() => { window.location.href = "/api/login"; }}
-                data-testid="button-sign-in">
-                Sign In to Save
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex justify-center">
-            <FloatingCard />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section className="bg-slate-900 py-10 border-b border-slate-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { value: 93, suffix: "%", label: "Indians over 50 regret not planning sooner", prefix: "" },
-            { value: 8, suffix: " Cr", label: "Typical corpus needed for urban retirement", prefix: "₹" },
-            { value: 60, suffix: " sec", label: "To get your retirement number free", prefix: "" },
-            { value: 52, suffix: "L+", label: "EPF final settlement claims in 2024–25", prefix: "" },
-          ].map(stat => (
-            <div key={stat.label} className="text-white">
-              <div className="text-3xl md:text-4xl font-black text-blue-400 mb-1">
-                <AnimatedNumber target={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
+      <div className="min-h-screen bg-white overflow-x-hidden">
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200/60">
+          <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 bg-[#F15A24] rounded-xl flex items-center justify-center">
+                <ChartLine className="h-5 w-5 text-white" />
               </div>
-              <div className="text-xs text-slate-400 leading-snug">{stat.label}</div>
+              <span className="text-xl font-bold text-slate-900">RetirePro</span>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Calculator */}
-      <section id="calculator" className="bg-gradient-to-b from-slate-50 to-white py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center mb-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <span className="inline-block bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full mb-4">
-              Free · No Login · Instant
-            </span>
-            <h2 className="text-4xl font-black text-slate-900 mb-4">Calculate Your Retirement Number</h2>
-            <p className="text-lg text-slate-600">
-              Enter your details below. See your corpus projection, funding gap, and the exact SIP you need — right here, no account required.
-            </p>
-          </motion.div>
-        </div>
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}>
-          <GuestCalculator />
-        </motion.div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 bg-white px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <h2 className="text-4xl font-black text-slate-900 mb-4">Why RetirePro?</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">Built for India. Designed for clarity.</p>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { icon: <Zap className="h-8 w-8" />, color: "text-blue-600 bg-blue-50", title: "60-Second Quick Plan", desc: "Answer a few questions. Get a full retirement projection with year-by-year corpus growth, income, and expense breakdown." },
-              { icon: <BarChart3 className="h-8 w-8" />, color: "text-emerald-600 bg-emerald-50", title: "Visual Projections", desc: "Interactive charts show your net worth trajectory, cashflow analysis, and exactly when (and if) your corpus runs out." },
-              { icon: <Shield className="h-8 w-8" />, color: "text-purple-600 bg-purple-50", title: "India-Specific Planning", desc: "Indian inflation rates, EPF, NPS, ELSS. Supports joint retirement, children's education goals, home loans, and mini-retirements." },
-            ].map((f, i) => (
-              <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}>
-                <div className="group bg-white rounded-2xl p-8 border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 h-full">
-                  <div className={`inline-flex p-3 rounded-2xl mb-5 ${f.color}`}>{f.icon}</div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">{f.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href="/blog" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Blog</Link>
+              <a href="#calculator" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Calculator</a>
+            </nav>
+            <Button
+              onClick={() => { window.location.href = "/api/login"; }}
+              className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full px-5 h-9 text-sm font-semibold"
+              data-testid="button-login"
+            >
+              Sign In
+            </Button>
           </div>
-        </div>
-      </section>
+        </header>
 
-      {/* Blog */}
-      <section className="py-20 bg-slate-50 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-center justify-between mb-10">
-            <div>
-              <h2 className="text-3xl font-black text-slate-900 mb-2">Learn Before You Plan</h2>
-              <p className="text-slate-600">India-specific retirement guides, written in plain language.</p>
-            </div>
-            <Link href="/blog" className="hidden md:flex items-center gap-1 text-blue-600 font-semibold hover:underline">
-              All articles <ArrowRight className="h-4 w-4" />
-            </Link>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              {
-                href: "/blog/why-indians-fail-retirement",
-                gradient: "from-blue-600 to-indigo-700",
-                tag: "Retirement Basics",
-                title: "Why Most Indians Fail to Plan for Retirement",
-                excerpt: "93% of Indians over 50 regret not planning sooner. Here's what goes wrong and the one habit that changes everything.",
-                time: "8 min read",
-              },
-              {
-                href: "/blog/nps-vs-ppf-vs-sip",
-                gradient: "from-emerald-600 to-teal-700",
-                tag: "Investment Guide",
-                title: "NPS vs PPF vs Mutual Fund SIP",
-                excerpt: "Real numbers. No fluff. We compare all three so you can stop guessing and start investing.",
-                time: "9 min read",
-              },
-            ].map((post, i) => (
-              <motion.div key={post.href} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-                <Link href={post.href} className="group block bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <div className={`h-40 bg-gradient-to-br ${post.gradient} flex items-end p-5`}>
-                    <span className="text-sm font-semibold bg-white/20 text-white px-3 py-1 rounded-full backdrop-blur-sm">{post.tag}</span>
+        {/* ── Hero ─────────────────────────────────────────────────────────── */}
+        <section
+          className="relative min-h-screen pt-16 flex items-center overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #0A1628 0%, #0D1B2A 60%, #111827 100%)",
+          }}
+        >
+          {/* Grid overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
+          {/* Orange orb top-left */}
+          <div
+            className="absolute pointer-events-none"
+            style={{ top: -80, left: -80, width: 400, height: 400, background: "radial-gradient(circle, rgba(241,90,36,0.13) 0%, transparent 70%)" }}
+          />
+          {/* Blue orb animated */}
+          <motion.div
+            animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full pointer-events-none"
+            style={{ background: "rgba(59,130,246,0.12)", filter: "blur(64px)" }}
+          />
+          <motion.div
+            animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="absolute bottom-1/4 right-1/3 w-64 h-64 rounded-full pointer-events-none"
+            style={{ background: "rgba(99,102,241,0.12)", filter: "blur(48px)" }}
+          />
+
+          <div className="relative max-w-[1280px] mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
+            {/* Left: copy */}
+            <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-6"
+                style={{ background: "rgba(241,90,36,0.15)", border: "1px solid rgba(241,90,36,0.3)", color: "#FFA07A" }}
+              >
+                <Star className="h-3.5 w-3.5" style={{ fill: "#FFA07A" }} />
+                Free. No login required. 60 seconds.
+              </motion.div>
+
+              <h1 className="text-5xl md:text-7xl font-black text-white leading-none mb-6">
+                Plan Your
+                <span className="block" style={{ background: "linear-gradient(90deg, #F15A24, #FF8C57, #FFA07A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Retirement
+                </span>
+                Free.
+              </h1>
+
+              <p className="text-xl text-slate-300 leading-relaxed mb-8 max-w-lg">
+                Calculate your retirement corpus in 60 seconds. See your funding gap. Know exactly what SIP you need. India-specific. No login required.
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                {/* Primary CTA — orange filled with pulse */}
+                <button
+                  className="flex items-center gap-2 rounded-full px-8 text-white font-bold text-base"
+                  style={{
+                    background: "#F15A24",
+                    height: "52px",
+                    animation: "orangePulse 2.5s ease-in-out infinite",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.animation = "none";
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(241,90,36,0.5)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLButtonElement).style.animation = "orangePulse 2.5s ease-in-out infinite";
+                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+                  }}
+                  onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth" })}
+                  data-testid="button-get-started"
+                >
+                  <Zap className="h-5 w-5" />
+                  Try Free Calculator
+                </button>
+
+                {/* Secondary CTA — outlined orange */}
+                <button
+                  className="flex items-center gap-2 rounded-full px-8 font-semibold text-base transition-all duration-200"
+                  style={{
+                    height: "52px",
+                    background: "transparent",
+                    border: "1.5px solid #F15A24",
+                    color: "#F15A24",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(241,90,36,0.1)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  }}
+                  onClick={() => { window.location.href = "/api/login"; }}
+                  data-testid="button-sign-in"
+                >
+                  Sign In to Save
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Right: floating preview cards */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative h-[520px] flex items-center justify-center"
+            >
+              {/* Card 1 — interactive plan summary card (center, prominent) */}
+              <div className="absolute z-30 preview-card-float-a" style={{ top: "10%", left: "5%" }}>
+                <div
+                  className="preview-card-shadow w-64 rounded-2xl p-5"
+                  style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.15)" }}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 rounded-full bg-[#F15A24] flex items-center justify-center">
+                      <TrendingUp className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <span className="text-white/80 text-xs font-medium">Priya's Retirement Plan</span>
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{post.title}</h3>
-                    <p className="text-slate-500 text-sm mb-3">{post.excerpt}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />{post.time}</span>
-                      <span className="text-sm font-semibold text-blue-600 flex items-center gap-1">Read <ArrowRight className="h-3.5 w-3.5" /></span>
+                  <div className="mb-3">
+                    <div className="text-white/50 text-[10px] mb-0.5">Projected corpus at 60</div>
+                    <div className="text-2xl font-black text-white">₹3.2 Cr</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.08)" }}>
+                      <div className="text-white/50 text-[10px]">Required</div>
+                      <div className="text-white text-sm font-bold">₹4.5 Cr</div>
+                    </div>
+                    <div className="rounded-lg p-2.5" style={{ background: "rgba(241,90,36,0.2)" }}>
+                      <div className="text-orange-300 text-[10px]">Gap</div>
+                      <div className="text-orange-300 text-sm font-bold">₹1.3 Cr</div>
                     </div>
                   </div>
-                </Link>
-              </motion.div>
+                  <div className="rounded-lg p-2.5" style={{ background: "rgba(59,130,246,0.2)", border: "1px solid rgba(59,130,246,0.25)" }}>
+                    <div className="text-blue-300 text-[10px] mb-0.5">Monthly SIP needed</div>
+                    <div className="text-blue-200 font-bold">₹12,400/mo</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2 — dashboard screenshot (top-right, Net Worth area) */}
+              <div className="absolute z-20 preview-card-float-b" style={{ top: "-2%", right: "-2%" }}>
+                <div className="preview-card-shadow overflow-hidden w-52 h-40 rounded-xl">
+                  <img
+                    src={dashboardImg}
+                    alt="Net Worth Projection"
+                    className="w-full h-auto"
+                    style={{ objectFit: "cover", objectPosition: "0 18%", width: "100%", transform: "scale(1.1)" }}
+                  />
+                </div>
+              </div>
+
+              {/* Card 3 — dashboard screenshot (bottom-right, Cashflow area) */}
+              <div className="absolute z-20 preview-card-float-c" style={{ bottom: "2%", right: "5%" }}>
+                <div className="preview-card-shadow overflow-hidden w-56 h-36 rounded-xl">
+                  <img
+                    src={dashboardImg}
+                    alt="Cashflow Analysis"
+                    className="w-full h-auto"
+                    style={{ objectFit: "cover", objectPosition: "0 75%", width: "100%", transform: "scale(1.1)" }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Data Ticker */}
+          <DataTicker />
+        </section>
+
+        {/* ── Stats Bar ─────────────────────────────────────────────────────── */}
+        <section className="py-10 border-b" style={{ background: "#0D1B2A", borderColor: "rgba(255,255,255,0.06)" }}>
+          <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { value: 93, suffix: "%", label: "Indians over 50 regret not planning sooner", prefix: "" },
+              { value: 8, suffix: " Cr", label: "Typical corpus needed for urban retirement", prefix: "₹" },
+              { value: 60, suffix: " sec", label: "To get your retirement number free", prefix: "" },
+              { value: 52, suffix: "L+", label: "EPF final settlement claims in 2024–25", prefix: "" },
+            ].map(stat => (
+              <div key={stat.label} className="text-white">
+                <div className="text-3xl md:text-4xl font-black mb-1" style={{ color: "#F15A24" }}>
+                  <AnimatedNumber target={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
+                </div>
+                <div className="text-xs text-slate-400 leading-snug">{stat.label}</div>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="relative py-24 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 overflow-hidden px-4">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-        </div>
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-            Your 65-year-old self<br />is counting on today's you.
-          </h2>
-          <p className="text-xl text-slate-300 mb-8">
-            Calculate your retirement number free — no login, no email, no commitment.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-10 h-14 text-base font-bold"
-              onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth" })}
-              data-testid="button-start-planning">
-              <Zap className="mr-2 h-5 w-5 text-blue-600" />
-              Calculate Free — No Login
-            </Button>
-            <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-full px-10 h-14 text-base"
-              onClick={() => { window.location.href = "/api/login"; }}>
-              Sign In to Save & Track
-            </Button>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-slate-950 text-slate-400 py-10 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-              <ChartLine className="h-4 w-4 text-white" />
+        {/* ── Why RetirePro (ABOVE calculator) ─────────────────────────────── */}
+        <section className="py-20 bg-white px-6">
+          <div className="max-w-[1280px] mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+              <h2 className="font-black text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700 }}>Why RetirePro?</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Built for India. Designed for clarity.</p>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { icon: <Zap className="h-8 w-8" />, color: "text-[#F15A24] bg-orange-50", title: "60-Second Quick Plan", desc: "Answer a few questions. Get a full retirement projection with year-by-year corpus growth, income, and expense breakdown." },
+                { icon: <BarChart3 className="h-8 w-8" />, color: "text-blue-600 bg-blue-50", title: "Visual Projections", desc: "Interactive charts show your net worth trajectory, cashflow analysis, and exactly when (and if) your corpus runs out." },
+                { icon: <Shield className="h-8 w-8" />, color: "text-emerald-600 bg-emerald-50", title: "India-Specific Planning", desc: "Indian inflation rates, EPF, NPS, ELSS. Supports joint retirement, children's education goals, home loans, and mini-retirements." },
+              ].map((f, i) => (
+                <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}>
+                  <TiltCard className="h-full">
+                    <div
+                      className="bg-white rounded-2xl p-8 border border-slate-200 h-full"
+                      style={{ transition: "box-shadow 0.4s ease" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(241,90,36,0.15)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = ""; }}
+                    >
+                      <div className={`inline-flex p-3 rounded-2xl mb-5 ${f.color}`}>{f.icon}</div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
+                      <p className="text-slate-600 leading-relaxed">{f.desc}</p>
+                    </div>
+                  </TiltCard>
+                </motion.div>
+              ))}
             </div>
-            <span className="text-white font-bold">RetirePro</span>
           </div>
-          <div className="flex gap-6 text-sm">
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-            <Link href="/blog/why-indians-fail-retirement" className="hover:text-white transition-colors">Why Indians Fail</Link>
-            <Link href="/blog/nps-vs-ppf-vs-sip" className="hover:text-white transition-colors">NPS vs PPF vs SIP</Link>
+        </section>
+
+        {/* ── Calculator (BELOW Why RetirePro) ─────────────────────────────── */}
+        <section id="calculator" className="py-20 px-6" style={{ background: "linear-gradient(to bottom, #F8F9FA, #ffffff)" }}>
+          <div className="max-w-[1280px] mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-center mb-12">
+              <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "#F15A24" }}>
+                Free · No Login · Instant
+              </span>
+              <h2 className="font-black text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700 }}>
+                See Your Retirement Future in 30 Seconds.
+                <span className="block text-slate-500" style={{ fontSize: "28px", fontWeight: 600 }}>No account required.</span>
+              </h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                Enter a few details below and instantly see your projected corpus, funding gap, and net worth projection.
+              </p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}>
+              <GuestCalculator />
+            </motion.div>
           </div>
-          <p className="text-sm">© 2025 RetirePro. Free retirement planning for India.</p>
-        </div>
-      </footer>
-    </div>
+        </section>
+
+        {/* ── Blog ─────────────────────────────────────────────────────────── */}
+        <section className="py-20 px-6 bg-slate-50">
+          <div className="max-w-[1280px] mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10 flex-wrap gap-4">
+              <div>
+                <h2 className="font-black text-slate-900 mb-2" style={{ fontSize: "40px", fontWeight: 700 }}>Learn Before You Plan</h2>
+                <p className="text-lg text-slate-600">India-specific retirement guides, written in plain language.</p>
+              </div>
+              <Link href="/blog" className="hidden md:flex items-center gap-1 font-semibold hover:underline" style={{ color: "#F15A24" }}>
+                All articles <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                {
+                  href: "/blog/why-indians-fail-retirement",
+                  gradient: "from-[#0A1628] to-[#1e3a5f]",
+                  tag: "Retirement Basics",
+                  title: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
+                  excerpt: "93% of Indians over 50 regret not planning sooner. Here's what goes wrong and the one habit that changes everything.",
+                  time: "8 min read",
+                },
+                {
+                  href: "/blog/nps-vs-ppf-vs-sip",
+                  gradient: "from-emerald-800 to-teal-900",
+                  tag: "Investment Guide",
+                  title: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
+                  excerpt: "Real numbers. No fluff. We compare all three with India-specific context so you can stop guessing and start investing.",
+                  time: "9 min read",
+                },
+              ].map((post, i) => (
+                <motion.div key={post.href} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                  <Link
+                    href={post.href}
+                    className="group block bg-white rounded-2xl overflow-hidden border border-slate-200"
+                    style={{ transition: "transform 0.25s ease, box-shadow 0.25s ease" }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                      (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-4px)";
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 16px 48px rgba(0,0,0,0.12)";
+                    }}
+                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                      (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "";
+                    }}
+                  >
+                    <div className={`h-44 bg-gradient-to-br ${post.gradient} flex items-end p-5`}>
+                      <span className="text-sm font-semibold bg-white/20 text-white px-3 py-1 rounded-full backdrop-blur-sm">{post.tag}</span>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-bold text-slate-900 mb-2 text-lg group-hover:text-[#F15A24] transition-colors">{post.title}</h3>
+                      <p className="text-slate-500 text-sm mb-4">{post.excerpt}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />{post.time}</span>
+                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: "#F15A24" }}>Read article <ArrowRight className="h-3.5 w-3.5" /></span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Final CTA ─────────────────────────────────────────────────────── */}
+        <section
+          className="relative py-24 overflow-hidden px-6"
+          style={{ background: "linear-gradient(135deg, #0A1628 0%, #0D1B2A 60%, #111827 100%)" }}
+        >
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full"
+              style={{ background: "rgba(241,90,36,0.08)", filter: "blur(64px)" }} />
+          </div>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto text-center">
+            <h2 className="font-black text-white mb-6" style={{ fontSize: "clamp(36px, 5vw, 52px)", lineHeight: 1.15 }}>
+              Your 65-year-old self<br />is counting on today's you.
+            </h2>
+            <p className="text-xl text-slate-300 mb-8">
+              Calculate your retirement number free — no login, no email, no commitment.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                className="flex items-center justify-center gap-2 rounded-full font-bold text-base text-white"
+                style={{ background: "#F15A24", padding: "16px 40px", animation: "orangePulse 2.5s ease-in-out infinite" }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.animation = "none";
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)";
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(241,90,36,0.5)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.animation = "orangePulse 2.5s ease-in-out infinite";
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+                }}
+                onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth" })}
+                data-testid="button-start-planning"
+              >
+                <Zap className="h-5 w-5" />
+                Calculate Free — No Login
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 rounded-full font-semibold text-base"
+                style={{ padding: "16px 40px", background: "transparent", border: "1.5px solid #F15A24", color: "#F15A24", transition: "background 0.2s ease" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(241,90,36,0.1)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                onClick={() => { window.location.href = "/api/login"; }}
+              >
+                Sign In to Save &amp; Track
+              </button>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ── Footer ───────────────────────────────────────────────────────── */}
+        <footer className="py-10 px-6" style={{ background: "#060E1A" }}>
+          <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#F15A24" }}>
+                <ChartLine className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-white font-bold">RetirePro</span>
+            </div>
+            <div className="flex gap-6 text-sm text-slate-400">
+              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+              <Link href="/blog/why-indians-fail-retirement" className="hover:text-white transition-colors">Why Indians Fail</Link>
+              <Link href="/blog/nps-vs-ppf-vs-sip" className="hover:text-white transition-colors">NPS vs PPF vs SIP</Link>
+            </div>
+            <p className="text-sm text-slate-500">© 2025 RetirePro. Free retirement planning for India.</p>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }
