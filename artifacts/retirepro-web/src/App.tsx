@@ -15,6 +15,10 @@ import BlogIndex from "@/pages/blog-index";
 import Blog1 from "@/pages/blog-1";
 import Blog2 from "@/pages/blog-2";
 import GuestPlanPreview from "@/pages/guest-plan-preview";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import Disclaimer from "@/pages/disclaimer";
+import RefundPolicy from "@/pages/refund-policy";
+import TermsAndConditions from "@/pages/terms-and-conditions";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +32,10 @@ function Router() {
       <Route path="/blog/why-indians-fail-retirement" component={Blog1} />
       <Route path="/blog/nps-vs-ppf-vs-sip" component={Blog2} />
       <Route path="/plan/preview" component={GuestPlanPreview} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/disclaimer" component={Disclaimer} />
+      <Route path="/refund-policy" component={RefundPolicy} />
+      <Route path="/terms-and-conditions" component={TermsAndConditions} />
 
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />

@@ -27,6 +27,8 @@ export default function GuestPlanPreview() {
   const [calculations, setCalculations] = useState<any>(null);
   const [guestForm, setGuestForm] = useState<GuestForm | null>(null);
   const [chartTimeRange, setChartTimeRange] = useState("25Y");
+  const [expert, setExpert] = useState({ name: "", phone: "", email: "" });
+  const [expertStatus, setExpertStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
     const raw = sessionStorage.getItem("guestCalcResult");
@@ -37,11 +39,52 @@ export default function GuestPlanPreview() {
     }
     try {
       setCalculations(JSON.parse(raw));
-      if (rawForm) setGuestForm(JSON.parse(rawForm));
+      if (rawForm) {
+        const parsed = JSON.parse(rawForm);
+        setGuestForm(parsed);
+        if (parsed?.fullName) setExpert(p => ({ ...p, name: parsed.fullName }));
+      }
     } catch {
       navigate("/");
     }
   }, [navigate]);
+
+  const saveLead = async () => {
+    if (!expert.phone.trim()) return;
+    try {
+      setExpertStatus("saving");
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: expert.name.trim() || "Expert enquiry",
+          phone: expert.phone.trim(),
+          email: expert.email.trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setExpertStatus("saved");
+    } catch {
+      setExpertStatus("error");
+    }
+  };
+
+  const handleWhatsApp = () => {
+    void saveLead();
+    const msg = encodeURIComponent(
+      `Hi Nidesh Financial, I'd like a free review of my retirement plan${expert.name ? ` (${expert.name})` : ""}.`,
+    );
+    window.open(`https://wa.me/919819590598?text=${msg}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleEmail = () => {
+    void saveLead();
+    const subject = encodeURIComponent("Retirement plan review enquiry");
+    const body = encodeURIComponent(
+      `Hi Nidesh Financial,\n\nI'd like a free, no-obligation review of my retirement plan.\n\nName: ${expert.name || ""}\nPhone: ${expert.phone || ""}\n`,
+    );
+    window.location.href = `mailto:investments.nidesh@outlook.com?subject=${subject}&body=${body}`;
+  };
 
   if (!calculations) {
     return (
@@ -234,6 +277,76 @@ export default function GuestPlanPreview() {
             <CashflowAdvisor calculations={calculations} />
           </CardContent>
         </Card>
+
+        {/* Talk to an Expert */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="expert-card" data-testid="expert-card">
+            <div className="expert-card-inner">
+              <div className="expert-left">
+                <span className="expert-badge">AMFI-Registered Advisor</span>
+                <h3 className="expert-title">Want a human to review your plan?</h3>
+                <p className="expert-desc">
+                  Talk to <strong>Nidesh Financial</strong> — an AMFI-registered mutual fund advisor — for a free,
+                  no-obligation review of your retirement projection. Get personalised guidance on SIPs, asset
+                  allocation, and how to close your funding gap.
+                </p>
+                <div className="expert-stats">
+                  <span>✅ AMFI-Registered</span>
+                  <span>🇮🇳 India-focused</span>
+                  <span>💬 Free first consult</span>
+                </div>
+              </div>
+              <div className="expert-right">
+                <input
+                  className="expert-input"
+                  placeholder="Your name"
+                  value={expert.name}
+                  onChange={e => setExpert(p => ({ ...p, name: e.target.value }))}
+                  data-testid="input-expert-name"
+                />
+                <input
+                  className="expert-input"
+                  placeholder="Phone / WhatsApp number"
+                  value={expert.phone}
+                  onChange={e => setExpert(p => ({ ...p, phone: e.target.value }))}
+                  data-testid="input-expert-phone"
+                />
+                <input
+                  className="expert-input"
+                  type="email"
+                  placeholder="Email (optional)"
+                  value={expert.email}
+                  onChange={e => setExpert(p => ({ ...p, email: e.target.value }))}
+                  data-testid="input-expert-email"
+                />
+                <button className="expert-cta-primary" onClick={handleWhatsApp} data-testid="button-expert-whatsapp">
+                  💬 Talk on WhatsApp
+                </button>
+                <button className="expert-cta-secondary" onClick={handleEmail} data-testid="button-expert-email">
+                  ✉️ Email the advisor
+                </button>
+                {expertStatus === "saved" && (
+                  <p style={{ fontSize: 12, color: "#166534", textAlign: "center" }}>
+                    Thanks! Your details have been shared with the advisor.
+                  </p>
+                )}
+                {expertStatus === "error" && (
+                  <p style={{ fontSize: 12, color: "#B91C1C", textAlign: "center" }}>
+                    Couldn't save your details — please use WhatsApp or email directly.
+                  </p>
+                )}
+                <p className="expert-disclaimer">
+                  By sharing your details you agree to be contacted by Nidesh Financial. Mutual fund investments are
+                  subject to market risks; read all scheme-related documents carefully.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Bottom CTA */}
         <motion.div

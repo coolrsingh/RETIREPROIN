@@ -79,6 +79,7 @@ function GuestCalculator() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [consent, setConsent] = useState(false);
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
@@ -91,6 +92,10 @@ function GuestCalculator() {
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(form.dob)) {
       setError("Date of birth must be in YYYY-MM-DD format (e.g. 1988-06-15).");
+      return;
+    }
+    if (!consent) {
+      setError("Please agree to the Privacy Policy and Disclaimer to continue.");
       return;
     }
     setLoading(true);
@@ -164,6 +169,26 @@ function GuestCalculator() {
             <Label className={labelClass}>Expected Return (% p.a.)</Label>
             <Input type="number" placeholder="12" value={form.returnPre} onChange={e => set("returnPre", e.target.value)} className={inputClass} />
           </div>
+          <div className="sm:col-span-2 consent-block">
+            <label className="consent-label">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={e => setConsent(e.target.checked)}
+                data-testid="checkbox-consent"
+              />
+              <span className="consent-text">
+                I agree to RetirePro's{" "}
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>{" "}
+                and{" "}
+                <a href="/disclaimer" target="_blank" rel="noopener noreferrer">Disclaimer</a>, and consent to
+                the processing of my personal data in accordance with the Digital Personal Data Protection Act, 2023.
+              </span>
+            </label>
+            <p className="consent-note">
+              This is a self-help calculator for educational purposes only — not investment advice. Your data is never sold.
+            </p>
+          </div>
           {error && (
             <div className="sm:col-span-2 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-2.5">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" /> {error}
@@ -216,8 +241,8 @@ const TICKER_ITEMS = [
 
 function DataTicker() {
   return (
-    <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-white/5"
-      style={{ opacity: 0.18, fontFamily: "monospace", fontSize: "12px", color: "#fff", padding: "6px 0" }}
+    <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-slate-200"
+      style={{ opacity: 0.55, fontFamily: "monospace", fontSize: "12px", color: "#64748B", padding: "6px 0" }}
       aria-hidden="true"
     >
       <div className="flex gap-12 whitespace-nowrap" style={{ animation: "tickerScroll 35s linear infinite" }}>
@@ -257,8 +282,8 @@ export default function Landing() {
         .preview-card-float-b { animation: floatB 6s ease-in-out infinite; animation-delay: 1.5s; }
         .preview-card-float-c { animation: floatC 4.5s ease-in-out infinite; animation-delay: 3s; }
         .preview-card-shadow {
-          border-radius: 12px;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07);
+          border-radius: 16px;
+          box-shadow: 0 24px 50px -12px rgba(37,99,235,0.25), 0 0 0 1px rgba(15,23,42,0.05);
         }
         html { scroll-behavior: smooth; }
         @media (prefers-reduced-motion: reduce) {
@@ -294,14 +319,14 @@ export default function Landing() {
         <section
           className="relative min-h-screen pt-16 flex items-center overflow-hidden"
           style={{
-            background: "linear-gradient(135deg, #0A1628 0%, #0D1B2A 60%, #111827 100%)",
+            background: "linear-gradient(135deg, #F4F9FF 0%, #FFFFFF 100%)",
           }}
         >
           {/* Grid overlay */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+              backgroundImage: "linear-gradient(rgba(15,23,42,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.035) 1px, transparent 1px)",
               backgroundSize: "48px 48px",
             }}
           />
@@ -330,21 +355,21 @@ export default function Landing() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                 className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-6"
-                style={{ background: "rgba(241,90,36,0.15)", border: "1px solid rgba(241,90,36,0.3)", color: "#FFA07A" }}
+                style={{ background: "rgba(241,90,36,0.1)", border: "1px solid rgba(241,90,36,0.25)", color: "#C2410C" }}
               >
-                <Star className="h-3.5 w-3.5" style={{ fill: "#FFA07A" }} />
+                <Star className="h-3.5 w-3.5" style={{ fill: "#C2410C" }} />
                 Free. No login required. 60 seconds.
               </motion.div>
 
-              <h1 className="text-5xl md:text-7xl font-black text-white leading-none mb-6">
+              <h1 className="text-5xl md:text-7xl font-black leading-none mb-6" style={{ color: "#0F172A" }}>
                 Plan Your
-                <span className="block" style={{ background: "linear-gradient(90deg, #F15A24, #FF8C57, #FFA07A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                <span className="block italic" style={{ background: "linear-gradient(90deg, #F15A24, #FF8C57, #FFA07A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                   Retirement
                 </span>
                 Free.
               </h1>
 
-              <p className="text-xl text-slate-300 leading-relaxed mb-8 max-w-lg">
+              <p className="text-xl leading-relaxed mb-8 max-w-lg" style={{ color: "#475569" }}>
                 Calculate your retirement corpus in 60 seconds. See your funding gap. Know exactly what SIP you need. India-specific. No login required.
               </p>
 
@@ -375,17 +400,17 @@ export default function Landing() {
                   Try Free Calculator
                 </button>
 
-                {/* Secondary CTA — outlined orange */}
+                {/* Secondary CTA — outlined blue */}
                 <button
                   className="flex items-center gap-2 rounded-full px-8 font-semibold text-base transition-all duration-200"
                   style={{
                     height: "52px",
                     background: "transparent",
-                    border: "1.5px solid #F15A24",
-                    color: "#F15A24",
+                    border: "1.5px solid #2563EB",
+                    color: "#2563EB",
                   }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(241,90,36,0.1)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(37,99,235,0.1)";
                   }}
                   onMouseLeave={e => {
                     (e.currentTarget as HTMLButtonElement).style.background = "transparent";
@@ -409,32 +434,32 @@ export default function Landing() {
               {/* Card 1 — interactive plan summary card (center, prominent) */}
               <div className="absolute z-30 preview-card-float-a" style={{ top: "10%", left: "5%" }}>
                 <div
-                  className="preview-card-shadow w-64 rounded-2xl p-5"
-                  style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.15)" }}
+                  className="preview-card-shadow w-64 p-5"
+                  style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16 }}
                 >
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-7 h-7 rounded-full bg-[#F15A24] flex items-center justify-center">
                       <TrendingUp className="h-3.5 w-3.5 text-white" />
                     </div>
-                    <span className="text-white/80 text-xs font-medium">Priya's Retirement Plan</span>
+                    <span className="text-slate-700 text-xs font-medium">Priya's Retirement Plan</span>
                   </div>
                   <div className="mb-3">
-                    <div className="text-white/50 text-[10px] mb-0.5">Projected corpus at 60</div>
-                    <div className="text-2xl font-black text-white">₹3.2 Cr</div>
+                    <div className="text-slate-400 text-[10px] mb-0.5">Projected corpus at 60</div>
+                    <div className="text-2xl font-black text-slate-900">₹3.2 Cr</div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.08)" }}>
-                      <div className="text-white/50 text-[10px]">Required</div>
-                      <div className="text-white text-sm font-bold">₹4.5 Cr</div>
+                    <div className="rounded-lg p-2.5" style={{ background: "#F1F5F9" }}>
+                      <div className="text-slate-500 text-[10px]">Required</div>
+                      <div className="text-slate-900 text-sm font-bold">₹4.5 Cr</div>
                     </div>
-                    <div className="rounded-lg p-2.5" style={{ background: "rgba(241,90,36,0.2)" }}>
-                      <div className="text-orange-300 text-[10px]">Gap</div>
-                      <div className="text-orange-300 text-sm font-bold">₹1.3 Cr</div>
+                    <div className="rounded-lg p-2.5" style={{ background: "rgba(241,90,36,0.1)" }}>
+                      <div className="text-[#C2410C] text-[10px]">Gap</div>
+                      <div className="text-[#C2410C] text-sm font-bold">₹1.3 Cr</div>
                     </div>
                   </div>
-                  <div className="rounded-lg p-2.5" style={{ background: "rgba(59,130,246,0.2)", border: "1px solid rgba(59,130,246,0.25)" }}>
-                    <div className="text-blue-300 text-[10px] mb-0.5">Monthly SIP needed</div>
-                    <div className="text-blue-200 font-bold">₹12,400/mo</div>
+                  <div className="rounded-lg p-2.5" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)" }}>
+                    <div className="text-blue-600 text-[10px] mb-0.5">Monthly SIP needed</div>
+                    <div className="text-blue-700 font-bold">₹12,400/mo</div>
                   </div>
                 </div>
               </div>
@@ -470,7 +495,7 @@ export default function Landing() {
         </section>
 
         {/* ── Stats Bar ─────────────────────────────────────────────────────── */}
-        <section className="py-10 border-b" style={{ background: "#0D1B2A", borderColor: "rgba(255,255,255,0.06)" }}>
+        <section className="py-10 border-b" style={{ background: "#0F172A", borderColor: "rgba(255,255,255,0.06)" }}>
           <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
               { value: 93, suffix: "%", label: "Indians over 50 regret not planning sooner", prefix: "" },
@@ -535,6 +560,18 @@ export default function Landing() {
                 Enter a few details below and instantly see your projected corpus, funding gap, and net worth projection.
               </p>
             </motion.div>
+
+            {/* Trust badges */}
+            <div className="trust-row" data-testid="trust-row">
+              <span className="trust-badge">🔒 256-bit SSL Secured</span>
+              <span className="trust-divider">•</span>
+              <span className="trust-badge">🇮🇳 India-Specific</span>
+              <span className="trust-divider">•</span>
+              <span className="trust-badge">✅ AMFI-Registered Partner</span>
+              <span className="trust-divider">•</span>
+              <span className="trust-badge">🛡️ Your data is never sold</span>
+            </div>
+
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}>
               <GuestCalculator />
             </motion.div>
@@ -608,17 +645,17 @@ export default function Landing() {
         {/* ── Final CTA ─────────────────────────────────────────────────────── */}
         <section
           className="relative py-24 overflow-hidden px-6"
-          style={{ background: "linear-gradient(135deg, #0A1628 0%, #0D1B2A 60%, #111827 100%)" }}
+          style={{ background: "linear-gradient(135deg, #F4F9FF 0%, #FFFFFF 100%)" }}
         >
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full"
-              style={{ background: "rgba(241,90,36,0.08)", filter: "blur(64px)" }} />
+              style={{ background: "rgba(241,90,36,0.06)", filter: "blur(64px)" }} />
           </div>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto text-center">
-            <h2 className="font-bold text-white mb-6" style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15 }}>
+            <h2 className="font-bold mb-6" style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15, color: "#0F172A" }}>
               Your 65-year-old self<br />is counting on today's you.
             </h2>
-            <p className="text-xl text-slate-300 mb-8">
+            <p className="text-xl mb-8" style={{ color: "#475569" }}>
               Calculate your retirement number free — no login, no email, no commitment.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -643,8 +680,8 @@ export default function Landing() {
               </button>
               <button
                 className="flex items-center justify-center gap-2 rounded-full font-semibold text-base"
-                style={{ padding: "16px 40px", background: "transparent", border: "1.5px solid #F15A24", color: "#F15A24", transition: "background 0.2s ease" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(241,90,36,0.1)"; }}
+                style={{ padding: "16px 40px", background: "transparent", border: "1.5px solid #2563EB", color: "#2563EB", transition: "background 0.2s ease" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(37,99,235,0.1)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
                 onClick={() => { window.location.href = "/api/login"; }}
               >
@@ -663,10 +700,12 @@ export default function Landing() {
               </div>
               <span className="text-white font-bold">RetirePro</span>
             </div>
-            <div className="flex gap-6 text-sm text-slate-400">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
               <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <Link href="/blog/why-indians-fail-retirement" className="hover:text-white transition-colors">Why Indians Fail</Link>
-              <Link href="/blog/nps-vs-ppf-vs-sip" className="hover:text-white transition-colors">NPS vs PPF vs SIP</Link>
+              <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link>
+              <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
+              <Link href="/terms-and-conditions" className="hover:text-white transition-colors">Terms &amp; Conditions</Link>
             </div>
             <p className="text-sm text-slate-500">© 2025 RetirePro. Free retirement planning for India.</p>
           </div>
