@@ -34,7 +34,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role", { enum: ['client', 'admin'] }).default('client'),
-  planCount: integer("plan_count").default(0),
+  planCount: integer("plan_count").notNull().default(0),
   isPremium: boolean("is_premium").default(false),
   // Financial profile fields
   phone: varchar("phone"),

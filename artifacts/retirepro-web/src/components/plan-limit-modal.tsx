@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, CreditCard } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 interface PlanLimitModalProps {
@@ -15,27 +14,15 @@ interface PlanLimitModalProps {
 
 export default function PlanLimitModal({ isOpen, onClose, planCount }: PlanLimitModalProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
   const upgradeMutation = useMutation({
     mutationFn: async () => {
-      // In real implementation, this would integrate with payment gateway
-      const paymentToken = "dummy_payment_token_for_$2";
-      return apiRequest('/api/upgrade/premium', 'POST', { paymentToken });
+      throw new Error("Payment provider not yet integrated.");
     },
-    onSuccess: () => {
+    onError: () => {
       toast({
-        title: "Upgrade Successful!",
-        description: "You now have unlimited retirement plans.",
-        variant: "default",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      onClose();
-    },
-    onError: (error) => {
-      toast({
-        title: "Upgrade Failed",
-        description: "Please try again or contact support.",
+        title: "Premium Upgrade Coming Soon",
+        description: "Payment integration is not yet available. Please check back later.",
         variant: "destructive",
       });
     },

@@ -5,9 +5,13 @@ import { setupAuth, isAuthenticated } from "../replitAuth";
 import { calculateRetirementPlan } from "../calculations";
 import { generatePDF } from "../pdf";
 import { z } from "zod/v4";
-import { quickPlanSchema, insertScenarioSchema, insertLeadSchema, users, scenarios, leads } from "@workspace/db";
+import {
+  quickPlanSchema, insertScenarioSchema, insertLeadSchema,
+  users, scenarios, leads,
+  assumptions, householdMembers, incomeItems, expenseItems, goals, assets, liabilities, miniRetirements,
+} from "@workspace/db";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 import * as XLSX from "xlsx";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -86,29 +90,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/scenarios', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      // Check plan limit for non-premium users
-      if (!user?.isPremium && (user?.planCount || 0) >= 10) {
-        return res.status(402).json({ 
-          message: "Plan limit reached. Upgrade to premium for unlimited plans.",
-          requiresPayment: true,
-          planCount: user?.planCount || 0
-        });
-      }
-      
+
       const scenarioData = insertScenarioSchema.parse({
         ...req.body,
         userId,
       });
 
-      const scenario = await storage.createScenario(scenarioData);
-      
-      // Increment plan count
-      if (user) {
-        await storage.updateUserPlanCount(userId, (user.planCount || 0) + 1);
+      // Wrap quota check-and-increment + scenario insert in one transaction so
+      // that a failed scenario insert automatically rolls back the counter —
+      // no compensating decrement needed.
+      let scenario;
+      try {
+        scenario = await db.transaction(async (tx) => {
+          const [grantedUser] = await tx
+            .update(users)
+            .set({ planCount: sql`COALESCE(${users.planCount}, 0) + 1`, updatedAt: new Date() })
+            .where(
+              and(
+                eq(users.id, userId),
+                or(eq(users.isPremium, true), sql`COALESCE(${users.planCount}, 0) < 10`)
+              )
+            )
+            .returning();
+
+          if (!grantedUser) {
+            const err: any = new Error("Plan limit reached");
+            err.code = "PLAN_LIMIT_REACHED";
+            throw err;
+          }
+
+          const [newScenario] = await tx.insert(scenarios).values(scenarioData).returning();
+          return newScenario;
+        });
+      } catch (txErr: any) {
+        if (txErr.code === "PLAN_LIMIT_REACHED") {
+          return res.status(402).json({
+            message: "Plan limit reached. Upgrade to premium for unlimited plans.",
+            requiresPayment: true,
+          });
+        }
+        throw txErr;
       }
-      
+
       res.json(scenario);
     } catch (error) {
       console.error("Error creating scenario:", error);
@@ -263,202 +286,203 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Quick plan creation with limit check
   app.post('/api/plan/quick', isAuthenticated, async (req: any, res) => {
+    const userId: string = req.user.claims.sub;
     try {
       console.log("=== PLAN CREATION START ===");
-      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
-      console.log("Content-Type:", req.headers['content-type']);
-      console.log("User claims:", req.user?.claims);
-      
-      const userId = req.user.claims.sub;
       console.log("User ID:", userId);
-      
-      const user = await storage.getUser(userId);
-      console.log("User from storage:", user);
-      
-      // Check plan limit for non-premium users
-      if (!user?.isPremium && (user?.planCount || 0) >= 10) {
-        return res.status(402).json({ 
-          message: "Plan limit reached. Upgrade to premium for unlimited plans.",
-          requiresPayment: true,
-          planCount: user?.planCount || 0
-        });
-      }
-      
-      console.log("Attempting to parse plan data...");
-      console.log("Schema validation starting...");
-      
-      // Add detailed validation logging
-      console.log("Starting validation with schema...");
+
+      // Validate input before touching the DB so malformed requests never
+      // consume quota or create partial records.
       const validationResult = quickPlanSchema.safeParse(req.body);
-      console.log("Validation result success:", validationResult.success);
-      
       if (!validationResult.success) {
         console.log("=== VALIDATION FAILED ===");
         console.log("Validation errors:", JSON.stringify(validationResult.error.issues, null, 2));
-        validationResult.error.issues.forEach((issue, index) => {
-          console.log(`Error ${index + 1}: Field '${issue.path.join('.')}' - ${issue.message} (received: ${issue.received})`);
-        });
         return res.status(400).json({ 
           message: "Validation failed", 
           errors: validationResult.error.issues 
         });
       }
-      
       const planData = validationResult.data;
-      console.log("Plan data parsed successfully:", planData);
+      console.log("Plan data parsed successfully");
 
-      // Create scenario
-      console.log("Creating scenario...");
-      const scenario = await storage.createScenario({
-        userId,
-        name: `${planData.fullName}'s Retirement Plan`,
-        mode: 'quick',
-      });
-      console.log("Scenario created:", scenario.id);
-
-      // Get CRM defaults for missing assumptions
+      // Fetch CRM defaults outside the transaction (read-only, safe to retry).
       const crmDefaults = await storage.getCrmDefaults();
 
-      // Create assumptions
-      await storage.upsertAssumptions({
-        scenarioId: scenario.id,
-        inflationHeadline: planData.assumptions?.inflationHeadline?.toString() || crmDefaults.inflationHeadline,
-        inflationEdu: crmDefaults.inflationEdu,
-        inflationHealth: crmDefaults.inflationHealth,
-        returnPre: planData.assumptions?.returnPre?.toString() || crmDefaults.returnPre,
-        returnPost: planData.assumptions?.returnPost?.toString() || crmDefaults.returnPost,
-        lifeExpectancy: crmDefaults.lifeExpectancy,
+      // Wrap quota check-and-increment + ALL sub-record inserts in a single
+      // transaction.  Any failure automatically rolls back planCount and every
+      // partial insert — no compensating decrement needed.
+      let scenario;
+      try {
+        scenario = await db.transaction(async (tx) => {
+          // 1. Atomic quota check-and-increment
+          const [grantedUser] = await tx
+            .update(users)
+            .set({ planCount: sql`COALESCE(${users.planCount}, 0) + 1`, updatedAt: new Date() })
+            .where(
+              and(
+                eq(users.id, userId),
+                or(eq(users.isPremium, true), sql`COALESCE(${users.planCount}, 0) < 10`)
+              )
+            )
+            .returning();
 
-        source: planData.assumptions ? 'user' : 'crm',
-      });
+          if (!grantedUser) {
+            const err: any = new Error("Plan limit reached");
+            err.code = "PLAN_LIMIT_REACHED";
+            throw err;
+          }
 
-      // Create household members
-      await storage.createHouseholdMember({
-        scenarioId: scenario.id,
-        name: planData.fullName,
-        relation: 'self',
-        dob: planData.dob && planData.dob.trim() !== '' ? planData.dob : null,
-        dependent: false,
-      });
+          // 2. Create scenario
+          const [newScenario] = await tx.insert(scenarios).values({
+            userId,
+            name: `${planData.fullName}'s Retirement Plan`,
+            mode: 'quick',
+          }).returning();
+          const scenarioId = newScenario.id;
+          console.log("Scenario created:", scenarioId);
 
-      if (planData.spouseDob && planData.spouseDob.trim() !== '') {
-        await storage.createHouseholdMember({
-          scenarioId: scenario.id,
-          name: 'Spouse',
-          relation: 'spouse',
-          dob: planData.spouseDob,
-          dependent: false,
-        });
-      }
+          // 3. Assumptions
+          await tx.insert(assumptions).values({
+            scenarioId,
+            inflationHeadline: planData.assumptions?.inflationHeadline?.toString() || crmDefaults.inflationHeadline,
+            inflationEdu: crmDefaults.inflationEdu,
+            inflationHealth: crmDefaults.inflationHealth,
+            returnPre: planData.assumptions?.returnPre?.toString() || crmDefaults.returnPre,
+            returnPost: planData.assumptions?.returnPost?.toString() || crmDefaults.returnPost,
+            lifeExpectancy: crmDefaults.lifeExpectancy,
+            source: planData.assumptions ? 'user' : 'crm',
+          });
 
-      // Create children and their goals
-      if (planData.children && planData.children.length > 0) {
-        for (const child of planData.children) {
-          if (child.name) {
-            await storage.createHouseholdMember({
-              scenarioId: scenario.id,
-              name: child.name,
-              relation: 'child',
-              dob: child.dob && child.dob.trim() !== '' ? child.dob : null,
-              dependent: true,
-              dependenceEnd: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 25 : undefined,
+          // 4. Household members
+          await tx.insert(householdMembers).values({
+            scenarioId,
+            name: planData.fullName,
+            relation: 'self',
+            dob: planData.dob && planData.dob.trim() !== '' ? planData.dob : null,
+            dependent: false,
+          });
+
+          if (planData.spouseDob && planData.spouseDob.trim() !== '') {
+            await tx.insert(householdMembers).values({
+              scenarioId,
+              name: 'Spouse',
+              relation: 'spouse',
+              dob: planData.spouseDob,
+              dependent: false,
             });
+          }
 
-            if (child.eduTodaysCost && child.eduTodaysCost > 0) {
-              await storage.createGoal({
-                scenarioId: scenario.id,
-                kind: 'child_edu',
-                todaysCost: child.eduTodaysCost.toString(),
-                targetYear: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 20 : new Date().getFullYear() + 20,
-                inflationCategory: 'education',
-              });
-            }
-
-            if (child.marriageTodaysCost && child.marriageTodaysCost > 0) {
-              await storage.createGoal({
-                scenarioId: scenario.id,
-                kind: 'child_marriage',
-                todaysCost: child.marriageTodaysCost.toString(),
-                targetYear: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 30 : new Date().getFullYear() + 30,
-                inflationCategory: 'headline',
-              });
+          if (planData.children && planData.children.length > 0) {
+            for (const child of planData.children) {
+              if (child.name) {
+                await tx.insert(householdMembers).values({
+                  scenarioId,
+                  name: child.name,
+                  relation: 'child',
+                  dob: child.dob && child.dob.trim() !== '' ? child.dob : null,
+                  dependent: true,
+                  dependenceEnd: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 25 : undefined,
+                });
+                if (child.eduTodaysCost && child.eduTodaysCost > 0) {
+                  await tx.insert(goals).values({
+                    scenarioId,
+                    kind: 'child_edu',
+                    todaysCost: child.eduTodaysCost.toString(),
+                    targetYear: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 20 : new Date().getFullYear() + 20,
+                    inflationCategory: 'education',
+                  });
+                }
+                if (child.marriageTodaysCost && child.marriageTodaysCost > 0) {
+                  await tx.insert(goals).values({
+                    scenarioId,
+                    kind: 'child_marriage',
+                    todaysCost: child.marriageTodaysCost.toString(),
+                    targetYear: child.dob && child.dob.trim() !== '' ? new Date(child.dob).getFullYear() + 30 : new Date().getFullYear() + 30,
+                    inflationCategory: 'headline',
+                  });
+                }
+              }
             }
           }
+
+          // 5. Income
+          console.log("Creating income item...");
+          await tx.insert(incomeItems).values({
+            scenarioId,
+            type: 'salary',
+            amount: (planData.monthlyIncomeTotal * 12).toString(),
+            frequency: 'annual',
+            start: new Date().getFullYear(),
+            end: new Date(planData.dob).getFullYear() + planData.retirementAge,
+          });
+
+          // 6. Expenses
+          await tx.insert(expenseItems).values({
+            scenarioId,
+            type: 'core',
+            amountMonthly: planData.monthlyExpenseTotal.toString(),
+          });
+
+          // 7. Assets
+          if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {
+            await tx.insert(assets).values({
+              scenarioId,
+              kind: 'equity',
+              value: planData.assetsLumpSum.toString(),
+              expectedReturnPre: planData.preRetirementReturn?.toString() || crmDefaults.returnPre,
+              expectedReturnPost: planData.postRetirementReturn?.toString() || crmDefaults.returnPost,
+            });
+          }
+
+          // 8. Mini retirement
+          if (planData.miniRetirement?.startYear && planData.miniRetirement?.durationMonths) {
+            await tx.insert(miniRetirements).values({
+              scenarioId,
+              start: planData.miniRetirement.startYear,
+              months: planData.miniRetirement.durationMonths,
+              incomeDuring: '0',
+              expenseDeltaPct: '0',
+            });
+          }
+
+          // 9. Existing EMI as liability
+          if (planData.existingEMI?.emiAmount && planData.existingEMI?.tenureRemainingMonths) {
+            const endDate = new Date();
+            endDate.setMonth(endDate.getMonth() + planData.existingEMI.tenureRemainingMonths);
+            await tx.insert(liabilities).values({
+              scenarioId,
+              name: 'Existing EMI',
+              type: 'other',
+              principalLeft: '0',
+              rate: '0',
+              emi: planData.existingEMI.emiAmount.toString(),
+              tenureMonths: planData.existingEMI.tenureRemainingMonths % 12,
+              tenureYears: Math.floor(planData.existingEMI.tenureRemainingMonths / 12),
+              endDate: endDate.toISOString().split('T')[0],
+            });
+          }
+
+          return newScenario;
+        });
+      } catch (txErr: any) {
+        if (txErr.code === "PLAN_LIMIT_REACHED") {
+          return res.status(402).json({
+            message: "Plan limit reached. Upgrade to premium for unlimited plans.",
+            requiresPayment: true,
+          });
         }
-      }
-
-      // Create income item
-      console.log("Creating income item...");
-      await storage.createIncomeItem({
-        scenarioId: scenario.id,
-        type: 'salary',
-        amount: (planData.monthlyIncomeTotal * 12).toString(),
-        frequency: 'annual',
-        start: new Date().getFullYear(),
-        end: new Date(planData.dob).getFullYear() + planData.retirementAge,
-      });
-      console.log("Income item created successfully");
-
-      // Create basic expense from monthly total
-      await storage.createExpenseItem({
-        scenarioId: scenario.id,
-        type: 'core',
-        amountMonthly: planData.monthlyExpenseTotal.toString(),
-      });
-
-      // Create current assets
-      if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {
-        await storage.createAsset({
-          scenarioId: scenario.id,
-          kind: 'equity',
-          value: planData.assetsLumpSum.toString(),
-          expectedReturnPre: planData.preRetirementReturn?.toString() || crmDefaults.returnPre,
-          expectedReturnPost: planData.postRetirementReturn?.toString() || crmDefaults.returnPost,
-        });
-      }
-
-      // Save mini retirement if provided
-      if (planData.miniRetirement?.startYear && planData.miniRetirement?.durationMonths) {
-        await storage.createMiniRetirement({
-          scenarioId: scenario.id,
-          start: planData.miniRetirement.startYear,
-          months: planData.miniRetirement.durationMonths,
-          incomeDuring: '0',
-          expenseDeltaPct: '0',
-        });
-      }
-
-      // Save existing EMI as a liability if provided
-      if (planData.existingEMI?.emiAmount && planData.existingEMI?.tenureRemainingMonths) {
-        const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + planData.existingEMI.tenureRemainingMonths);
-        await storage.createLiability({
-          scenarioId: scenario.id,
-          name: 'Existing EMI',
-          type: 'other',
-          principalLeft: '0',
-          rate: '0',
-          emi: planData.existingEMI.emiAmount.toString(),
-          tenureMonths: planData.existingEMI.tenureRemainingMonths % 12,
-          tenureYears: Math.floor(planData.existingEMI.tenureRemainingMonths / 12),
-          endDate: endDate.toISOString().split('T')[0],
-        });
-      }
-
-      // Increment plan count for the user
-      if (user) {
-        await storage.updateUserPlanCount(userId, (user.planCount || 0) + 1);
+        throw txErr;
       }
 
       res.json(scenario);
-    } catch (error) {
+    } catch (error: any) {
       console.error("=== PLAN CREATION ERROR ===");
-      console.error("Error type:", error.constructor.name);
+      console.error("Error type:", error.constructor?.name);
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
       if (error instanceof z.ZodError) {
-        console.error("Zod validation errors:", error.errors);
-        return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
+        console.error("Zod validation errors:", error.issues);
+        return res.status(400).json({ message: "Invalid plan data", errors: error.issues });
       }
       res.status(500).json({ 
         message: "Failed to create plan. Please try again.",
@@ -770,35 +794,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Payment upgrade endpoint for premium plans
-  app.post('/api/upgrade/premium', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      
-      // In a real implementation, this would integrate with Stripe/Razorpay
-      const { paymentToken } = req.body;
-      
-      if (!paymentToken) {
-        return res.status(400).json({ message: "Payment token required for premium upgrade" });
-      }
-      
-      // Simulate payment processing for $2 USD
-      // await processPayment(paymentToken, 200); // 200 cents = $2
-      
-      // Update user to premium status
-      const [updatedUser] = await db
-        .update(users)
-        .set({ isPremium: true, updatedAt: new Date() })
-        .where(eq(users.id, userId))
-        .returning();
-      
-      res.json({ 
-        message: "Successfully upgraded to premium! You now have unlimited retirement plans.",
-        user: updatedUser
-      });
-    } catch (error) {
-      console.error("Error upgrading to premium:", error);
-      res.status(500).json({ message: "Failed to upgrade to premium" });
-    }
+  // NOTE: This endpoint requires a verified payment provider integration before
+  // it can safely grant premium status. Accepting a client-supplied token as
+  // proof of payment without server-side verification with a payment processor
+  // allows any user to obtain premium for free.  Until a real payment flow is
+  // wired up (Stripe, Razorpay, etc.) this endpoint is disabled.
+  app.post('/api/upgrade/premium', isAuthenticated, async (_req, res) => {
+    return res.status(501).json({
+      message: "Premium upgrade is not yet available. Payment provider integration is pending.",
+    });
   });
 
   app.get('/api/healthz', (_req, res) => {

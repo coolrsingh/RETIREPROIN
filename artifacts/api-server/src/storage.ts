@@ -37,13 +37,24 @@ import {
   type InsertCrmDefaults,
 } from "@workspace/db";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPlanCount(userId: string, count: number): Promise<User>;
+  /**
+   * Atomically increments planCount only when the user is either premium or
+   * currently below the 10-plan free-tier limit.  Returns the updated user
+   * record, or null when the limit is already reached.
+   */
+  atomicIncrementPlanCount(userId: string): Promise<User | null>;
+  /**
+   * Compensating decrement used when scenario creation fails after quota was
+   * already charged. Never goes below 0.
+   */
+  decrementPlanCount(userId: string): Promise<void>;
   updateUserProfile(userId: string, profile: Partial<UpsertUser>): Promise<User>;
   incrementShareCount(userId: string): Promise<User>;
   
@@ -141,6 +152,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async atomicIncrementPlanCount(userId: string): Promise<User | null> {
+    // Both the WHERE guard and the SET expression use COALESCE so that NULL
+    // plan_count rows (legacy data) are treated as 0 rather than silently
+    // bypassing the limit (NULL + 1 = NULL, NULL < 10 = NULL = falsy in SQL).
+    const [user] = await db
+      .update(users)
+      .set({ planCount: sql`COALESCE(${users.planCount}, 0) + 1`, updatedAt: new Date() })
+      .where(
+        and(
+          eq(users.id, userId),
+          or(eq(users.isPremium, true), sql`COALESCE(${users.planCount}, 0) < 10`)
+        )
+      )
+      .returning();
+    return user ?? null;
+  }
+
+  async decrementPlanCount(userId: string): Promise<void> {
+    // Compensating update: called when scenario creation fails after the quota
+    // was already charged. GREATEST prevents the counter going below 0.
+    await db
+      .update(users)
+      .set({ planCount: sql`GREATEST(COALESCE(${users.planCount}, 0) - 1, 0)`, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   async updateUserProfile(userId: string, profile: Partial<UpsertUser>): Promise<User> {
