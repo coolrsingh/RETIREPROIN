@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChartLine, ArrowLeft, Download, Users, Mail, Phone, Globe } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -54,24 +55,19 @@ export default function LeadsAdmin() {
 
   if (isLoading || leadsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white">
+      <header className="bg-white/85 backdrop-blur-xl border-b border-slate-200/60 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-8">
-              <Link href="/">
-                <div className="flex items-center gap-2 hover:opacity-80 cursor-pointer">
-                  <ChartLine className="text-blue-600 h-7 w-7" />
-                  <span className="text-lg font-bold text-slate-800">RetirePro</span>
-                </div>
-              </Link>
+              <BrandLogo textClassName="text-slate-800" />
               <span className="text-slate-500 font-medium hidden md:block">Lead Management</span>
             </div>
             <Link href="/">

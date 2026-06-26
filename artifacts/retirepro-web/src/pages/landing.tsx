@@ -9,6 +9,8 @@ import {
   AlertTriangle, BookOpen, Star, Lock
 } from "lucide-react";
 import dashboardImg from "@assets/retirepro.in_plan_58390e0d-7ccd-4950-a3d7-52a04338c489_1781421890049.png";
+import BrandLogo from "@/components/brand-logo";
+import logoUrl from "@/assets/retirepro-logo.png";
 
 // ─── Animated counter ────────────────────────────────────────────────────────
 function AnimatedNumber({ target, prefix = "", suffix = "" }: { target: number; prefix?: string; suffix?: string }) {
@@ -295,12 +297,7 @@ export default function Landing() {
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200/60">
           <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-[#F15A24] rounded-xl flex items-center justify-center">
-                <ChartLine className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-slate-900">RetirePro</span>
-            </div>
+            <BrandLogo href={null} textClassName="text-slate-900" />
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/blog" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Blog</Link>
               <a href="#calculator" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Calculator</a>
@@ -695,8 +692,8 @@ export default function Landing() {
         <footer className="py-10 px-6" style={{ background: "#060E1A" }}>
           <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#F15A24" }}>
-                <ChartLine className="h-4 w-4 text-white" />
+              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+                <img src={logoUrl} alt="RetirePro logo" className="w-6 h-6 object-contain" />
               </div>
               <span className="text-white font-bold">RetirePro</span>
             </div>

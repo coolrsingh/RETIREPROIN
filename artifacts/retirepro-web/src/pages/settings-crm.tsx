@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ChartLine, ArrowLeft, Save, Shield } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 import { Link, useLocation } from "wouter";
 
 const crmDefaultsSchema = z.object({
@@ -126,7 +127,7 @@ export default function SettingsCrm() {
 
   if (isLoading || defaultsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <p className="text-slate-600">Loading settings...</p>
@@ -137,7 +138,7 @@ export default function SettingsCrm() {
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6 text-center">
             <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -156,16 +157,13 @@ export default function SettingsCrm() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200">
+      <header className="bg-white/85 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <ChartLine className="text-primary-600 h-8 w-8" />
-                <span className="text-xl font-bold text-slate-800">RetirePro</span>
-              </div>
+              <BrandLogo textClassName="text-slate-800" />
               <nav className="hidden md:flex space-x-6">
                 <Link href="/" className="text-slate-600 hover:text-primary-600 font-medium">
                   <a data-testid="link-dashboard">Dashboard</a>

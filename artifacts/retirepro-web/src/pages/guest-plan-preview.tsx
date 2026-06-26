@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChartLine, ArrowLeft, Zap, Lock } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 import KpiCards from "@/components/kpi-cards";
 import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
@@ -88,7 +89,7 @@ export default function GuestPlanPreview() {
 
   if (!calculations) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" />
       </div>
     );
@@ -109,12 +110,7 @@ export default function GuestPlanPreview() {
       <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-[1280px] mx-auto px-6 flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center">
-                <ChartLine className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-xl font-bold text-slate-900">RetirePro</span>
-            </Link>
+            <BrandLogo textClassName="text-slate-900" />
             <nav className="hidden md:flex gap-6">
               <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium text-sm">Dashboard</Link>
               <span className="text-orange-500 font-medium text-sm">Preview Plan</span>

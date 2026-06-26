@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, Clock, Tag } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 
 const POSTS = [
   {
@@ -29,8 +30,7 @@ export default function BlogIndex() {
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <ChartLine className="h-7 w-7 text-blue-600" />
-            <span className="text-xl font-bold text-slate-800">RetirePro</span>
+            <BrandLogo href={null} textClassName="text-slate-800" />
           </Link>
           <Link href="/" className="text-sm font-medium text-blue-600 hover:text-blue-700">← Back to Calculator</Link>
         </div>

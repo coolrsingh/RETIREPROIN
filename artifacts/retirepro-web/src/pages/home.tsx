@@ -9,6 +9,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import ProfileMenu from "@/components/profile-menu";
+import BrandLogo from "@/components/brand-logo";
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -47,7 +48,7 @@ export default function Home() {
 
   if (isLoading || scenariosLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <p className="text-slate-600">Loading your dashboard...</p>
@@ -59,18 +60,13 @@ export default function Home() {
   const isAdmin = (user as any)?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200">
+      <header className="bg-white/85 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <Link href="/">
-                <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
-                  <ChartLine className="text-primary-600 h-8 w-8" />
-                  <span className="text-xl font-bold text-slate-800">RetirePro</span>
-                </div>
-              </Link>
+              <BrandLogo textClassName="text-slate-800" />
               <nav className="hidden md:flex space-x-6">
                 <span className="text-primary-600 font-medium">Dashboard</span>
                 {isAdmin && (

@@ -1,2 +1,2 @@
-- [Retirepro web theme & lead capture](retirepro-web-notes.md) — landing is light-themed (only stats bar + footer dark); expert card saves leads best-effort via nullable leads.email.
+- [Retirepro web theme & lead capture](retirepro-web-notes.md) — landing is light-themed (only stats bar + footer dark); logged-in pages must match via gradient bg + shared BrandLogo; expert card saves leads best-effort via nullable leads.email.
 - [Retirepro pre-existing typecheck debt](retirepro-typecheck-debt.md) — known unrelated tsc errors in plan-dashboard/plan-form/settings-crm/routes.ts; don't be alarmed.
