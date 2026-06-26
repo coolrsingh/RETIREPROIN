@@ -1,9 +1,11 @@
-import { writeFileSync, readFileSync } from 'fs';
-import { join } from 'path';
-
-interface PDFData {
-  scenario: any;
-  calculations: any;
+function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
 }
 
 export async function generatePDF(scenarioData: any, calculations: any): Promise<Buffer> {
@@ -27,12 +29,21 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
     minute: '2-digit'
   });
 
+  const safeScenarioName = escapeHtml(scenarioData.name);
+  const safeSelfName = escapeHtml(self?.name) || 'Not provided';
+  const safeChildren = (scenarioData.householdMembers ?? [])
+    .filter((m: any) => m.relation === 'child')
+    .map((child: any) => ({
+      name: escapeHtml(child.name),
+      dob: escapeHtml(child.dob ? new Date(child.dob).toLocaleDateString('en-IN') : ''),
+    }));
+
   const html = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>${scenarioData.name} - RetirePro Report</title>
+      <title>${safeScenarioName} - RetirePro Report</title>
       <style>
         @page { margin: 0; }
         body { 
@@ -165,7 +176,7 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
         <div style="background: #f8fafc; padding: 30px; border-radius: 12px; margin: 40px 0;">
           <h3 style="color: #3b82f6; margin-bottom: 15px;">Report Generated On:</h3>
           <p style="font-size: 16px; margin: 5px 0;"><strong>${currentDate}</strong></p>
-          <p style="font-size: 14px; color: #64748b;">Plan Name: ${scenarioData.name}</p>
+          <p style="font-size: 14px; color: #64748b;">Plan Name: ${safeScenarioName}</p>
         </div>
       </div>
 
@@ -185,7 +196,7 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
           </tr>
           <tr>
             <td><strong>Full Name</strong></td>
-            <td>${self?.name || 'Not provided'}</td>
+            <td>${safeSelfName}</td>
           </tr>
           <tr>
             <td><strong>Current Age</strong></td>
@@ -224,16 +235,16 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
           </tr>
         </table>
 
-        ${scenarioData.householdMembers?.filter((m: any) => m.relation === 'child').length > 0 ? `
+        ${safeChildren.length > 0 ? `
         <table class="user-summary-table">
           <tr>
             <th style="width: 40%;">Family Members</th>
             <th>Details</th>
           </tr>
-          ${scenarioData.householdMembers.filter((m: any) => m.relation === 'child').map((child: any) => `
+          ${safeChildren.map((child) => `
           <tr>
             <td><strong>${child.name}</strong></td>
-            <td>Born: ${new Date(child.dob).toLocaleDateString('en-IN')}</td>
+            <td>Born: ${child.dob}</td>
           </tr>
           `).join('')}
         </table>
@@ -292,13 +303,19 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--disable-web-security',
         '--disable-features=VizDisplayCompositor'
       ]
     });
     
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    // Block all network requests to prevent SSRF — the PDF HTML is self-contained.
+    await page.setRequestInterception(true);
+    page.on('request', (interceptedRequest) => {
+      interceptedRequest.abort();
+    });
+
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
     
     const pdf = await page.pdf({
       format: 'A4',

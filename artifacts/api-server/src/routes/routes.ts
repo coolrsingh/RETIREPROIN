@@ -575,12 +575,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF export - both GET and POST routes for flexibility
-  app.get('/api/export/pdf/:scenarioId', async (req, res) => {
+  // PDF export - GET route requires authentication and ownership check
+  app.get('/api/export/pdf/:scenarioId', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const scenario = await storage.getScenario(req.params.scenarioId);
+
+      if (!scenario || scenario.userId !== userId) {
+        return res.status(404).json({ message: "Scenario not found" });
+      }
+
       const scenarioData = await storage.getScenarioWithAllData(req.params.scenarioId);
       if (!scenarioData) {
-        return res.status(404).json({ message: "Scenario not found" });
+        return res.status(404).json({ message: "Scenario data not found" });
       }
 
       const calculations = await calculateRetirementPlan(scenarioData);

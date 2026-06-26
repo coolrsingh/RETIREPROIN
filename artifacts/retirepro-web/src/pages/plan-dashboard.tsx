@@ -77,7 +77,7 @@ export default function PlanDashboard() {
   }, [isAuthenticated, isLoading, toast]);
 
   const handleExportPDF = () => {
-    if (isAuthenticated || scenario?.leadId) {
+    if (isAuthenticated) {
       window.open(`/api/export/pdf/${params?.id}`, '_blank');
     } else {
       setShowLeadModal(true);
@@ -370,7 +370,6 @@ export default function PlanDashboard() {
         scenarioId={params?.id}
         onSuccess={() => {
           setShowLeadModal(false);
-          window.open(`/api/export/pdf/${params?.id}`, '_blank');
         }}
       />
     </div>
