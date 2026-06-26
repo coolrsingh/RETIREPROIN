@@ -716,8 +716,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics and reporting endpoint for daily emails
-  app.get('/api/analytics/daily', async (req, res) => {
+  app.get('/api/analytics/daily', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
