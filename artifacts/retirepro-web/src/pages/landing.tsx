@@ -165,7 +165,7 @@ function GuestCalculator() {
             <Input type="number" placeholder="12" value={form.returnPre} onChange={e => set("returnPre", e.target.value)} className={inputClass} />
           </div>
           {error && (
-            <div className="sm:col-span-2 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-3">
+            <div className="sm:col-span-2 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-2.5">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" /> {error}
             </div>
           )}
@@ -217,7 +217,7 @@ const TICKER_ITEMS = [
 function DataTicker() {
   return (
     <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-white/5"
-      style={{ opacity: 0.18, fontFamily: "monospace", fontSize: "12px", color: "#fff", padding: "8px 0" }}
+      style={{ opacity: 0.18, fontFamily: "monospace", fontSize: "12px", color: "#fff", padding: "6px 0" }}
       aria-hidden="true"
     >
       <div className="flex gap-12 whitespace-nowrap" style={{ animation: "tickerScroll 35s linear infinite" }}>

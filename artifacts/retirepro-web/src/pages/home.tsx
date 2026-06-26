@@ -194,7 +194,7 @@ export default function Home() {
                   Get started by creating your first retirement plan
                 </p>
                 
-                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <div className="bg-blue-50 rounded-lg px-4 py-3 mb-6">
                   <h4 className="font-semibold text-blue-900 mb-2">💡 Did you know?</h4>
                   <p className="text-blue-800 text-sm">
                     Starting to save for retirement at age 25 vs 35 can result in 2x more wealth at retirement, 

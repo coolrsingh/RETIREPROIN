@@ -193,12 +193,12 @@ export default function PlanForm() {
           </div>
 
           {guestFormData && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <div className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
               ✅ Your details from the preview calculator have been pre-filled below. Complete the optional sections and create your plan.
             </div>
           )}
           {!guestFormData && profile && (profile.monthlyIncome || profile.dob) && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+            <div className="mb-4 px-3 py-2.5 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
               ✅ Your saved profile data has been pre-filled below. Review and adjust before creating your plan.
             </div>
           )}

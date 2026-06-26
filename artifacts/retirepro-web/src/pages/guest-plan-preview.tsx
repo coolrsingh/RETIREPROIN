@@ -92,7 +92,7 @@ export default function GuestPlanPreview() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-amber-50 border-b border-amber-200"
       >
-        <div className="max-w-[1280px] mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+        <div className="max-w-[1280px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2 text-sm text-amber-800">
             <Lock className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span>
