@@ -588,8 +588,17 @@ export default function Landing() {
               </Link>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
+                {
+                  href: "/blog/real-estate-rich-retirement-illusion",
+                  gradient: "from-[#0B1628] to-slate-800",
+                  tag: "HNI Planning · New",
+                  title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed",
+                  excerpt: "Most HNIs believe their net worth guarantees comfort. Here's the quiet arithmetic that says otherwise — and what to do about it.",
+                  time: "9 min read",
+                  isNew: true,
+                },
                 {
                   href: "/blog/why-indians-fail-retirement",
                   gradient: "from-[#0A1628] to-[#1e3a5f]",
@@ -597,6 +606,7 @@ export default function Landing() {
                   title: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
                   excerpt: "93% of Indians over 50 regret not planning sooner. Here's what goes wrong and the one habit that changes everything.",
                   time: "8 min read",
+                  isNew: false,
                 },
                 {
                   href: "/blog/nps-vs-ppf-vs-sip",
@@ -605,6 +615,7 @@ export default function Landing() {
                   title: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
                   excerpt: "Real numbers. No fluff. We compare all three with India-specific context so you can stop guessing and start investing.",
                   time: "9 min read",
+                  isNew: false,
                 },
               ].map((post, i) => (
                 <motion.div key={post.href} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
@@ -621,8 +632,11 @@ export default function Landing() {
                       (e.currentTarget as HTMLAnchorElement).style.boxShadow = "";
                     }}
                   >
-                    <div className={`h-44 bg-gradient-to-br ${post.gradient} flex items-end p-5`}>
+                    <div className={`h-44 bg-gradient-to-br ${post.gradient} flex items-end justify-between p-5`}>
                       <span className="text-sm font-semibold bg-white/20 text-white px-3 py-1 rounded-full backdrop-blur-sm">{post.tag}</span>
+                      {(post as any).isNew && (
+                        <span className="text-xs font-bold bg-orange-500 text-white px-2.5 py-1 rounded-full uppercase tracking-wide">New</span>
+                      )}
                     </div>
                     <div className="p-6">
                       <h3 className="font-bold text-slate-900 mb-2 text-lg group-hover:text-[#F15A24] transition-colors">{post.title}</h3>

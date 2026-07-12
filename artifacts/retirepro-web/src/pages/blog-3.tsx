@@ -1,18 +1,43 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, AlertTriangle, CheckCircle, TrendingDown } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar, XAxis, YAxis,
+  AreaChart, Area, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Cell,
 } from "recharts";
 
 const PUBLISH_DATE = "12 July 2026";
 
+function ReadingProgress() {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const scrolled = window.scrollY;
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      setPct(total ? Math.min(100, (scrolled / total) * 100) : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[200] h-[3px] bg-slate-200/50">
+      <div
+        className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-[width] duration-75"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
 function ArticleSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-10">
-      <h2 className="text-2xl font-bold text-slate-900 mb-4">{title}</h2>
+    <section className="mb-12">
+      <div className="flex items-start gap-3 mb-5">
+        <div className="w-1 h-8 rounded-full bg-orange-500 flex-shrink-0 mt-1" />
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">{title}</h2>
+      </div>
       {children}
     </section>
   );
@@ -186,9 +211,10 @@ function YieldGapChart() {
 
 export default function Blog3() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
+      <ReadingProgress />
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <BrandLogo textClassName="text-slate-800" />
           <Link href="/free-plan" className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1">
             Free Planner <ArrowRight className="h-4 w-4" />
@@ -196,13 +222,13 @@ export default function Blog3() {
         </div>
       </header>
 
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white py-16 px-4">
-        <div className="max-w-3xl mx-auto">
+      <div className="bg-gradient-to-br from-[#0B1628] via-slate-900 to-slate-800 py-20 px-4">
+        <div className="max-w-[960px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-block bg-white/15 text-orange-200 text-sm font-semibold px-3 py-1 rounded-full mb-6">
+            <span className="inline-block bg-white/10 text-orange-300 text-sm font-semibold px-3 py-1 rounded-full mb-6 border border-white/10">
               HNI Planning · 9 min read
             </span>
-            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-white">
               The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed
             </h1>
             <p className="text-lg text-slate-300 mb-6">
@@ -217,7 +243,7 @@ export default function Blog3() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-[960px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
 
           <p className="text-lg leading-relaxed text-slate-700 mb-8">
@@ -358,7 +384,7 @@ export default function Blog3() {
           </ArticleSection>
 
           <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-8 text-center text-white mt-12">
-            <h2 className="text-2xl font-bold mb-3">
+            <h2 className="text-2xl font-bold mb-3 text-white">
               Stress-test your own retirement plan — free
             </h2>
             <p className="text-orange-100 mb-6 max-w-xl mx-auto">
@@ -370,7 +396,7 @@ export default function Blog3() {
             </Link>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-slate-200">
+          <div className="mt-12 pt-8 border-t border-slate-200 pb-16">
             <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 text-sm">
               ← Back to all articles
             </Link>
