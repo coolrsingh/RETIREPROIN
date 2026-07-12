@@ -9,9 +9,10 @@ interface PlanChartProps {
 }
 
 const markerColors = {
-  education: "#3b82f6",
+  education: "#F15A24",
   marriage: "#ec4899", 
   retirement: "#10b981",
+  mini_retirement: "#8b5cf6",
   other: "#6366f1",
 };
 
@@ -183,14 +184,15 @@ export default function PlanChart({ calculations, timeRange = "25Y" }: PlanChart
                 key={`marker-${marker.year}-${marker.type}`}
                 x={marker.year}
                 y={dataPoint.value}
-                r={8}
+                r={11}
                 fill={markerColors[marker.type as keyof typeof markerColors] || markerColors.other}
                 stroke="white"
                 strokeWidth={2}
                 label={{
-                  value: marker.type === 'education' ? `Education: ${marker.label}` :
-                         marker.type === 'marriage' ? `Marriage: ${marker.label}` :
-                         marker.type === 'retirement' ? 'Retirement' :
+                  value: marker.type === 'education' ? `🎓 ${marker.label}` :
+                         marker.type === 'marriage' ? `💍 ${marker.label}` :
+                         marker.type === 'retirement' ? '🧓 Retirement' :
+                         marker.type === 'mini_retirement' ? '☕ Mini-Retirement' :
                          marker.label || marker.type,
                   position: 'top',
                   fontSize: 10,

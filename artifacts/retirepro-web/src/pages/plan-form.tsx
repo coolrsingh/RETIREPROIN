@@ -94,10 +94,10 @@ export default function PlanForm() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-gray-600">Loading your retirement planning dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F15A24] mx-auto mb-4" />
+          <p className="text-slate-600">Loading your retirement planning dashboard...</p>
         </div>
       </div>
     );
@@ -130,8 +130,8 @@ export default function PlanForm() {
   } : profileDefaults;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white">
-      <header className="bg-white/85 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
+    <div className="min-h-screen bg-white">
+      <header className="bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
           <BrandLogo textClassName="text-slate-900" />
           <ProfileMenu user={user} isAdmin={isAdmin} />
@@ -150,13 +150,13 @@ export default function PlanForm() {
           </div>
 
           {guestFormData && (
-            <div className="mb-4 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-              ✅ Your details from the preview calculator have been pre-filled below. Complete the optional sections and create your plan.
+            <div className="mb-4 px-3 py-2.5 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800">
+              ✅ Your details from the planner have been pre-filled below. Complete the optional sections and generate your plan.
             </div>
           )}
           {!guestFormData && profile && (profile.monthlyIncome || profile.dob) && (
-            <div className="mb-4 px-3 py-2.5 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
-              ✅ Your saved profile data has been pre-filled below. Review and adjust before creating your plan.
+            <div className="mb-4 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800">
+              ✅ Your saved profile data has been pre-filled below. Review and adjust before generating your plan.
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +57,10 @@ export default function PlanDashboard() {
     enabled: !!scenario,
   });
 
+  // Export nudge banner — shown once when calculations first load
+  const [showExportBanner, setShowExportBanner] = useState(false);
+  const exportBannerShown = useRef(false);
+
   // Initialise live rate inputs from loaded assumptions
   useEffect(() => {
     if (scenario?.assumptions && !liveRates) {
@@ -66,6 +70,14 @@ export default function PlanDashboard() {
       });
     }
   }, [scenario]);
+
+  useEffect(() => {
+    if (calculations && !calculationsLoading && !exportBannerShown.current) {
+      exportBannerShown.current = true;
+      const timer = setTimeout(() => setShowExportBanner(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [calculations, calculationsLoading]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -92,9 +104,9 @@ export default function PlanDashboard() {
 
   if (isLoading || scenarioLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F15A24] mx-auto mb-4"></div>
           <p className="text-slate-600">Loading your plan...</p>
         </div>
       </div>
@@ -103,7 +115,7 @@ export default function PlanDashboard() {
 
   if (!scenario) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6 text-center">
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Plan Not Found</h1>
@@ -123,7 +135,7 @@ export default function PlanDashboard() {
   const isAdmin = (user as any)?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white/85 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
@@ -200,45 +212,45 @@ export default function PlanDashboard() {
         </div>
 
         {/* Live Return Rate Adjuster */}
-        <Card className="mb-6 border-blue-200 bg-blue-50">
+        <Card className="mb-6 border-orange-200 bg-orange-50">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-orange-800 flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
               Adjust Return Rates &amp; Recalculate
             </CardTitle>
-            <CardDescription className="text-blue-700 text-xs">
+            <CardDescription className="text-orange-700 text-xs">
               Change the expected rates of return below to instantly see how it impacts your retirement outlook.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex flex-col gap-1">
-                <Label className="text-xs text-blue-700">Pre-retirement Return (%)</Label>
+                <Label className="text-xs text-orange-700 font-medium">Pre-retirement Return (%)</Label>
                 <Input
                   type="number"
                   step="0.5"
                   min={0}
                   max={30}
-                  className="w-36 bg-white border-blue-300"
+                  className="w-36 bg-white border-orange-300"
                   value={liveRates?.pre ?? ""}
                   onChange={e => setLiveRates(r => ({ pre: e.target.value, post: r?.post ?? "8" }))}
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <Label className="text-xs text-blue-700">Post-retirement Return (%)</Label>
+                <Label className="text-xs text-orange-700 font-medium">Post-retirement Return (%)</Label>
                 <Input
                   type="number"
                   step="0.5"
                   min={0}
                   max={30}
-                  className="w-36 bg-white border-blue-300"
+                  className="w-36 bg-white border-orange-300"
                   value={liveRates?.post ?? ""}
                   onChange={e => setLiveRates(r => ({ pre: r?.pre ?? "12", post: e.target.value }))}
                 />
               </div>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-[#F15A24] hover:bg-[#d44d1e] text-white font-semibold shadow-sm"
                 onClick={handleRecalculate}
                 disabled={calculationsLoading}
               >
@@ -252,6 +264,38 @@ export default function PlanDashboard() {
         {/* KPI Cards */}
         {calculations && (
           <KpiCards calculations={calculations} />
+        )}
+
+        {/* Export nudge banner */}
+        {showExportBanner && (
+          <div className="mb-6 flex items-center justify-between gap-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-5 py-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <FileSpreadsheet className="h-5 w-5 text-emerald-700" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">Your plan is ready to export!</p>
+                <p className="text-xs text-emerald-700 mt-0.5">Download all your numbers, projections, and year-by-year data to Excel for your records or to share with your advisor.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a
+                href={`/api/export/excel/${params?.id}`}
+                download
+                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Download Excel
+              </a>
+              <button
+                onClick={() => setShowExportBanner(false)}
+                className="text-emerald-500 hover:text-emerald-700 p-1 rounded"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
         )}
 
         {/* AI Insights — above the chart */}
@@ -351,19 +395,21 @@ export default function PlanDashboard() {
         </Card>
       </main>
 
-      {/* WhatsApp Expert Connect — floating widget */}
+      {/* Expert Connect — fixed vertical right-side sidebar poster */}
       <a
         href={`https://wa.me/919867659000?text=${encodeURIComponent(`Hi, I just created my retirement plan on RetirePro for ${scenario?.name ?? "my household"}. Can you help me review it?`)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 text-white font-semibold text-sm px-5 py-3 rounded-full shadow-2xl transition-all duration-200 hover:scale-105 hover:shadow-green-400/40"
-        style={{ background: "#25D366" }}
-        title="Connect with a retirement advisor on WhatsApp"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 py-5 px-2.5 rounded-l-2xl shadow-2xl transition-all duration-200 hover:px-4 hover:shadow-green-400/50 group"
+        style={{ background: "#25D366", minHeight: "160px" }}
+        title="Review your plan with a retirement advisor on WhatsApp"
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5 flex-shrink-0" style={{ fill: "white" }} xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 24 24" className="h-6 w-6 flex-shrink-0 mt-1" style={{ fill: "white" }} xmlns="http://www.w3.org/2000/svg">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
         </svg>
-        Talk to an Advisor
+        <span className="text-white font-bold text-[11px] tracking-widest uppercase leading-tight" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
+          Review with Advisor
+        </span>
       </a>
 
       {/* Lead Capture Modal */}
