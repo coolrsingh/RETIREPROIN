@@ -390,11 +390,11 @@ export default function Landing() {
                     (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
                     (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
                   }}
-                  onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={() => { window.location.href = "/free-plan"; }}
                   data-testid="button-get-started"
                 >
                   <Zap className="h-5 w-5" />
-                  Try Free Calculator
+                  Try Full Free Planner
                 </button>
 
                 {/* Secondary CTA — outlined blue */}

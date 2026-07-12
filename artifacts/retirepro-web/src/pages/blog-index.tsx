@@ -5,6 +5,16 @@ import BrandLogo from "@/components/brand-logo";
 
 const POSTS = [
   {
+    slug: "real-estate-rich-retirement-illusion",
+    title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed",
+    excerpt: "Most Indian HNIs believe their net worth guarantees a comfortable retirement. Here's the quiet arithmetic that says otherwise — and what to do about it.",
+    readTime: "9 min read",
+    tag: "HNI Planning",
+    tagColor: "bg-orange-100 text-orange-700",
+    gradient: "from-slate-700 to-slate-900",
+    date: "12 Jul 2026",
+  },
+  {
     slug: "why-indians-fail-retirement",
     title: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
     excerpt: "93% of Indians over 50 regret not starting retirement planning sooner. Here's what goes wrong and the one small shift that changes everything.",
@@ -12,6 +22,7 @@ const POSTS = [
     tag: "Retirement Basics",
     tagColor: "bg-blue-100 text-blue-700",
     gradient: "from-blue-600 to-indigo-700",
+    date: null,
   },
   {
     slug: "nps-vs-ppf-vs-sip",
@@ -21,6 +32,7 @@ const POSTS = [
     tag: "Investment Guide",
     tagColor: "bg-emerald-100 text-emerald-700",
     gradient: "from-emerald-600 to-teal-700",
+    date: null,
   },
 ];
 
@@ -48,7 +60,7 @@ export default function BlogIndex() {
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {POSTS.map((post, i) => (
               <motion.div
                 key={post.slug}
@@ -68,9 +80,10 @@ export default function BlogIndex() {
                       </h2>
                       <p className="text-slate-600 text-sm leading-relaxed mb-4">{post.excerpt}</p>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
                           <Clock className="h-3.5 w-3.5" />
                           <span>{post.readTime}</span>
+                          {post.date && <span className="text-orange-500 font-medium">· {post.date}</span>}
                         </div>
                         <span className="flex items-center gap-1 text-sm font-semibold text-blue-600 group-hover:gap-2 transition-all">
                           Read article <ArrowRight className="h-4 w-4" />

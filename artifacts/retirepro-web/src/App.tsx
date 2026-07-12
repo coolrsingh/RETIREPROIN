@@ -14,7 +14,9 @@ import LeadsAdmin from "@/pages/leads-admin";
 import BlogIndex from "@/pages/blog-index";
 import Blog1 from "@/pages/blog-1";
 import Blog2 from "@/pages/blog-2";
+import Blog3 from "@/pages/blog-3";
 import GuestPlanPreview from "@/pages/guest-plan-preview";
+import FreePlan from "@/pages/free-plan";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Disclaimer from "@/pages/disclaimer";
 import RefundPolicy from "@/pages/refund-policy";
@@ -31,7 +33,9 @@ function Router() {
       <Route path="/blog" component={BlogIndex} />
       <Route path="/blog/why-indians-fail-retirement" component={Blog1} />
       <Route path="/blog/nps-vs-ppf-vs-sip" component={Blog2} />
+      <Route path="/blog/real-estate-rich-retirement-illusion" component={Blog3} />
       <Route path="/plan/preview" component={GuestPlanPreview} />
+      <Route path="/free-plan" component={FreePlan} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/refund-policy" component={RefundPolicy} />
