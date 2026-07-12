@@ -397,7 +397,7 @@ export default function PlanDashboard() {
 
       {/* Expert Connect — fixed vertical right-side sidebar poster */}
       <a
-        href={`https://wa.me/919867659000?text=${encodeURIComponent(`Hi, I just created my retirement plan on RetirePro for ${scenario?.name ?? "my household"}. Can you help me review it?`)}`}
+        href={`https://wa.me/919819590598?text=${encodeURIComponent(`Hi, I just created my retirement plan on RetirePro for ${scenario?.name ?? "my household"}. Can you help me review it?`)}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 py-5 px-2.5 rounded-l-2xl shadow-2xl transition-all duration-200 hover:px-4 hover:shadow-green-400/50 group"
