@@ -11,6 +11,7 @@ import {
 import dashboardImg from "@assets/retirepro.in_plan_58390e0d-7ccd-4950-a3d7-52a04338c489_1781421890049.png";
 import BrandLogo from "@/components/brand-logo";
 import logoUrl from "@/assets/retirepro-logo.png";
+import QuickPlanForm from "@/components/quick-plan-form";
 
 // ─── Animated counter ────────────────────────────────────────────────────────
 function AnimatedNumber({ target, prefix = "", suffix = "" }: { target: number; prefix?: string; suffix?: string }) {
@@ -65,168 +66,55 @@ function TiltCard({ children, className = "" }: { children: React.ReactNode; cla
   );
 }
 
-// ─── Guest Calculator ─────────────────────────────────────────────────────────
-function GuestCalculator() {
+// ─── Landing Planner — full form, no auth required ───────────────────────────
+function LandingPlannerSection() {
   const [, navigate] = useLocation();
-  const [form, setForm] = useState({
-    fullName: "",
-    dob: "",
-    retirementAge: "60",
-    monthlyIncomeTotal: "",
-    monthlyExpenseTotal: "",
-    monthlySavings: "",
-    assetsLumpSum: "0",
-    returnPre: "12",
-    inflationRate: "6",
-  });
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [consent, setConsent] = useState(false);
 
-  const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSubmit = async (data: any) => {
+    setIsLoading(true);
     setError("");
-    if (!form.fullName || !form.dob || !form.monthlyIncomeTotal) {
-      setError("Please fill in name, date of birth, and monthly income.");
-      return;
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.dob)) {
-      setError("Date of birth must be in YYYY-MM-DD format (e.g. 1988-06-15).");
-      return;
-    }
-    if (!consent) {
-      setError("Please agree to the Privacy Policy and Disclaimer to continue.");
-      return;
-    }
-    setLoading(true);
     try {
       const res = await fetch("/api/plan/try", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: form.fullName,
-          dob: form.dob,
-          retirementAge: Number(form.retirementAge) || 60,
-          monthlyIncomeTotal: Number(form.monthlyIncomeTotal) || 0,
-          monthlyExpenseTotal: Number(form.monthlyExpenseTotal) || Number(form.monthlyIncomeTotal) * 0.6,
-          monthlySavings: Number(form.monthlySavings) || 0,
-          assetsLumpSum: Number(form.assetsLumpSum) || 0,
-          assumptions: {
-            returnPre: Number(form.returnPre) || 12,
-            returnPost: 8,
-            inflationHeadline: Number(form.inflationRate) || 6,
-          },
-        }),
+        body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Calculation failed. Please check your inputs.");
-      const data = await res.json();
-      sessionStorage.setItem("guestCalcResult", JSON.stringify(data));
-      sessionStorage.setItem("guestCalcForm", JSON.stringify(form));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).message || "Calculation failed. Please check your inputs.");
+      }
+      const result = await res.json();
+      sessionStorage.setItem("guestCalcResult", JSON.stringify(result));
+      sessionStorage.setItem("guestCalcForm", JSON.stringify({
+        fullName: data.fullName,
+        dob: data.dob,
+        retirementAge: String(data.retirementAge),
+        monthlyIncomeTotal: String(data.monthlyIncomeTotal),
+        monthlyExpenseTotal: String(data.monthlyExpenseTotal),
+        monthlySavings: String(data.monthlySavings),
+        assetsLumpSum: String(data.assetsLumpSum ?? 0),
+        returnPre: String(data.assumptions?.returnPre ?? 12),
+        inflationRate: String(data.assumptions?.inflationHeadline ?? 7),
+      }));
       navigate("/plan/preview");
     } catch (e: any) {
-      setError(e.message ?? "Something went wrong.");
+      setError(e.message ?? "Something went wrong. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const labelClass = "text-base font-medium text-slate-700 mb-2 block";
-  const inputClass = "h-12 text-base border-slate-300 focus:border-[#F15A24] focus:ring-[#F15A24]/20";
-
   return (
-    <div className="max-w-[1280px] mx-auto">
-      <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-        <div className="p-8 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-          <div>
-            <Label className={labelClass}>Full Name</Label>
-            <Input placeholder="Rahul Sharma" value={form.fullName} onChange={e => set("fullName", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Date of Birth</Label>
-            <Input placeholder="1985-06-15 (YYYY-MM-DD)" value={form.dob} onChange={e => set("dob", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Retirement Age</Label>
-            <Input type="number" placeholder="60" value={form.retirementAge} onChange={e => set("retirementAge", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Monthly Income (₹)</Label>
-            <Input type="number" placeholder="75,000" value={form.monthlyIncomeTotal} onChange={e => set("monthlyIncomeTotal", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Monthly Expenses (₹)</Label>
-            <Input type="number" placeholder="45,000" value={form.monthlyExpenseTotal} onChange={e => set("monthlyExpenseTotal", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Monthly Savings / SIP (₹)</Label>
-            <Input type="number" placeholder="15,000" value={form.monthlySavings} onChange={e => set("monthlySavings", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Existing Investments (₹)</Label>
-            <Input type="number" placeholder="5,00,000" value={form.assetsLumpSum} onChange={e => set("assetsLumpSum", e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <Label className={labelClass}>Expected Return (% p.a.)</Label>
-            <Input type="number" placeholder="12" value={form.returnPre} onChange={e => set("returnPre", e.target.value)} className={inputClass} />
-          </div>
-          <div className="sm:col-span-2 consent-block">
-            <label className="consent-label">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={e => setConsent(e.target.checked)}
-                data-testid="checkbox-consent"
-              />
-              <span className="consent-text">
-                I agree to RetirePro's{" "}
-                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>{" "}
-                and{" "}
-                <a href="/disclaimer" target="_blank" rel="noopener noreferrer">Disclaimer</a>, and consent to
-                the processing of my personal data in accordance with the Digital Personal Data Protection Act, 2023.
-              </span>
-            </label>
-            <p className="consent-note">
-              This is a self-help calculator for educational purposes only — not investment advice. Your data is never sold.
-            </p>
-          </div>
-          {error && (
-            <div className="sm:col-span-2 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-2.5">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" /> {error}
-            </div>
-          )}
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-60"
-              style={{
-                background: "#F15A24",
-                padding: "18px 24px",
-                fontSize: "18px",
-                animation: loading ? "none" : "orangePulse 2.5s ease-in-out infinite",
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.animation = "none";
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.02)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(241,90,36,0.45)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.animation = "orangePulse 2.5s ease-in-out infinite";
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
-              }}
-            >
-              {loading ? (
-                <><span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> Calculating your retirement plan…</>
-              ) : (
-                <><Zap className="h-5 w-5" /> See My Retirement Future →</>
-              )}
-            </button>
-          </div>
+    <div className="max-w-4xl mx-auto">
+      {error && (
+        <div className="mb-4 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-3 border border-red-200">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" /> {error}
         </div>
-      </form>
+      )}
+      <QuickPlanForm onSubmit={handleSubmit} isLoading={isLoading} />
     </div>
   );
 }
@@ -300,7 +188,7 @@ export default function Landing() {
             <BrandLogo href={null} textClassName="text-slate-900" />
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/blog" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Blog</Link>
-              <a href="#calculator" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Calculator</a>
+              <a href="#planner" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Free Planner</a>
             </nav>
             <Button
               onClick={() => { window.location.href = "/api/login"; }}
@@ -355,7 +243,7 @@ export default function Landing() {
                 style={{ background: "rgba(241,90,36,0.1)", border: "1px solid rgba(241,90,36,0.25)", color: "#C2410C" }}
               >
                 <Star className="h-3.5 w-3.5" style={{ fill: "#C2410C" }} />
-                Free. No login required. 60 seconds.
+                Free. No account required.
               </motion.div>
 
               <h1 className="text-5xl md:text-7xl font-black leading-none mb-6" style={{ color: "#0F172A" }}>
@@ -367,7 +255,7 @@ export default function Landing() {
               </h1>
 
               <p className="text-xl leading-relaxed mb-8 max-w-lg" style={{ color: "#475569" }}>
-                Calculate your retirement corpus in 60 seconds. See your funding gap. Know exactly what SIP you need. India-specific. No login required.
+                Build a complete, personalised retirement plan — income, expenses, children's education, loans, mini-retirement breaks, and more. India-specific. No login required.
               </p>
 
               <div className="flex flex-wrap gap-3">
@@ -390,11 +278,11 @@ export default function Landing() {
                     (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
                     (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
                   }}
-                  onClick={() => { window.location.href = "/free-plan"; }}
+                  onClick={() => document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" })}
                   data-testid="button-get-started"
                 >
-                  <Zap className="h-5 w-5" />
-                  Try Full Free Planner
+                  <ArrowRight className="h-5 w-5" />
+                  Start My Free Plan
                 </button>
 
                 {/* Secondary CTA — outlined blue */}
@@ -497,7 +385,7 @@ export default function Landing() {
             {[
               { value: 93, suffix: "%", label: "Indians over 50 regret not planning sooner", prefix: "" },
               { value: 8, suffix: " Cr", label: "Typical corpus needed for urban retirement", prefix: "₹" },
-              { value: 60, suffix: " sec", label: "To get your retirement number free", prefix: "" },
+              { value: 100, suffix: "%", label: "Free — no account required to plan", prefix: "" },
               { value: 52, suffix: "L+", label: "EPF final settlement claims in 2024–25", prefix: "" },
             ].map(stat => (
               <div key={stat.label} className="text-white">
@@ -519,7 +407,7 @@ export default function Landing() {
             </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { icon: <Zap className="h-8 w-8" />, color: "text-[#F15A24] bg-orange-50", title: "60-Second Quick Plan", desc: "Answer a few questions. Get a full retirement projection with year-by-year corpus growth, income, and expense breakdown." },
+                { icon: <BarChart3 className="h-8 w-8" />, color: "text-[#F15A24] bg-orange-50", title: "Comprehensive Retirement Plan", desc: "Cover everything — income growth, children's education & marriage, mini-retirement breaks, existing loans, and investment assumptions. Get a complete year-by-year projection." },
                 { icon: <BarChart3 className="h-8 w-8" />, color: "text-blue-600 bg-blue-50", title: "Visual Projections", desc: "Interactive charts show your net worth trajectory, cashflow analysis, and exactly when (and if) your corpus runs out." },
                 { icon: <Shield className="h-8 w-8" />, color: "text-emerald-600 bg-emerald-50", title: "India-Specific Planning", desc: "Indian inflation rates, EPF, NPS, ELSS. Supports joint retirement, children's education goals, home loans, and mini-retirements." },
               ].map((f, i) => (
@@ -542,19 +430,19 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Calculator (BELOW Why RetirePro) ─────────────────────────────── */}
-        <section id="calculator" className="py-20 px-6" style={{ background: "linear-gradient(to bottom, #F8F9FA, #ffffff)" }}>
+        {/* ── Planner (BELOW Why RetirePro) ─────────────────────────────── */}
+        <section id="planner" className="py-20 px-6" style={{ background: "linear-gradient(to bottom, #F8F9FA, #ffffff)" }}>
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-center mb-12">
               <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "#F15A24" }}>
-                Free · No Login · Instant
+                Free · No Account Required · Full Planner
               </span>
               <h2 className="font-bold text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>
-                See Your Retirement Future in 30 Seconds.
+                Build Your Complete Retirement Plan
                 <span className="block text-slate-500" style={{ fontSize: "28px", fontWeight: 600 }}>No account required.</span>
               </h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                Enter a few details below and instantly see your projected corpus, funding gap, and net worth projection.
+                Answer all the key questions — children's education, loans, mini-retirements — and get a detailed year-by-year plan with corpus projections and funding gap analysis.
               </p>
             </motion.div>
 
@@ -570,7 +458,7 @@ export default function Landing() {
             </div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}>
-              <GuestCalculator />
+              <LandingPlannerSection />
             </motion.div>
           </div>
         </section>
@@ -667,7 +555,7 @@ export default function Landing() {
               Your 65-year-old self<br />is counting on today's you.
             </h2>
             <p className="text-xl mb-8" style={{ color: "#475569" }}>
-              Calculate your retirement number free — no login, no email, no commitment.
+              Build a complete retirement plan free — no login, no email, no commitment.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
@@ -683,11 +571,11 @@ export default function Landing() {
                   (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
                   (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
                 }}
-                onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={() => document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" })}
                 data-testid="button-start-planning"
               >
-                <Zap className="h-5 w-5" />
-                Calculate Free — No Login
+                <ArrowRight className="h-5 w-5" />
+                Start My Free Plan
               </button>
               <button
                 className="flex items-center justify-center gap-2 rounded-full font-semibold text-base"

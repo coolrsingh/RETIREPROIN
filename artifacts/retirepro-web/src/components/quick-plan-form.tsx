@@ -561,7 +561,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             className="px-8"
             data-testid="button-create-plan"
           >
-            {isLoading ? "Creating Plan..." : "Create Quick Plan"}
+            {isLoading ? "Generating your plan…" : "Generate My Plan →"}
           </Button>
         </div>
       </form>
