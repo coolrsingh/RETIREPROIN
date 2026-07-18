@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, HelpCircle, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BrandLogo from "@/components/brand-logo";
 
 const faqs = [
@@ -92,14 +92,36 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
 }
 
 export default function FAQ() {
+  useEffect(() => {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map(faq => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
+    };
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "faq-schema";
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+    document.title = "Retirement Planning FAQ — India | RetirePro";
+    return () => {
+      document.getElementById("faq-schema")?.remove();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <Link href="/">
-            <BrandLogo textClassName="text-slate-900" />
-          </Link>
+          <BrandLogo textClassName="text-slate-900" />
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
             <Link href="/blog" className="hover:text-orange-600 transition-colors">Blog</Link>
             <Link href="/faq" className="text-orange-600">FAQ</Link>
