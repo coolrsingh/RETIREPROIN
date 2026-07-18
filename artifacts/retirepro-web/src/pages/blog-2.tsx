@@ -232,9 +232,34 @@ export default function Blog2() {
           <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-8 text-center text-white">
             <h2 className="text-2xl font-bold mb-3">See How NPS, PPF, and SIP Work Together For You</h2>
             <p className="text-emerald-100 mb-6">Use the free Retirement Calculator — no login required.</p>
-            <Link href="/" className="inline-block bg-white text-emerald-700 font-bold px-8 py-3 rounded-full hover:bg-emerald-50 transition-colors">
+            <Link href="/free-plan" className="inline-block bg-white text-emerald-700 font-bold px-8 py-3 rounded-full hover:bg-emerald-50 transition-colors">
               Calculate My Retirement Corpus →
             </Link>
+          </div>
+
+          {/* Related Articles */}
+          <div className="mt-12 pt-10 border-t border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900 mb-5">Related Articles</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { slug: "how-much-to-retire-india", title: "How Much Money Do You Need to Retire in India?", tag: "Retirement Basics", tagColor: "text-orange-600", gradient: "from-orange-500 to-red-600" },
+                { slug: "why-indians-fail-retirement", title: "Why Most Indians Fail to Plan for Retirement", tag: "Retirement Basics", tagColor: "text-blue-600", gradient: "from-blue-600 to-indigo-700" },
+                { slug: "real-estate-rich-retirement-illusion", title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are Most Exposed", tag: "HNI Planning", tagColor: "text-orange-600", gradient: "from-slate-700 to-slate-900" },
+              ].map(post => (
+                <Link key={post.slug} href={`/blog/${post.slug}`} className="group block bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                  <div className={`h-20 bg-gradient-to-br ${post.gradient}`} />
+                  <div className="p-4">
+                    <span className={`text-xs font-semibold ${post.tagColor}`}>{post.tag}</span>
+                    <p className="text-sm font-semibold text-slate-800 mt-1 leading-snug group-hover:text-emerald-600 transition-colors">{post.title}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-8">
+              <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 text-sm">
+                ← Back to all articles
+              </Link>
+            </div>
           </div>
         </motion.div>
       </article>

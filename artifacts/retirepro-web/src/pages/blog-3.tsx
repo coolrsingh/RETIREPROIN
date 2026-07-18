@@ -396,10 +396,29 @@ export default function Blog3() {
             </Link>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-slate-200 pb-16">
-            <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 text-sm">
-              ← Back to all articles
-            </Link>
+          {/* Related Articles */}
+          <div className="mt-12 pt-10 border-t border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900 mb-5">Related Articles</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { slug: "how-much-to-retire-india", title: "How Much Money Do You Need to Retire in India?", tag: "Retirement Basics", tagColor: "text-orange-600", gradient: "from-orange-500 to-red-600" },
+                { slug: "why-indians-fail-retirement", title: "Why Most Indians Fail to Plan for Retirement", tag: "Retirement Basics", tagColor: "text-blue-600", gradient: "from-blue-600 to-indigo-700" },
+                { slug: "nps-vs-ppf-vs-sip", title: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Corpus?", tag: "Investment Guide", tagColor: "text-emerald-600", gradient: "from-emerald-600 to-teal-700" },
+              ].map(post => (
+                <Link key={post.slug} href={`/blog/${post.slug}`} className="group block bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                  <div className={`h-20 bg-gradient-to-br ${post.gradient}`} />
+                  <div className="p-4">
+                    <span className={`text-xs font-semibold ${post.tagColor}`}>{post.tag}</span>
+                    <p className="text-sm font-semibold text-slate-800 mt-1 leading-snug group-hover:text-orange-600 transition-colors">{post.title}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-8 pb-16">
+              <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 text-sm">
+                ← Back to all articles
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>

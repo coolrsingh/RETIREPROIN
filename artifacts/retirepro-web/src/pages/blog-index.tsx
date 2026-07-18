@@ -5,6 +5,16 @@ import BrandLogo from "@/components/brand-logo";
 
 const POSTS = [
   {
+    slug: "how-much-to-retire-india",
+    title: "How Much Money Do You Need to Retire in India? [2026 Complete Guide]",
+    excerpt: "₹1.5 crore or ₹6.5 crore? The answer depends on your city, lifestyle, and one number most calculators ignore: inflation. Here's the complete India-specific formula.",
+    readTime: "10 min read",
+    tag: "Retirement Basics",
+    tagColor: "bg-orange-100 text-orange-700",
+    gradient: "from-orange-500 to-red-600",
+    date: "18 Jul 2026",
+  },
+  {
     slug: "real-estate-rich-retirement-illusion",
     title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed",
     excerpt: "Most Indian HNIs believe their net worth guarantees a comfortable retirement. Here's the quiet arithmetic that says otherwise — and what to do about it.",
