@@ -21,6 +21,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import Disclaimer from "@/pages/disclaimer";
 import RefundPolicy from "@/pages/refund-policy";
 import TermsAndConditions from "@/pages/terms-and-conditions";
+import FAQ from "@/pages/faq";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/refund-policy" component={RefundPolicy} />
       <Route path="/terms-and-conditions" component={TermsAndConditions} />
+      <Route path="/faq" component={FAQ} />
 
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
