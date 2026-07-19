@@ -312,6 +312,45 @@ export default function Landing() {
           }
         }
 
+        @media (max-width: 359px) {
+          .hero-heading {
+            font-size: 28px !important;
+            line-height: 1.15 !important;
+            margin-bottom: 16px !important;
+          }
+          .hero-subtext {
+            font-size: 15px !important;
+            margin-bottom: 20px !important;
+          }
+          .hero-badge {
+            font-size: 11px !important;
+            padding: 5px 10px !important;
+            margin-bottom: 14px !important;
+          }
+          .hero-plan-card {
+            padding: 18px 14px !important;
+          }
+          .hero-sip-pill {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 2px !important;
+            padding: 10px 12px !important;
+          }
+          .hero-cta-btn-primary {
+            padding: 0 20px !important;
+            width: 100%;
+            justify-content: center;
+          }
+          .hero-cta-btn-secondary {
+            padding: 0 16px !important;
+            width: 100%;
+            justify-content: center;
+          }
+          .hero-cta-row {
+            flex-direction: column !important;
+          }
+        }
+
         .trust-row {
           display: flex;
           flex-wrap: wrap;
@@ -375,25 +414,25 @@ export default function Landing() {
             <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-6"
+                className="hero-badge inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-6"
                 style={{ background: "rgba(232,148,10,0.12)", border: "1px solid rgba(232,148,10,0.3)", color: "#92660A" }}
               >
                 <Star className="h-3.5 w-3.5" style={{ fill: "#92660A" }} />
                 Free · No account required · India-specific
               </motion.div>
 
-              <h1 style={{ fontSize: "clamp(42px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.06, color: "var(--ink)", marginBottom: "24px", fontFamily: "var(--font-serif)" }}>
+              <h1 className="hero-heading" style={{ fontSize: "clamp(42px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.06, color: "var(--ink)", marginBottom: "24px", fontFamily: "var(--font-serif)" }}>
                 Know your number<br />
                 <em style={{ color: "var(--saffron)", fontStyle: "italic" }}>before it's too late.</em>
               </h1>
 
-              <p style={{ fontSize: "19px", lineHeight: 1.65, color: "var(--slate-mid)", marginBottom: "32px", maxWidth: "480px" }}>
+              <p className="hero-subtext" style={{ fontSize: "19px", lineHeight: 1.65, color: "var(--slate-mid)", marginBottom: "32px", maxWidth: "480px" }}>
                 Build a complete, personalised retirement plan — income, expenses, children's education, loans, mini-retirement breaks, and more. Takes 60 seconds.
               </p>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="hero-cta-row flex flex-wrap gap-3">
                 <button
-                  className="flex items-center gap-2 rounded-full text-white font-bold text-base"
+                  className="hero-cta-btn-primary flex items-center gap-2 rounded-full text-white font-bold text-base"
                   style={{ background: "var(--orange)", height: "52px", padding: "0 32px", animation: "orangePulse 2.5s ease-in-out infinite" }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLButtonElement).style.animation = "none";
@@ -413,7 +452,7 @@ export default function Landing() {
                 </button>
 
                 <button
-                  className="flex items-center gap-2 rounded-full font-semibold text-base"
+                  className="hero-cta-btn-secondary flex items-center gap-2 rounded-full font-semibold text-base"
                   style={{ height: "52px", padding: "0 28px", background: "transparent", border: "1.5px solid rgba(26,18,8,0.25)", color: "var(--ink)", transition: "all 0.2s ease" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(26,18,8,0.06)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
@@ -434,6 +473,7 @@ export default function Landing() {
               className="flex items-center justify-center"
             >
               <div
+                className="hero-plan-card"
                 style={{
                   width: "100%", maxWidth: 420,
                   background: "#FFFFFF",
@@ -473,7 +513,7 @@ export default function Landing() {
                 </div>
 
                 {/* SIP pill */}
-                <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "var(--ink)" }}>
+                <div className="hero-sip-pill rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "var(--ink)" }}>
                   <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>Monthly SIP needed</span>
                   <span className="font-bold landing-num" style={{ color: "var(--saffron-light)", fontSize: "15px" }}>₹12,400/mo</span>
                 </div>
