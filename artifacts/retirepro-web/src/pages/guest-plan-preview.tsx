@@ -89,7 +89,7 @@ export default function GuestPlanPreview() {
 
   if (!calculations) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ivory)" }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" />
       </div>
     );
@@ -105,20 +105,29 @@ export default function GuestPlanPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen" style={{ background: "var(--ivory)" }}>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: "rgba(251,248,242,0.92)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(232,148,10,0.18)",
+          boxShadow: "0 1px 8px rgba(26,18,8,0.06)",
+        }}
+      >
         <div className="max-w-[1280px] mx-auto px-6 flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
             <BrandLogo textClassName="text-slate-900" />
             <nav className="hidden md:flex gap-6">
-              <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium text-sm">Dashboard</Link>
-              <span className="text-orange-500 font-medium text-sm">Preview Plan</span>
+              <Link href="/" className="font-medium text-sm" style={{ color: "var(--slate-mid)" }}>Dashboard</Link>
+              <span className="font-semibold text-sm" style={{ color: "var(--saffron)" }}>Preview Plan</span>
             </nav>
           </div>
           <Button
             onClick={() => { window.location.href = "/api/login"; }}
-            className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full px-5 h-9 text-sm font-semibold"
+            className="text-white rounded-full px-5 h-9 text-sm font-semibold"
+            style={{ background: "var(--orange)" }}
           >
             Sign In to Save
           </Button>
@@ -169,10 +178,20 @@ export default function GuestPlanPreview() {
           </div>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">{planName}</h1>
+              <h1
+                className="text-3xl font-bold"
+                style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+              >
+                {planName}
+              </h1>
               <div className="flex items-center gap-3 mt-2">
-                <Badge className="bg-orange-100 text-orange-700 border-orange-200">Preview Plan</Badge>
-                <span className="text-slate-500 text-sm">Calculated just now · Not saved</span>
+                <Badge
+                  className="border"
+                  style={{ background: "rgba(232,148,10,0.1)", color: "#92660A", borderColor: "rgba(232,148,10,0.3)" }}
+                >
+                  Preview Plan
+                </Badge>
+                <span className="text-sm" style={{ color: "var(--slate-mid)" }}>Calculated just now · Not saved</span>
               </div>
             </div>
           </div>
@@ -349,15 +368,22 @@ export default function GuestPlanPreview() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-gradient-to-r from-[#0A1628] to-[#0D1B2A] rounded-2xl p-8 text-center text-white mb-8"
+          className="rounded-2xl p-8 text-center text-white mb-8"
+          style={{ background: "linear-gradient(135deg, #1A1208 0%, #2C1F0A 100%)" }}
         >
-          <h2 className="text-2xl font-bold mb-2">Save this plan and track your progress</h2>
-          <p className="text-slate-300 mb-6 max-w-xl mx-auto">
+          <h2
+            className="text-2xl font-bold mb-2"
+            style={{ fontFamily: "var(--font-serif)", color: "#FBF8F2" }}
+          >
+            Save this plan and track your progress
+          </h2>
+          <p className="mb-6 max-w-xl mx-auto" style={{ color: "rgba(251,248,242,0.72)" }}>
             Create a free account to save your plan, adjust assumptions, download your full Excel report, and get year-by-year projections.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full px-8 h-12 text-base font-bold"
+              className="text-white rounded-full px-8 h-12 text-base font-bold"
+              style={{ background: "var(--orange)" }}
               onClick={() => { window.location.href = "/api/login"; }}
             >
               <Zap className="mr-2 h-5 w-5" />
@@ -365,7 +391,8 @@ export default function GuestPlanPreview() {
             </Button>
             <Button
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 rounded-full px-8 h-12 text-base"
+              className="rounded-full px-8 h-12 text-base"
+              style={{ borderColor: "rgba(251,248,242,0.3)", color: "#FBF8F2", background: "transparent" }}
               onClick={() => navigate("/")}
             >
               Recalculate

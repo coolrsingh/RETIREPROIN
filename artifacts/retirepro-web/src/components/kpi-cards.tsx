@@ -24,101 +24,143 @@ const calculateYearsToRetirement = (retirementYear: number) => {
   return Math.max(0, retirementYear - currentYear);
 };
 
+const CARD_BASE: React.CSSProperties = {
+  borderRadius: 16,
+  padding: "20px 22px",
+  background: "#FFFFFF",
+  border: "1px solid rgba(232,148,10,0.18)",
+  boxShadow: "0 2px 12px rgba(26,18,8,0.06)",
+};
+
+const NUM_STYLE: React.CSSProperties = {
+  fontFamily: "'Fraunces', Georgia, serif",
+  fontSize: "1.5rem",
+  fontWeight: 700,
+  lineHeight: 1.1,
+  marginTop: 4,
+};
+
 export default function KpiCards({ calculations }: KpiCardsProps) {
   const { summary } = calculations;
   const yearsToRetirement = calculateYearsToRetirement(summary.retirementYear);
-  
+  const funded = summary.gap <= 0;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-required-corpus">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-600">Required Corpus</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">
-              {formatCurrency(summary.requiredCorpusAtRetirement)}
-            </p>
-          </div>
-          <div className="p-3 bg-red-100 rounded-lg">
-            <div className="w-6 h-6 text-red-600">🎯</div>
-          </div>
-        </div>
-        <div className="flex items-center mt-4">
-          <span className="text-sm text-slate-500">Target retirement corpus needed</span>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-projected-corpus">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-600">Projected Corpus</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">
-              {formatCurrency(summary.projectedCorpusAtRetirement)}
-            </p>
-          </div>
-          <div className="p-3 bg-blue-100 rounded-lg">
-            <div className="w-6 h-6 text-blue-600">📈</div>
-          </div>
-        </div>
-        <div className="flex items-center mt-4">
-          <span className="text-sm text-slate-500">Based on current plan</span>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-funding-gap">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-600">Funding Gap</p>
-            <p className={`text-2xl font-bold mt-1 ${summary.gap > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {summary.gap > 0 ? formatCurrency(summary.gap) : '₹0'}
-            </p>
-          </div>
-          <div className={`p-3 rounded-lg ${summary.gap > 0 ? 'bg-red-100' : 'bg-green-100'}`}>
-            <div className={`w-6 h-6 ${summary.gap > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {summary.gap > 0 ? '⚠️' : '✅'}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center mt-4">
-          <span className={`text-sm ${summary.gap > 0 ? 'text-red-600' : 'text-green-600'}`}>
-            {summary.gap > 0 ? 'Additional savings needed' : 'On track for retirement'}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      {/* Required Corpus */}
+      <div style={CARD_BASE} data-testid="kpi-required-corpus">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
+            Required Corpus
+          </p>
+          <span
+            className="flex-shrink-0 flex items-center justify-center rounded-lg"
+            style={{ width: 34, height: 34, background: "rgba(232,148,10,0.1)", fontSize: 16 }}
+          >
+            🎯
           </span>
         </div>
+        <p style={{ ...NUM_STYLE, color: "#1A1208" }}>
+          {formatCurrency(summary.requiredCorpusAtRetirement)}
+        </p>
+        <p className="text-xs mt-2" style={{ color: "#64748B" }}>Target retirement corpus needed</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-years-to-retirement">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-600">Years to Retirement</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">
-              {yearsToRetirement}
-            </p>
-          </div>
-          <div className="p-3 bg-green-100 rounded-lg">
-            <div className="w-6 h-6 text-green-600">📅</div>
-          </div>
+      {/* Projected Corpus */}
+      <div style={CARD_BASE} data-testid="kpi-projected-corpus">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#15803D" }}>
+            Projected Corpus
+          </p>
+          <span
+            className="flex-shrink-0 flex items-center justify-center rounded-lg"
+            style={{ width: 34, height: 34, background: "rgba(22,163,74,0.1)", fontSize: 16 }}
+          >
+            📈
+          </span>
         </div>
-        <div className="flex items-center mt-4">
-          <span className="text-sm text-slate-500">Time to build your corpus</span>
-        </div>
+        <p style={{ ...NUM_STYLE, color: funded ? "#15803D" : "#1A1208" }}>
+          {formatCurrency(summary.projectedCorpusAtRetirement)}
+        </p>
+        <p className="text-xs mt-2" style={{ color: "#64748B" }}>Based on current plan</p>
       </div>
 
-      {/* SIP Required Card - only show if there's a gap */}
+      {/* Funding Gap */}
+      <div
+        style={{
+          ...CARD_BASE,
+          background: funded ? "rgba(22,163,74,0.05)" : "rgba(241,90,36,0.05)",
+          border: funded ? "1px solid rgba(22,163,74,0.25)" : "1px solid rgba(241,90,36,0.25)",
+        }}
+        data-testid="kpi-funding-gap"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: funded ? "#15803D" : "#C2410C" }}>
+            Funding Gap
+          </p>
+          <span
+            className="flex-shrink-0 flex items-center justify-center rounded-lg"
+            style={{
+              width: 34, height: 34,
+              background: funded ? "rgba(22,163,74,0.12)" : "rgba(241,90,36,0.12)",
+              fontSize: 16,
+            }}
+          >
+            {funded ? "✅" : "⚠️"}
+          </span>
+        </div>
+        <p style={{ ...NUM_STYLE, color: funded ? "#15803D" : "#C2410C" }}>
+          {funded ? "₹0" : formatCurrency(summary.gap)}
+        </p>
+        <p className="text-xs mt-2" style={{ color: funded ? "#15803D" : "#C2410C" }}>
+          {funded ? "On track for retirement" : "Additional savings needed"}
+        </p>
+      </div>
+
+      {/* Years to Retirement */}
+      <div style={CARD_BASE} data-testid="kpi-years-to-retirement">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
+            Years to Retire
+          </p>
+          <span
+            className="flex-shrink-0 flex items-center justify-center rounded-lg"
+            style={{ width: 34, height: 34, background: "rgba(232,148,10,0.1)", fontSize: 16 }}
+          >
+            📅
+          </span>
+        </div>
+        <p style={{ ...NUM_STYLE, color: "#1A1208" }}>
+          {yearsToRetirement}
+        </p>
+        <p className="text-xs mt-2" style={{ color: "#64748B" }}>Time to build your corpus</p>
+      </div>
+
+      {/* SIP Required — only show if there's a gap */}
       {summary.gap > 0 && summary.sipRequired && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="kpi-sip-required">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">SIP Required</p>
-              <p className="text-2xl font-bold text-amber-600 mt-1">
-                ₹{(summary.sipRequired / 1000).toFixed(0)}K/month
-              </p>
-            </div>
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <div className="w-6 h-6 text-amber-600">💰</div>
-            </div>
+        <div
+          style={{
+            ...CARD_BASE,
+            background: "rgba(232,148,10,0.05)",
+            border: "1px solid rgba(232,148,10,0.3)",
+          }}
+          data-testid="kpi-sip-required"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
+              SIP Required
+            </p>
+            <span
+              className="flex-shrink-0 flex items-center justify-center rounded-lg"
+              style={{ width: 34, height: 34, background: "rgba(232,148,10,0.15)", fontSize: 16 }}
+            >
+              💰
+            </span>
           </div>
-          <div className="flex items-center mt-4">
-            <span className="text-sm text-slate-500">To bridge funding gap</span>
-          </div>
+          <p style={{ ...NUM_STYLE, color: "#92660A" }}>
+            ₹{(summary.sipRequired / 1000).toFixed(0)}K<span style={{ fontSize: "0.85rem", fontWeight: 600 }}>/mo</span>
+          </p>
+          <p className="text-xs mt-2" style={{ color: "#64748B" }}>To bridge funding gap</p>
         </div>
       )}
     </div>

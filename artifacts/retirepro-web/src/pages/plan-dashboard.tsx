@@ -104,10 +104,10 @@ export default function PlanDashboard() {
 
   if (isLoading || scenarioLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ivory)" }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F15A24] mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading your plan...</p>
+          <p style={{ color: "var(--slate-mid)" }}>Loading your plan...</p>
         </div>
       </div>
     );
@@ -115,11 +115,11 @@ export default function PlanDashboard() {
 
   if (!scenario) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ivory)" }}>
+        <Card className="w-full max-w-md mx-4" style={{ border: "1px solid rgba(232,148,10,0.18)" }}>
           <CardContent className="pt-6 text-center">
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Plan Not Found</h1>
-            <p className="text-slate-600 mb-4">The retirement plan you're looking for doesn't exist.</p>
+            <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}>Plan Not Found</h1>
+            <p className="mb-4" style={{ color: "var(--slate-mid)" }}>The retirement plan you're looking for doesn't exist.</p>
             <Link href="/">
               <Button data-testid="button-back-home">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -135,18 +135,26 @@ export default function PlanDashboard() {
   const isAdmin = (user as any)?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: "var(--ivory)" }}>
       {/* Header */}
-      <header className="bg-white/85 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: "rgba(251,248,242,0.92)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(232,148,10,0.18)",
+          boxShadow: "0 1px 8px rgba(26,18,8,0.06)",
+        }}
+      >
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <BrandLogo textClassName="text-slate-800" />
               <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-slate-600 hover:text-primary-600 font-medium" data-testid="link-dashboard">
+                <Link href="/" className="font-medium" style={{ color: "var(--slate-mid)" }} data-testid="link-dashboard">
                   Dashboard
                 </Link>
-                <span className="text-primary-600 font-medium">My Plans</span>
+                <span className="font-semibold" style={{ color: "var(--saffron)" }}>My Plans</span>
               </nav>
             </div>
             <ProfileMenu user={user} isAdmin={isAdmin} />
@@ -155,13 +163,13 @@ export default function PlanDashboard() {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-slate-200">
+      <div style={{ background: "rgba(251,248,242,0.6)", borderBottom: "1px solid rgba(232,148,10,0.12)" }}>
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="h-auto p-0 bg-transparent">
-              <TabsTrigger 
-                value="dashboard" 
-                className="py-4 px-1 border-b-2 border-transparent data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 rounded-none"
+              <TabsTrigger
+                value="dashboard"
+                className="py-4 px-1 border-b-2 border-transparent data-[state=active]:border-[#E8940A] data-[state=active]:text-[#92660A] rounded-none"
                 data-testid="tab-dashboard"
               >
                 <ChartLine className="mr-2 h-4 w-4" />
@@ -185,14 +193,18 @@ export default function PlanDashboard() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900" data-testid="text-scenario-name">
+              <h1
+                className="text-3xl font-bold"
+                style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                data-testid="text-scenario-name"
+              >
                 {scenario.name}
               </h1>
               <div className="flex items-center space-x-4 mt-1">
-                <span className="text-slate-600">
-                  Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN', { 
-                    day: 'numeric', 
-                    month: 'long', 
+                <span style={{ color: "var(--slate-mid)" }}>
+                  Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'long',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
@@ -322,33 +334,19 @@ export default function PlanDashboard() {
                     </Badge>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={chartTimeRange === "10Y" ? "bg-primary-100 text-primary-700" : ""}
-                      onClick={() => setChartTimeRange("10Y")}
-                      data-testid="button-chart-10y"
-                    >
-                      10Y
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={chartTimeRange === "25Y" ? "bg-primary-100 text-primary-700" : ""}
-                      onClick={() => setChartTimeRange("25Y")}
-                      data-testid="button-chart-25y"
-                    >
-                      25Y
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={chartTimeRange === "Life" ? "bg-primary-100 text-primary-700" : ""}
-                      onClick={() => setChartTimeRange("Life")}
-                      data-testid="button-chart-life"
-                    >
-                      Life
-                    </Button>
+                    {["10Y", "25Y", "Life"].map(range => (
+                      <Button
+                        key={range}
+                        variant="outline"
+                        size="sm"
+                        className={chartTimeRange === range ? "border" : ""}
+                        style={chartTimeRange === range ? { background: "rgba(232,148,10,0.1)", color: "#92660A", borderColor: "rgba(232,148,10,0.35)" } : {}}
+                        onClick={() => setChartTimeRange(range)}
+                        data-testid={`button-chart-${range.toLowerCase()}`}
+                      >
+                        {range}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               </CardHeader>
