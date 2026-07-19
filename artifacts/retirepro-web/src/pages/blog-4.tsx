@@ -3,6 +3,43 @@ import { motion } from "framer-motion";
 import { ArrowRight, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 
+const ARTICLE_META = {
+  headline: "How Much Money Do You Need to Retire in India? [2026 Complete Guide]",
+  description: "For a comfortable retirement in India, you need ₹1.5 crore to ₹5 crore — depending on your city, lifestyle, and age. Here's the exact formula, city-wise breakdown, and the inflation trap most Indians fall into.",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
+  slug: "how-much-to-retire-india",
+  readTime: "10 min read",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: ARTICLE_META.headline,
+  description: ARTICLE_META.description,
+  author: {
+    "@type": "Organization",
+    name: "RetirePro Editorial",
+    url: "https://retirepro.in",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "RetirePro",
+    url: "https://retirepro.in",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://retirepro.in/og-image.jpg",
+    },
+  },
+  datePublished: ARTICLE_META.datePublished,
+  dateModified: ARTICLE_META.dateModified,
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+  },
+  image: "https://retirepro.in/og-image.jpg",
+};
+
 const RELATED = [
   {
     slug: "why-indians-fail-retirement",
@@ -98,6 +135,11 @@ function RelatedArticles() {
 export default function Blog4() {
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <BrandLogo textClassName="text-slate-800" />
@@ -112,7 +154,7 @@ export default function Blog4() {
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="inline-block bg-white/15 text-orange-100 text-sm font-semibold px-3 py-1 rounded-full mb-6">
-              Retirement Basics · 10 min read
+              Retirement Basics · {ARTICLE_META.readTime}
             </span>
             <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
               How Much Money Do You Need to Retire in India? [2026 Complete Guide]
@@ -123,7 +165,7 @@ export default function Blog4() {
             <div className="flex items-center gap-4 text-sm text-orange-200">
               <span>RetirePro Editorial</span>
               <span>·</span>
-              <span>Jul 2026</span>
+              <time dateTime={ARTICLE_META.datePublished}>18 Jul 2026</time>
             </div>
           </motion.div>
         </div>

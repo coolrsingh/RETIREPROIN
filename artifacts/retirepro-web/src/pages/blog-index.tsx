@@ -13,6 +13,7 @@ const POSTS = [
     tagColor: "bg-orange-100 text-orange-700",
     gradient: "from-orange-500 to-red-600",
     date: "18 Jul 2026",
+    dateTime: "2026-07-18",
   },
   {
     slug: "real-estate-rich-retirement-illusion",
@@ -23,6 +24,7 @@ const POSTS = [
     tagColor: "bg-orange-100 text-orange-700",
     gradient: "from-slate-700 to-slate-900",
     date: "12 Jul 2026",
+    dateTime: "2026-07-12",
   },
   {
     slug: "why-indians-fail-retirement",
@@ -32,7 +34,8 @@ const POSTS = [
     tag: "Retirement Basics",
     tagColor: "bg-blue-100 text-blue-700",
     gradient: "from-blue-600 to-indigo-700",
-    date: null,
+    date: "10 Jul 2026",
+    dateTime: "2026-07-10",
   },
   {
     slug: "nps-vs-ppf-vs-sip",
@@ -42,7 +45,8 @@ const POSTS = [
     tag: "Investment Guide",
     tagColor: "bg-emerald-100 text-emerald-700",
     gradient: "from-emerald-600 to-teal-700",
-    date: null,
+    date: "11 Jul 2026",
+    dateTime: "2026-07-11",
   },
 ];
 
@@ -93,7 +97,8 @@ export default function BlogIndex() {
                         <div className="flex items-center gap-2 text-xs text-slate-400">
                           <Clock className="h-3.5 w-3.5" />
                           <span>{post.readTime}</span>
-                          {post.date && <span className="text-orange-500 font-medium">· {post.date}</span>}
+                          <span>·</span>
+                          <time dateTime={post.dateTime} className="text-orange-500 font-medium">{post.date}</time>
                         </div>
                         <span className="flex items-center gap-1 text-sm font-semibold text-blue-600 group-hover:gap-2 transition-all">
                           Read article <ArrowRight className="h-4 w-4" />

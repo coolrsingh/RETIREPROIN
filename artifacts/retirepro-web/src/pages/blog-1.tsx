@@ -3,6 +3,43 @@ import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, BookOpen, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 
+const ARTICLE_META = {
+  headline: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
+  description: "93% of Indians over 50 regret not starting retirement planning sooner. Here's what goes wrong and the one small shift that changes everything.",
+  datePublished: "2026-07-10",
+  dateModified: "2026-07-10",
+  slug: "why-indians-fail-retirement",
+  readTime: "8 min read",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: ARTICLE_META.headline,
+  description: ARTICLE_META.description,
+  author: {
+    "@type": "Organization",
+    name: "RetirePro Editorial",
+    url: "https://retirepro.in",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "RetirePro",
+    url: "https://retirepro.in",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://retirepro.in/og-image.jpg",
+    },
+  },
+  datePublished: ARTICLE_META.datePublished,
+  dateModified: ARTICLE_META.dateModified,
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+  },
+  image: "https://retirepro.in/og-image.jpg",
+};
+
 function ArticleSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-10">
@@ -39,6 +76,11 @@ function StatBox({ number, label }: { number: string; label: string }) {
 export default function Blog1() {
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <BrandLogo textClassName="text-slate-800" />
@@ -53,14 +95,19 @@ export default function Blog1() {
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="inline-block bg-white/15 text-blue-200 text-sm font-semibold px-3 py-1 rounded-full mb-6">
-              Retirement Basics · 8 min read
+              Retirement Basics · {ARTICLE_META.readTime}
             </span>
             <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
               Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything
             </h1>
-            <p className="text-blue-200 text-lg leading-relaxed">
+            <p className="text-blue-200 text-lg leading-relaxed mb-6">
               Most Indians retire with far less than they need — not because they didn't earn enough, but because of habits formed too late. Here's what goes wrong and the one small shift that changes everything.
             </p>
+            <div className="flex items-center gap-3 text-sm text-blue-300">
+              <span>RetirePro Editorial</span>
+              <span>·</span>
+              <time dateTime={ARTICLE_META.datePublished}>10 Jul 2026</time>
+            </div>
           </motion.div>
         </div>
       </div>

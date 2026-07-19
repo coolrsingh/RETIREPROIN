@@ -8,7 +8,42 @@ import {
   CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Cell,
 } from "recharts";
 
-const PUBLISH_DATE = "12 July 2026";
+const ARTICLE_META = {
+  headline: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed",
+  description: "Most Indian HNIs believe their net worth guarantees a comfortable retirement. Here's the quiet arithmetic that says otherwise — and what to do about it.",
+  datePublished: "2026-07-12",
+  dateModified: "2026-07-12",
+  slug: "real-estate-rich-retirement-illusion",
+  readTime: "9 min read",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: ARTICLE_META.headline,
+  description: ARTICLE_META.description,
+  author: {
+    "@type": "Organization",
+    name: "RetirePro Editorial",
+    url: "https://retirepro.in",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "RetirePro",
+    url: "https://retirepro.in",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://retirepro.in/og-image.jpg",
+    },
+  },
+  datePublished: ARTICLE_META.datePublished,
+  dateModified: ARTICLE_META.dateModified,
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+  },
+  image: "https://retirepro.in/og-image.jpg",
+};
 
 function ReadingProgress() {
   const [pct, setPct] = useState(0);
@@ -212,6 +247,10 @@ function YieldGapChart() {
 export default function Blog3() {
   return (
     <div className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ReadingProgress />
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
@@ -226,7 +265,7 @@ export default function Blog3() {
         <div className="max-w-[960px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="inline-block bg-white/10 text-orange-300 text-sm font-semibold px-3 py-1 rounded-full mb-6 border border-white/10">
-              HNI Planning · 9 min read
+              HNI Planning · {ARTICLE_META.readTime}
             </span>
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-white">
               The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed
@@ -237,7 +276,7 @@ export default function Blog3() {
             <div className="flex items-center gap-4 text-sm text-slate-400">
               <span>RetirePro Editorial</span>
               <span>·</span>
-              <span>{PUBLISH_DATE}</span>
+              <time dateTime={ARTICLE_META.datePublished}>12 Jul 2026</time>
             </div>
           </motion.div>
         </div>

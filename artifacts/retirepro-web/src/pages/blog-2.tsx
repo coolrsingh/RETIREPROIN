@@ -3,6 +3,43 @@ import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 
+const ARTICLE_META = {
+  headline: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
+  description: "Real numbers, no fluff. We compare NPS, PPF, and equity mutual fund SIPs with India-specific context so you can stop guessing and start investing.",
+  datePublished: "2026-07-11",
+  dateModified: "2026-07-11",
+  slug: "nps-vs-ppf-vs-sip",
+  readTime: "9 min read",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: ARTICLE_META.headline,
+  description: ARTICLE_META.description,
+  author: {
+    "@type": "Organization",
+    name: "RetirePro Editorial",
+    url: "https://retirepro.in",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "RetirePro",
+    url: "https://retirepro.in",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://retirepro.in/og-image.jpg",
+    },
+  },
+  datePublished: ARTICLE_META.datePublished,
+  dateModified: ARTICLE_META.dateModified,
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+  },
+  image: "https://retirepro.in/og-image.jpg",
+};
+
 function ComparisonTable() {
   const rows = [
     { feature: "Expected Returns", nps: "9–12% (market-linked)", ppf: "7.1% (fixed, govt.)", sip: "12–15% (market-linked)" },
@@ -71,6 +108,11 @@ function CorpusComparison() {
 export default function Blog2() {
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -86,14 +128,19 @@ export default function Blog2() {
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="inline-block bg-white/15 text-emerald-200 text-sm font-semibold px-3 py-1 rounded-full mb-6">
-              Investment Guide · 9 min read
+              Investment Guide · {ARTICLE_META.readTime}
             </span>
             <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
               NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?
             </h1>
-            <p className="text-emerald-200 text-lg leading-relaxed">
+            <p className="text-emerald-200 text-lg leading-relaxed mb-6">
               Real numbers. No fluff. India-specific context. We compare all three so you can stop guessing and start investing.
             </p>
+            <div className="flex items-center gap-3 text-sm text-emerald-300">
+              <span>RetirePro Editorial</span>
+              <span>·</span>
+              <time dateTime={ARTICLE_META.datePublished}>11 Jul 2026</time>
+            </div>
           </motion.div>
         </div>
       </div>
