@@ -22,6 +22,22 @@ import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
 import { apiRequest } from "@/lib/queryClient";
 
+interface ScenarioData {
+  id: string;
+  name: string;
+  updatedAt: string | Date;
+  assumptions?: {
+    inflationHeadline?: string;
+    inflationEdu?: string;
+    inflationHealth?: string;
+    returnPre?: string;
+    returnPost?: string;
+    lifeExpectancy?: number;
+    taxRegime?: string;
+    source?: string;
+  };
+}
+
 export default function PlanDashboard() {
   const [match, params] = useRoute("/plan/:id");
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -34,7 +50,7 @@ export default function PlanDashboard() {
   // Live return rate override (user can tweak without saving a new plan)
   const [liveRates, setLiveRates] = useState<{ pre: string; post: string } | null>(null);
 
-  const { data: scenario, isLoading: scenarioLoading } = useQuery({
+  const { data: scenario, isLoading: scenarioLoading } = useQuery<ScenarioData>({
     queryKey: ["/api/scenarios", params?.id],
     enabled: isAuthenticated && !!params?.id,
   });
@@ -77,6 +93,7 @@ export default function PlanDashboard() {
       const timer = setTimeout(() => setShowExportBanner(true), 1500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [calculations, calculationsLoading]);
 
   useEffect(() => {

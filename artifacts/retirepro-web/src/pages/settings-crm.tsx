@@ -24,16 +24,27 @@ const crmDefaultsSchema = z.object({
   returnPre: z.number().min(0).max(30),
   returnPost: z.number().min(0).max(30),
   lifeExpectancy: z.number().min(60).max(100),
+  taxRegime: z.enum(["old", "new"]).default("new"),
 });
 
 type CrmDefaults = z.infer<typeof crmDefaultsSchema>;
+
+interface CrmDefaultsResponse {
+  inflationHeadline?: string | null;
+  inflationEdu?: string | null;
+  inflationHealth?: string | null;
+  returnPre?: string | null;
+  returnPost?: string | null;
+  lifeExpectancy?: number | null;
+  taxRegime?: "old" | "new" | null;
+}
 
 export default function SettingsCrm() {
   const [location, navigate] = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
 
-  const { data: crmDefaults, isLoading: defaultsLoading } = useQuery({
+  const { data: crmDefaults, isLoading: defaultsLoading } = useQuery<CrmDefaultsResponse>({
     queryKey: ["/api/crm/defaults"],
     enabled: isAuthenticated,
   });
@@ -103,7 +114,7 @@ export default function SettingsCrm() {
         inflationHealth: parseFloat(crmDefaults.inflationHealth || '7.0'),
         returnPre: parseFloat(crmDefaults.returnPre || '10.0'),
         returnPost: parseFloat(crmDefaults.returnPost || '7.0'),
-        lifeExpectancy: parseInt(crmDefaults.lifeExpectancy || '85'),
+        lifeExpectancy: crmDefaults.lifeExpectancy ?? 85,
         taxRegime: crmDefaults.taxRegime || 'new',
       });
     }

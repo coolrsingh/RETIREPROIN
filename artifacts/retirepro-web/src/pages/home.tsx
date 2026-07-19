@@ -1,5 +1,11 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+
+interface ScenarioSummary {
+  id: string;
+  name: string;
+  updatedAt: string | Date;
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartLine, Plus, FileText, Zap, Users } from "lucide-react";
@@ -15,7 +21,7 @@ export default function Home() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  const { data: scenarios, isLoading: scenariosLoading } = useQuery({
+  const { data: scenarios, isLoading: scenariosLoading } = useQuery<ScenarioSummary[]>({
     queryKey: ["/api/scenarios"],
     enabled: isAuthenticated,
   });
