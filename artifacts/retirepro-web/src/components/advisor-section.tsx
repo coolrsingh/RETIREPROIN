@@ -41,11 +41,11 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
 
   return (
     <section
+      className="px-5 sm:px-6 py-14 sm:py-20 lg:py-[88px]"
       style={{
         background: "linear-gradient(160deg, #FBF8F2 0%, #FEF3E2 60%, #FBF8F2 100%)",
         borderTop: "1px solid rgba(232,148,10,0.12)",
         borderBottom: "1px solid rgba(232,148,10,0.12)",
-        padding: "88px 24px",
       }}
     >
       <div className="max-w-[1280px] mx-auto">
@@ -110,11 +110,11 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
           {/* ── Right: form card ────────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: 0.1 }}>
             <div
+              className="p-5 sm:p-8 lg:p-9"
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(232,148,10,0.22)",
                 borderRadius: 24,
-                padding: "36px 32px",
                 boxShadow: "0 8px 40px rgba(232,148,10,0.08), 0 2px 12px rgba(0,0,0,0.06)",
               }}
             >
