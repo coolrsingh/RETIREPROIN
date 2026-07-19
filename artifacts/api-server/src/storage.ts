@@ -62,6 +62,7 @@ export interface IStorage {
   
   // Subscriber operations
   subscribeEmail(email: string, source?: string): Promise<Subscriber>;
+  getSubscribers(): Promise<Subscriber[]>;
 
   // Scenario operations
   getScenario(id: string): Promise<Scenario | undefined>;
@@ -514,6 +515,10 @@ export class DatabaseStorage implements IStorage {
       .onConflictDoUpdate({ target: subscribers.email, set: { source } })
       .returning();
     return row;
+  }
+
+  async getSubscribers(): Promise<Subscriber[]> {
+    return db.select().from(subscribers).orderBy(sql`created_at DESC`);
   }
 }
 

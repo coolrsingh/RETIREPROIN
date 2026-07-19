@@ -23,6 +23,7 @@ import Disclaimer from "@/pages/disclaimer";
 import RefundPolicy from "@/pages/refund-policy";
 import TermsAndConditions from "@/pages/terms-and-conditions";
 import FAQ from "@/pages/faq";
+import SubscribersAdmin from "@/pages/subscribers-admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -55,6 +56,7 @@ function Router() {
           <Route path="/plan/:id" component={PlanDashboard} />
           <Route path="/settings/crm" component={SettingsCrm} />
           <Route path="/leads" component={LeadsAdmin} />
+          <Route path="/subscribers" component={SubscribersAdmin} />
         </>
       )}
       <Route component={NotFound} />

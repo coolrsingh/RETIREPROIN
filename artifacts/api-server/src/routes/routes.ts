@@ -805,6 +805,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // List all newsletter subscribers (admin only)
+  app.get('/api/subscribers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const subs = await storage.getSubscribers();
+      res.json(subs);
+    } catch (error) {
+      console.error("Error fetching subscribers:", error);
+      res.status(500).json({ message: "Failed to fetch subscribers" });
+    }
+  });
+
   // Newsletter subscription — stores email for future campaigns
   app.post('/api/subscribe', async (req, res) => {
     try {

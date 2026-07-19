@@ -100,6 +100,12 @@ export default function Home() {
                     Ad Leads
                   </Link>
                 )}
+                {isAdmin && (
+                  <Link href="/subscribers" className="font-medium hover:opacity-80 flex items-center gap-1.5" style={{ color: "var(--slate-mid)" }}>
+                    <Mail className="h-4 w-4" />
+                    Subscribers
+                  </Link>
+                )}
               </nav>
             </div>
             <ProfileMenu user={user} isAdmin={isAdmin} />
