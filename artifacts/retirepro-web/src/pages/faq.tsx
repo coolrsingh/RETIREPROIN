@@ -1,8 +1,9 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, HelpCircle, ArrowRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import BrandLogo from "@/components/brand-logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const faqs = [
   {
@@ -63,6 +64,19 @@ const faqs = [
   },
 ];
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map(faq => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+
 function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
   const [open, setOpen] = useState(false);
   return (
@@ -82,42 +96,34 @@ function FAQItem({ question, answer, index }: { question: string; answer: string
           ? <ChevronUp className="h-5 w-5 text-orange-500 flex-shrink-0" />
           : <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0" />}
       </button>
-      {open && (
+      <div
+        className={`overflow-hidden transition-all duration-300 ${open ? "max-h-[600px]" : "max-h-0"}`}
+        aria-hidden={!open}
+      >
         <div className="px-6 pb-5 pt-1 bg-white border-t border-slate-100">
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed">{answer}</p>
         </div>
-      )}
+      </div>
     </motion.div>
   );
 }
 
 export default function FAQ() {
-  useEffect(() => {
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: faqs.map(faq => ({
-        "@type": "Question",
-        name: faq.question,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: faq.answer,
-        },
-      })),
-    };
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.id = "faq-schema";
-    script.textContent = JSON.stringify(schema);
-    document.head.appendChild(script);
-    document.title = "Retirement Planning FAQ — India | RetirePro";
-    return () => {
-      document.getElementById("faq-schema")?.remove();
-    };
-  }, []);
+  usePageMeta({
+    title: "Retirement Planning FAQ — India | RetirePro",
+    description: "Answers to the most common questions about retirement planning in India — corpus size, SIP, EPF, NPS, and how RetirePro works. No login required.",
+    canonical: "https://retirepro.in/faq",
+    ogUrl: "https://retirepro.in/faq",
+    ogType: "website",
+  });
 
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">

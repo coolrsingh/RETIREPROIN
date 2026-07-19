@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { ChartLine, CheckCircle, TrendingUp, Shield, Clock, ArrowRight, Star, Users, IndianRupee } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const leadSchema = z.object({
   name: z.string().min(2, "Please enter your name"),
@@ -17,6 +18,14 @@ const leadSchema = z.object({
 type LeadForm = z.infer<typeof leadSchema>;
 
 export default function AdLanding() {
+  usePageMeta({
+    title: "Get Your Free Retirement Plan — India | RetirePro",
+    description: "Get a personalised retirement plan from India's top retirement advisors. Free consultation, no commitment. Calculate your corpus in 60 seconds.",
+    canonical: "https://retirepro.in/go",
+    ogUrl: "https://retirepro.in/go",
+    ogType: "website",
+  });
+
   const [submitted, setSubmitted] = useState(false);
   const [utmParams, setUtmParams] = useState<Record<string, string>>({});
 

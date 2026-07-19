@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, BookOpen, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const ARTICLE_META = {
   headline: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
@@ -74,6 +75,14 @@ function StatBox({ number, label }: { number: string; label: string }) {
 }
 
 export default function Blog1() {
+  usePageMeta({
+    title: `${ARTICLE_META.headline} | RetirePro`,
+    description: ARTICLE_META.description,
+    canonical: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogUrl: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogType: "article",
+  });
+
   return (
     <div className="min-h-screen bg-white">
       <script

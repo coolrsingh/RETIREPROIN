@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const ARTICLE_META = {
   headline: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
@@ -106,6 +107,14 @@ function CorpusComparison() {
 }
 
 export default function Blog2() {
+  usePageMeta({
+    title: `${ARTICLE_META.headline} | RetirePro`,
+    description: ARTICLE_META.description,
+    canonical: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogUrl: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogType: "article",
+  });
+
   return (
     <div className="min-h-screen bg-white">
       <script

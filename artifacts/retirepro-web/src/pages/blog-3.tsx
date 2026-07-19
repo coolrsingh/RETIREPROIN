@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, AlertTriangle, CheckCircle, TrendingDown } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import {
   AreaChart, Area, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Cell,
@@ -245,6 +246,14 @@ function YieldGapChart() {
 }
 
 export default function Blog3() {
+  usePageMeta({
+    title: `${ARTICLE_META.headline} | RetirePro`,
+    description: ARTICLE_META.description,
+    canonical: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogUrl: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogType: "article",
+  });
+
   return (
     <div className="bg-white">
       <script

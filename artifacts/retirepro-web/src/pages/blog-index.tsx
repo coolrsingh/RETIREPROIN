@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, Clock, Tag } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const POSTS = [
   {
@@ -51,6 +52,14 @@ const POSTS = [
 ];
 
 export default function BlogIndex() {
+  usePageMeta({
+    title: "Retirement Planning Blog — India | RetirePro",
+    description: "Expert articles on retirement planning in India — corpus targets, NPS vs PPF vs SIP, FIRE, HNI strategies, and more. No login required.",
+    canonical: "https://retirepro.in/blog",
+    ogUrl: "https://retirepro.in/blog",
+    ogType: "website",
+  });
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200">

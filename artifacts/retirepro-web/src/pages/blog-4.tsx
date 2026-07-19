@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const ARTICLE_META = {
   headline: "How Much Money Do You Need to Retire in India? [2026 Complete Guide]",
@@ -133,6 +134,14 @@ function RelatedArticles() {
 }
 
 export default function Blog4() {
+  usePageMeta({
+    title: `${ARTICLE_META.headline} | RetirePro`,
+    description: ARTICLE_META.description,
+    canonical: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogUrl: `https://retirepro.in/blog/${ARTICLE_META.slug}`,
+    ogType: "article",
+  });
+
   return (
     <div className="min-h-screen bg-white">
       <script

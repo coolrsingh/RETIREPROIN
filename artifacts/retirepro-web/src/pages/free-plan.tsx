@@ -6,8 +6,17 @@ import QuickPlanForm from "@/components/quick-plan-form";
 import { type QuickPlan } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Zap, Lock, CheckCircle, AlertTriangle } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export default function FreePlan() {
+  usePageMeta({
+    title: "Free Retirement Calculator India — No Login | RetirePro",
+    description: "Calculate your retirement corpus for free. India-specific assumptions — EPF, NPS, SIP, inflation. Takes 60 seconds. No account needed.",
+    canonical: "https://retirepro.in/free-plan",
+    ogUrl: "https://retirepro.in/free-plan",
+    ogType: "website",
+  });
+
   const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
