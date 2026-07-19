@@ -1,38 +1,38 @@
 import { useState, useRef, useEffect } from "react";
-import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   ChartLine, Zap, Shield, BarChart3, ArrowRight, TrendingUp, Users, Clock,
-  AlertTriangle, BookOpen, Star, Lock
+  AlertTriangle, BookOpen, Star, Lock, Brain, FileText, Sliders
 } from "lucide-react";
-import dashboardImg from "@assets/retirepro.in_plan_58390e0d-7ccd-4950-a3d7-52a04338c489_1781421890049.png";
 import BrandLogo from "@/components/brand-logo";
 import logoUrl from "@/assets/retirepro-logo.png";
 import QuickPlanForm from "@/components/quick-plan-form";
 
-// ─── Animated counter ────────────────────────────────────────────────────────
-function AnimatedNumber({ target, prefix = "", suffix = "" }: { target: number; prefix?: string; suffix?: string }) {
+// ─── Animated counter (integers) ─────────────────────────────────────────────
+function AnimatedNumber({ target, prefix = "", suffix = "", decimals = 0 }: { target: number; prefix?: string; suffix?: string; decimals?: number }) {
   const [displayed, setDisplayed] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const started = useRef(false);
   useEffect(() => {
     const observer = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) {
+      if (e.isIntersecting && !started.current) {
+        started.current = true;
         let start = 0;
         const step = target / 60;
         const id = setInterval(() => {
           start += step;
           if (start >= target) { setDisplayed(target); clearInterval(id); }
-          else setDisplayed(Math.round(start));
+          else setDisplayed(Math.round(start * Math.pow(10, decimals)) / Math.pow(10, decimals));
         }, 16);
       }
     }, { threshold: 0.4 });
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [target]);
-  return <span ref={ref}>{prefix}{displayed.toLocaleString("en-IN")}{suffix}</span>;
+  }, [target, decimals]);
+  const formatted = decimals > 0 ? displayed.toFixed(decimals) : displayed.toLocaleString("en-IN");
+  return <span ref={ref}>{prefix}{formatted}{suffix}</span>;
 }
 
 // ─── Feature card with 3D tilt ───────────────────────────────────────────────
@@ -45,24 +45,59 @@ function TiltCard({ children, className = "" }: { children: React.ReactNode; cla
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     card.style.transition = "none";
-    card.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale(1.03)`;
+    card.style.transform = `perspective(600px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) scale(1.02)`;
   };
   const handleLeave = () => {
     const card = ref.current;
     if (!card) return;
-    card.style.transition = "transform 0.4s ease, box-shadow 0.4s ease";
+    card.style.transition = "transform 0.4s ease";
     card.style.transform = "perspective(600px) rotateY(0deg) rotateX(0deg) scale(1)";
   };
   return (
-    <div
-      ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      className={className}
-      style={{ willChange: "transform", transformStyle: "preserve-3d" }}
-    >
+    <div ref={ref} onMouseMove={handleMove} onMouseLeave={handleLeave} className={className}
+      style={{ willChange: "transform", transformStyle: "preserve-3d" }}>
       {children}
     </div>
+  );
+}
+
+// ─── Typewriter cycling component ────────────────────────────────────────────
+const ADVISOR_INSIGHTS = [
+  "At your current savings rate, your corpus runs out by age 74. You need ₹8,400 more/mo.",
+  "Your education goal for Ananya overlaps with peak EMI years — consider prepaying 20% now.",
+  "Switching ₹5,000/mo from FD to ELSS could close 40% of your retirement gap by 60.",
+  "Your spouse's income stops at 55 — plan a 6-year income bridge to cover the gap.",
+];
+
+function TypewriterCycle() {
+  const [idx, setIdx] = useState(0);
+  const [text, setText] = useState("");
+  const [phase, setPhase] = useState<"typing" | "pause" | "erasing">("typing");
+  useEffect(() => {
+    const full = ADVISOR_INSIGHTS[idx];
+    let timeout: ReturnType<typeof setTimeout>;
+    if (phase === "typing") {
+      if (text.length < full.length) {
+        timeout = setTimeout(() => setText(full.slice(0, text.length + 1)), 28);
+      } else {
+        timeout = setTimeout(() => setPhase("pause"), 2000);
+      }
+    } else if (phase === "pause") {
+      timeout = setTimeout(() => setPhase("erasing"), 400);
+    } else {
+      if (text.length > 0) {
+        timeout = setTimeout(() => setText(text.slice(0, -1)), 14);
+      } else {
+        setIdx((idx + 1) % ADVISOR_INSIGHTS.length);
+        setPhase("typing");
+      }
+    }
+    return () => clearTimeout(timeout);
+  }, [text, phase, idx]);
+  return (
+    <span style={{ fontFamily: "var(--font-mono)", color: "#A3E635" }}>
+      {text}<span style={{ borderRight: "2px solid #A3E635", animation: "cursorBlink 1s step-end infinite" }}>&nbsp;</span>
+    </span>
   );
 }
 
@@ -121,24 +156,221 @@ function LandingPlannerSection() {
 
 // ─── Ticker ───────────────────────────────────────────────────────────────────
 const TICKER_ITEMS = [
-  "NIFTY 50 ▲ 24,850", "SENSEX ▲ 81,200", "INFLATION 6.8%",
-  "AVG RETURN 12.4%", "RETIREMENT AGE 60", "LIFE EXPECTANCY 85 yrs",
-  "CORPUS TARGET ₹3.8 Cr", "EPF WITHDRAWAL 52L+", "SIP GROWTH 15%",
-  "NIFTY 50 ▲ 24,850", "SENSEX ▲ 81,200", "INFLATION 6.8%",
-  "AVG RETURN 12.4%", "RETIREMENT AGE 60", "LIFE EXPECTANCY 85 yrs",
-  "CORPUS TARGET ₹3.8 Cr", "EPF WITHDRAWAL 52L+", "SIP GROWTH 15%",
+  { label: "NIFTY 50", value: "▲ 24,850", up: true },
+  { label: "SENSEX", value: "▲ 81,200", up: true },
+  { label: "INFLATION", value: "6.8%", up: false },
+  { label: "AVG RETURN", value: "12.4%", up: true },
+  { label: "RETIREMENT AGE", value: "60", up: false },
+  { label: "LIFE EXPECTANCY", value: "85 yrs", up: false },
+  { label: "CORPUS TARGET", value: "₹3.8 Cr", up: false },
+  { label: "EPF WITHDRAWAL", value: "52L+", up: true },
+  { label: "SIP GROWTH", value: "15%", up: true },
+  { label: "NIFTY 50", value: "▲ 24,850", up: true },
+  { label: "SENSEX", value: "▲ 81,200", up: true },
+  { label: "INFLATION", value: "6.8%", up: false },
+  { label: "AVG RETURN", value: "12.4%", up: true },
+  { label: "RETIREMENT AGE", value: "60", up: false },
+  { label: "LIFE EXPECTANCY", value: "85 yrs", up: false },
+  { label: "CORPUS TARGET", value: "₹3.8 Cr", up: false },
+  { label: "EPF WITHDRAWAL", value: "52L+", up: true },
+  { label: "SIP GROWTH", value: "15%", up: true },
 ];
 
 function DataTicker() {
   return (
-    <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-slate-200"
-      style={{ opacity: 0.55, fontFamily: "monospace", fontSize: "12px", color: "#64748B", padding: "6px 0" }}
+    <div
+      className="overflow-hidden border-t border-b"
+      style={{ background: "#FFFFFF", borderColor: "#E2E8F0", padding: "8px 0" }}
       aria-hidden="true"
     >
-      <div className="flex gap-12 whitespace-nowrap" style={{ animation: "tickerScroll 35s linear infinite" }}>
-        {TICKER_ITEMS.map((item, i) => <span key={i} className="flex-shrink-0">{item}</span>)}
+      <div className="flex gap-10 whitespace-nowrap" style={{ animation: "tickerScroll 38s linear infinite", fontFamily: "var(--font-mono)", fontSize: "11px" }}>
+        {TICKER_ITEMS.map((item, i) => (
+          <span key={i} className="flex-shrink-0 flex items-center gap-1.5">
+            <span style={{ color: "#94A3B8" }}>{item.label}</span>
+            <span style={{ color: item.up ? "#16A34A" : "#E5A100", fontWeight: 600 }}>{item.value}</span>
+            <span style={{ color: "#CBD5E1" }}>|</span>
+          </span>
+        ))}
       </div>
     </div>
+  );
+}
+
+// ─── Animated SVG Corpus Curve ────────────────────────────────────────────────
+function CorpusCurve() {
+  return (
+    <svg viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+      <defs>
+        <linearGradient id="curveGrad" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#F15A24" />
+        </linearGradient>
+        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M0 95 C30 90, 60 80, 80 68 C100 56, 110 50, 130 38 C150 26, 170 18, 200 10 C220 4, 240 2, 260 1"
+        stroke="url(#curveGrad)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        fill="none"
+        style={{
+          strokeDasharray: 380,
+          strokeDashoffset: 380,
+          animation: "drawCurve 2s ease-out forwards 0.4s",
+        }}
+      />
+      <path
+        d="M0 95 C30 90, 60 80, 80 68 C100 56, 110 50, 130 38 C150 26, 170 18, 200 10 C220 4, 240 2, 260 1 L260 100 L0 100 Z"
+        fill="url(#fillGrad)"
+        style={{ opacity: 0, animation: "fadeIn 0.5s ease-out forwards 1.8s" }}
+      />
+      <circle cx="260" cy="1" r="4" fill="#F15A24" style={{ opacity: 0, animation: "fadeIn 0.3s ease-out forwards 2s" }} />
+    </svg>
+  );
+}
+
+// ─── Advisor / AMFI Lead Capture ─────────────────────────────────────────────
+function AdvisorSection() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+
+  const saveLead = async () => {
+    if (!phone.trim()) return;
+    try {
+      await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() || "Landing visitor", phone: phone.trim() }),
+      });
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const handleWhatsApp = () => {
+    void saveLead();
+    const msg = encodeURIComponent(`Hi! I'd like a free review of my retirement plan. Name: ${name || "—"}`);
+    window.open(`https://wa.me/919819590598?text=${msg}`, "_blank");
+  };
+
+  const handleEmail = () => {
+    void saveLead();
+    window.location.href = `mailto:hello@retirepro.in?subject=Free retirement plan review&body=Hi, I'd like a free review of my retirement plan. Name: ${name || "—"}`;
+  };
+
+  return (
+    <section id="advisor" style={{ background: "#FFFFFF", borderTop: "1px solid rgba(0,0,0,0.06)", borderBottom: "1px solid rgba(0,0,0,0.06)", padding: "80px 24px" }}>
+      <div className="max-w-[1280px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left: copy */}
+          <motion.div initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
+            <div className="inline-block text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.1)", color: "#92660A", border: "1px solid rgba(232,148,10,0.2)" }}>
+              Want a human to look at it?
+            </div>
+            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2, marginBottom: 16 }}>
+              Free plan review by an<br />AMFI-registered advisor.
+            </h2>
+            <p style={{ fontSize: "16px", color: "var(--slate-mid)", lineHeight: 1.7, marginBottom: 24, maxWidth: 440 }}>
+              Talk to <strong>Nidesh Financial</strong> — an AMFI-registered mutual fund advisor — for a free, no-obligation review of your retirement projection. Personalised guidance on SIPs, asset allocation, and closing your funding gap. On WhatsApp or email, your choice.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { icon: "✅", label: "AMFI-Registered" },
+                { icon: "🇮🇳", label: "India-focused" },
+                { icon: "💬", label: "Free first consult" },
+              ].map(tag => (
+                <span key={tag.label} className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full" style={{ background: "rgba(26,18,8,0.05)", color: "#334155", border: "1px solid rgba(0,0,0,0.07)" }}>
+                  {tag.icon} {tag.label}
+                </span>
+              ))}
+            </div>
+
+            {/* Star reviews */}
+            <div className="mt-8 flex flex-col gap-3">
+              {[
+                { stars: 5, text: "Helped me realise I was saving ₹20k/mo less than I needed. Changed my SIP overnight.", who: "Ankit R., Pune" },
+                { stars: 5, text: "Finally understood what my corpus gap meant and how to close it. Super helpful!", who: "Meera S., Bengaluru" },
+              ].map((r, i) => (
+                <div key={i} className="rounded-xl px-4 py-3 flex gap-3" style={{ background: "rgba(251,248,242,0.8)", border: "1px solid rgba(232,148,10,0.15)" }}>
+                  <div style={{ color: "var(--saffron)", fontSize: 14 }}>{"★".repeat(r.stars)}</div>
+                  <div>
+                    <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.5, marginBottom: 2 }}>{r.text}</p>
+                    <p style={{ fontSize: 11, color: "#94A3B8" }}>— {r.who}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Right: lead form */}
+          <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: 0.1 }}>
+            <div style={{ background: "var(--ivory)", border: "1px solid rgba(232,148,10,0.2)", borderRadius: 20, padding: "32px" }}>
+              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "20px", fontWeight: 700, color: "var(--ink)", marginBottom: 20 }}>
+                Get a free review — no commitment
+              </h3>
+              <div className="flex flex-col gap-3 mb-4">
+                <input
+                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                  style={{ border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
+                  placeholder="Your name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  data-testid="input-advisor-name"
+                />
+                <input
+                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                  style={{ border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
+                  placeholder="Phone / WhatsApp number"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  data-testid="input-advisor-phone"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleWhatsApp}
+                  className="w-full rounded-xl py-3 font-semibold text-sm text-white flex items-center justify-center gap-2"
+                  style={{ background: "#25D366", transition: "opacity 0.2s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.9"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
+                  data-testid="button-advisor-whatsapp"
+                >
+                  💬 Talk on WhatsApp
+                </button>
+                <button
+                  onClick={handleEmail}
+                  className="w-full rounded-xl py-3 font-semibold text-sm flex items-center justify-center gap-2"
+                  style={{ background: "transparent", border: "1.5px solid rgba(0,0,0,0.15)", color: "var(--ink)", transition: "background 0.2s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.04)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                  data-testid="button-advisor-email"
+                >
+                  ✉️ Email the advisor
+                </button>
+              </div>
+              {status === "saved" && (
+                <p className="text-center text-xs mt-3" style={{ color: "#166534" }}>
+                  Thanks! Your details have been shared with the advisor.
+                </p>
+              )}
+              {status === "error" && (
+                <p className="text-center text-xs mt-3" style={{ color: "#B91C1C" }}>
+                  Couldn't save your details — please use WhatsApp or email directly.
+                </p>
+              )}
+              <p className="text-center text-xs mt-4" style={{ color: "#94A3B8", lineHeight: 1.5 }}>
+                By sharing your details you agree to be contacted by Nidesh Financial. Mutual fund investments are subject to market risk.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -146,53 +378,109 @@ function DataTicker() {
 export default function Landing() {
   return (
     <>
-      {/* Global CSS for animations */}
+      {/* ── Google Fonts + Global CSS ───────────────────────────────────────── */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600;1,9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+          --ivory: #FBF8F2;
+          --ink: #1A1208;
+          --saffron: #E8940A;
+          --saffron-light: #F59E0B;
+          --orange: #F15A24;
+          --leaf: #16A34A;
+          --slate-mid: #475569;
+          --font-serif: 'Fraunces', Georgia, serif;
+          --font-sans: 'Instrument Sans', system-ui, sans-serif;
+          --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body { font-family: var(--font-sans); }
+
+        h1, h2 { font-family: var(--font-serif); }
+
+        .landing-num { font-family: var(--font-mono); }
+
         @keyframes orangePulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(241, 90, 36, 0.4); }
-          50%       { box-shadow: 0 0 0 12px rgba(241, 90, 36, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(241,90,36,0.4); }
+          50%       { box-shadow: 0 0 0 14px rgba(241,90,36,0); }
         }
         @keyframes tickerScroll {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
-        @keyframes floatA {
-          0%, 100% { transform: translateY(0px) rotate(-3deg); }
-          50%       { transform: translateY(-14px) rotate(-3deg); }
+        @keyframes blobDrift1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%       { transform: translate(30px, -20px) scale(1.08); }
         }
-        @keyframes floatB {
-          0%, 100% { transform: translateY(0px) rotate(2.5deg); }
-          50%       { transform: translateY(-10px) rotate(2.5deg); }
+        @keyframes blobDrift2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%       { transform: translate(-20px, 30px) scale(1.05); }
         }
-        @keyframes floatC {
-          0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
-          50%       { transform: translateY(-18px) rotate(-1.5deg); }
+        @keyframes drawCurve {
+          to { stroke-dashoffset: 0; }
         }
-        .preview-card-float-a { animation: floatA 5s ease-in-out infinite; }
-        .preview-card-float-b { animation: floatB 6s ease-in-out infinite; animation-delay: 1.5s; }
-        .preview-card-float-c { animation: floatC 4.5s ease-in-out infinite; animation-delay: 3s; }
-        .preview-card-shadow {
-          border-radius: 16px;
-          box-shadow: 0 24px 50px -12px rgba(37,99,235,0.25), 0 0 0 1px rgba(15,23,42,0.05);
+        @keyframes fadeIn {
+          to { opacity: 1; }
         }
+        @keyframes cursorBlink {
+          50% { opacity: 0; }
+        }
+        @keyframes orbitA {
+          from { transform: rotate(0deg) translateX(90px) rotate(0deg); }
+          to   { transform: rotate(360deg) translateX(90px) rotate(-360deg); }
+        }
+        @keyframes orbitB {
+          from { transform: rotate(180deg) translateX(60px) rotate(-180deg); }
+          to   { transform: rotate(540deg) translateX(60px) rotate(-540deg); }
+        }
+        @keyframes orbitC {
+          from { transform: rotate(90deg) translateX(90px) rotate(-90deg); }
+          to   { transform: rotate(450deg) translateX(90px) rotate(-450deg); }
+        }
+        @keyframes orbitD {
+          from { transform: rotate(270deg) translateX(60px) rotate(-270deg); }
+          to   { transform: rotate(630deg) translateX(60px) rotate(-630deg); }
+        }
+
         html { scroll-behavior: smooth; }
+
         @media (prefers-reduced-motion: reduce) {
-          .preview-card-float-a, .preview-card-float-b, .preview-card-float-c { animation: none !important; }
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
         }
+
+        .trust-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 8px 16px;
+          margin-bottom: 24px;
+          font-size: 13px;
+          color: #64748B;
+        }
+        .trust-badge { white-space: nowrap; }
+        .trust-divider { color: #CBD5E1; }
       `}</style>
 
-      <div className="min-h-screen bg-white overflow-x-hidden">
-        {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200/60">
+      <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--ivory)", fontFamily: "var(--font-sans)" }}>
+
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{ background: "rgba(251,248,242,0.9)", backdropFilter: "blur(16px)", borderColor: "rgba(0,0,0,0.08)" }}>
           <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16">
             <BrandLogo href={null} textClassName="text-slate-900" />
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/blog" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Blog</Link>
-              <a href="#planner" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Free Planner</a>
+              <Link href="/blog" className="text-sm font-medium" style={{ color: "#64748B" }}>Blog</Link>
+              <a href="#planner" className="text-sm font-medium" style={{ color: "#64748B" }}>Free Planner</a>
             </nav>
             <Button
               onClick={() => { window.location.href = "/api/login"; }}
-              className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full px-5 h-9 text-sm font-semibold"
+              className="rounded-full px-5 h-9 text-sm font-semibold text-white"
+              style={{ background: "var(--orange)" }}
               data-testid="button-login"
             >
               Sign In
@@ -200,74 +488,54 @@ export default function Landing() {
           </div>
         </header>
 
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
+        {/* ── Hero ────────────────────────────────────────────────────────── */}
         <section
           className="relative min-h-screen pt-16 flex items-center overflow-hidden"
-          style={{
-            background: "linear-gradient(135deg, #F4F9FF 0%, #FFFFFF 100%)",
-          }}
+          style={{ background: "var(--ivory)" }}
         >
-          {/* Grid overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: "linear-gradient(rgba(15,23,42,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.035) 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-            }}
-          />
-          {/* Orange orb top-left */}
-          <div
-            className="absolute pointer-events-none"
-            style={{ top: -80, left: -80, width: 400, height: 400, background: "radial-gradient(circle, rgba(241,90,36,0.13) 0%, transparent 70%)" }}
-          />
-          {/* Blue orb animated */}
-          <motion.div
-            animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full pointer-events-none"
-            style={{ background: "rgba(59,130,246,0.12)", filter: "blur(64px)" }}
-          />
-          <motion.div
-            animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute bottom-1/4 right-1/3 w-64 h-64 rounded-full pointer-events-none"
-            style={{ background: "rgba(99,102,241,0.12)", filter: "blur(48px)" }}
-          />
+          {/* Warm saffron blob top-left */}
+          <div className="absolute pointer-events-none" style={{
+            top: -120, left: -120, width: 500, height: 500,
+            background: "radial-gradient(circle, rgba(232,148,10,0.18) 0%, transparent 65%)",
+            animation: "blobDrift1 14s ease-in-out infinite",
+          }} />
+          {/* Warm peach blob bottom-right */}
+          <div className="absolute pointer-events-none" style={{
+            bottom: -80, right: -80, width: 420, height: 420,
+            background: "radial-gradient(circle, rgba(241,90,36,0.12) 0%, transparent 65%)",
+            animation: "blobDrift2 18s ease-in-out infinite",
+          }} />
+          {/* Subtle grid */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: "linear-gradient(rgba(26,18,8,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(26,18,8,0.04) 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+          }} />
 
-          <div className="relative max-w-[1280px] mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
+          <div className="relative max-w-[1280px] mx-auto px-6 py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
             {/* Left: copy */}
             <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                 className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-6"
-                style={{ background: "rgba(241,90,36,0.1)", border: "1px solid rgba(241,90,36,0.25)", color: "#C2410C" }}
+                style={{ background: "rgba(232,148,10,0.12)", border: "1px solid rgba(232,148,10,0.3)", color: "#92660A" }}
               >
-                <Star className="h-3.5 w-3.5" style={{ fill: "#C2410C" }} />
-                Free. No account required.
+                <Star className="h-3.5 w-3.5" style={{ fill: "#92660A" }} />
+                Free · No account required · India-specific
               </motion.div>
 
-              <h1 className="text-5xl md:text-7xl font-black leading-none mb-6" style={{ color: "#0F172A" }}>
-                Plan Your
-                <span className="block italic" style={{ background: "linear-gradient(90deg, #F15A24, #FF8C57, #FFA07A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Retirement
-                </span>
-                Free.
+              <h1 style={{ fontSize: "clamp(42px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.06, color: "var(--ink)", marginBottom: "24px", fontFamily: "var(--font-serif)" }}>
+                Know your number<br />
+                <em style={{ color: "var(--saffron)", fontStyle: "italic" }}>before it's too late.</em>
               </h1>
 
-              <p className="text-xl leading-relaxed mb-8 max-w-lg" style={{ color: "#475569" }}>
-                Build a complete, personalised retirement plan — income, expenses, children's education, loans, mini-retirement breaks, and more. India-specific. No login required.
+              <p style={{ fontSize: "19px", lineHeight: 1.65, color: "var(--slate-mid)", marginBottom: "32px", maxWidth: "480px" }}>
+                Build a complete, personalised retirement plan — income, expenses, children's education, loans, mini-retirement breaks, and more. Takes 60 seconds.
               </p>
 
               <div className="flex flex-wrap gap-3">
-                {/* Primary CTA — orange filled with pulse */}
                 <button
-                  className="flex items-center gap-2 rounded-full px-8 text-white font-bold text-base"
-                  style={{
-                    background: "#F15A24",
-                    height: "52px",
-                    animation: "orangePulse 2.5s ease-in-out infinite",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  }}
+                  className="flex items-center gap-2 rounded-full text-white font-bold text-base"
+                  style={{ background: "var(--orange)", height: "52px", padding: "0 32px", animation: "orangePulse 2.5s ease-in-out infinite" }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLButtonElement).style.animation = "none";
                     (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)";
@@ -285,21 +553,11 @@ export default function Landing() {
                   Start My Free Plan
                 </button>
 
-                {/* Secondary CTA — outlined blue */}
                 <button
-                  className="flex items-center gap-2 rounded-full px-8 font-semibold text-base transition-all duration-200"
-                  style={{
-                    height: "52px",
-                    background: "transparent",
-                    border: "1.5px solid #2563EB",
-                    color: "#2563EB",
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(37,99,235,0.1)";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                  }}
+                  className="flex items-center gap-2 rounded-full font-semibold text-base"
+                  style={{ height: "52px", padding: "0 28px", background: "transparent", border: "1.5px solid rgba(26,18,8,0.25)", color: "var(--ink)", transition: "all 0.2s ease" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(26,18,8,0.06)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
                   onClick={() => { window.location.href = "/api/login"; }}
                   data-testid="button-sign-in"
                 >
@@ -309,139 +567,330 @@ export default function Landing() {
               </div>
             </motion.div>
 
-            {/* Right: floating preview cards */}
+            {/* Right: animated plan card */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative h-[520px] flex items-center justify-center"
+              transition={{ duration: 0.9, delay: 0.25 }}
+              className="flex items-center justify-center"
             >
-              {/* Card 1 — interactive plan summary card (center, prominent) */}
-              <div className="absolute z-30 preview-card-float-a" style={{ top: "10%", left: "5%" }}>
-                <div
-                  className="preview-card-shadow w-64 p-5"
-                  style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16 }}
-                >
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-7 h-7 rounded-full bg-[#F15A24] flex items-center justify-center">
-                      <TrendingUp className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <span className="text-slate-700 text-xs font-medium">Priya's Retirement Plan</span>
+              <div
+                style={{
+                  width: "100%", maxWidth: 420,
+                  background: "#FFFFFF",
+                  borderRadius: 24,
+                  padding: "28px",
+                  boxShadow: "0 32px 64px -12px rgba(26,18,8,0.18), 0 0 0 1px rgba(26,18,8,0.06)",
+                }}
+              >
+                {/* Card header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "var(--orange)" }}>
+                    <TrendingUp className="h-4 w-4 text-white" />
                   </div>
-                  <div className="mb-3">
-                    <div className="text-slate-400 text-[10px] mb-0.5">Projected corpus at 60</div>
-                    <div className="text-2xl font-black text-slate-900">₹3.2 Cr</div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div className="rounded-lg p-2.5" style={{ background: "#F1F5F9" }}>
-                      <div className="text-slate-500 text-[10px]">Required</div>
-                      <div className="text-slate-900 text-sm font-bold">₹4.5 Cr</div>
-                    </div>
-                    <div className="rounded-lg p-2.5" style={{ background: "rgba(241,90,36,0.1)" }}>
-                      <div className="text-[#C2410C] text-[10px]">Gap</div>
-                      <div className="text-[#C2410C] text-sm font-bold">₹1.3 Cr</div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg p-2.5" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)" }}>
-                    <div className="text-blue-600 text-[10px] mb-0.5">Monthly SIP needed</div>
-                    <div className="text-blue-700 font-bold">₹12,400/mo</div>
+                  <div>
+                    <div className="font-semibold text-sm" style={{ color: "var(--ink)" }}>Priya's Retirement Plan</div>
+                    <div className="text-xs" style={{ color: "#94A3B8" }}>Retiring at 60 · Projected to 85</div>
                   </div>
                 </div>
-              </div>
 
-              {/* Card 2 — dashboard screenshot (top-right, Net Worth area) */}
-              <div className="absolute z-20 preview-card-float-b" style={{ top: "-2%", right: "-2%" }}>
-                <div className="preview-card-shadow overflow-hidden w-52 h-40 rounded-xl">
-                  <img
-                    src={dashboardImg}
-                    alt="Net Worth Projection"
-                    className="w-full h-auto"
-                    style={{ objectFit: "cover", objectPosition: "0 18%", width: "100%", transform: "scale(1.1)" }}
-                  />
+                {/* SVG corpus curve */}
+                <div style={{ height: 100, marginBottom: 20, borderRadius: 12, overflow: "hidden", background: "rgba(251,248,242,0.8)", padding: "8px 8px 4px" }}>
+                  <CorpusCurve />
                 </div>
-              </div>
 
-              {/* Card 3 — dashboard screenshot (bottom-right, Cashflow area) */}
-              <div className="absolute z-20 preview-card-float-c" style={{ bottom: "2%", right: "5%" }}>
-                <div className="preview-card-shadow overflow-hidden w-56 h-36 rounded-xl">
-                  <img
-                    src={dashboardImg}
-                    alt="Cashflow Analysis"
-                    className="w-full h-auto"
-                    style={{ objectFit: "cover", objectPosition: "0 75%", width: "100%", transform: "scale(1.1)" }}
-                  />
+                {/* Stat chips */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {[
+                    { label: "Projected", value: "₹3.2 Cr", bg: "rgba(22,163,74,0.08)", color: "#15803D", border: "rgba(22,163,74,0.2)" },
+                    { label: "Required", value: "₹4.5 Cr", bg: "rgba(0,0,0,0.04)", color: "#334155", border: "rgba(0,0,0,0.08)" },
+                    { label: "Gap", value: "₹1.3 Cr", bg: "rgba(241,90,36,0.08)", color: "#C2410C", border: "rgba(241,90,36,0.2)" },
+                  ].map(chip => (
+                    <div key={chip.label} className="rounded-xl p-3 text-center" style={{ background: chip.bg, border: `1px solid ${chip.border}` }}>
+                      <div className="text-[10px] mb-0.5" style={{ color: chip.color, opacity: 0.7 }}>{chip.label}</div>
+                      <div className="text-sm font-bold landing-num" style={{ color: chip.color }}>{chip.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* SIP pill */}
+                <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "var(--ink)" }}>
+                  <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>Monthly SIP needed</span>
+                  <span className="font-bold landing-num" style={{ color: "var(--saffron-light)", fontSize: "15px" }}>₹12,400/mo</span>
                 </div>
               </div>
             </motion.div>
           </div>
-
-          {/* Data Ticker */}
-          <DataTicker />
         </section>
 
-        {/* ── Stats Bar ─────────────────────────────────────────────────────── */}
-        <section className="py-10 border-b" style={{ background: "#0F172A", borderColor: "rgba(255,255,255,0.06)" }}>
-          <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { value: 93, suffix: "%", label: "Indians over 50 regret not planning sooner", prefix: "" },
-              { value: 8, suffix: " Cr", label: "Typical corpus needed for urban retirement", prefix: "₹" },
-              { value: 100, suffix: "%", label: "Free — no account required to plan", prefix: "" },
-              { value: 52, suffix: "L+", label: "EPF final settlement claims in 2024–25", prefix: "" },
-            ].map(stat => (
-              <div key={stat.label} className="text-white">
-                <div className="text-3xl md:text-4xl font-black mb-1" style={{ color: "#F15A24" }}>
-                  <AnimatedNumber target={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
-                </div>
-                <div className="text-xs text-slate-400 leading-snug">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* ── Ticker ──────────────────────────────────────────────────────── */}
+        <DataTicker />
 
-        {/* ── Why RetirePro (ABOVE calculator) ─────────────────────────────── */}
-        <section className="py-20 bg-white px-6">
+        {/* ── The Uncomfortable Math ──────────────────────────────────────── */}
+        <section style={{ background: "#111827", padding: "80px 24px" }}>
           <div className="max-w-[1280px] mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-              <h2 className="font-bold text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>Why RetirePro?</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Built for India. Designed for clarity.</p>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
+              <div className="inline-block text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.15)", color: "var(--saffron-light)", border: "1px solid rgba(232,148,10,0.25)" }}>
+                Data-backed reality
+              </div>
+              <h2 style={{ fontSize: "clamp(32px, 4.5vw, 52px)", fontWeight: 700, color: "#F9FAFB", lineHeight: 1.15, marginBottom: 12, fontFamily: "var(--font-serif)" }}>
+                The uncomfortable math
+              </h2>
+              <p style={{ color: "#9CA3AF", fontSize: "17px", maxWidth: 520, margin: "0 auto" }}>
+                Most Indians know they should plan. Almost none have done the actual calculation.
+              </p>
             </motion.div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { icon: <BarChart3 className="h-8 w-8" />, color: "text-[#F15A24] bg-orange-50", title: "Comprehensive Retirement Plan", desc: "Cover everything — income growth, children's education & marriage, mini-retirement breaks, existing loans, and investment assumptions. Get a complete year-by-year projection." },
-                { icon: <BarChart3 className="h-8 w-8" />, color: "text-blue-600 bg-blue-50", title: "Visual Projections", desc: "Interactive charts show your net worth trajectory, cashflow analysis, and exactly when (and if) your corpus runs out." },
-                { icon: <Shield className="h-8 w-8" />, color: "text-emerald-600 bg-emerald-50", title: "India-Specific Planning", desc: "Indian inflation rates, EPF, NPS, ELSS. Supports joint retirement, children's education goals, home loans, and mini-retirements." },
-              ].map((f, i) => (
-                <motion.div key={f.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}>
-                  <TiltCard className="h-full">
-                    <div
-                      className="bg-white rounded-2xl p-8 border border-slate-200 h-full"
-                      style={{ transition: "box-shadow 0.4s ease" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(241,90,36,0.15)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = ""; }}
-                    >
-                      <div className={`inline-flex p-3 rounded-2xl mb-5 ${f.color}`}>{f.icon}</div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
-                      <p className="text-slate-600 leading-relaxed">{f.desc}</p>
-                    </div>
-                  </TiltCard>
+                {
+                  stat: 75.5, decimals: 1, suffix: "%",
+                  label: "of Indians have no retirement corpus whatsoever",
+                  source: "PFRDA Annual Report 2023–24",
+                  accent: "var(--saffron-light)",
+                },
+                {
+                  stat: 3.6, decimals: 1, suffix: "×",
+                  label: "the corpus you need if you start at 40 vs 30",
+                  source: "Compounding math at 12% p.a. CAGR",
+                  accent: "#F87171",
+                },
+                {
+                  stat: 59, decimals: 0, suffix: "%",
+                  label: "of retirees depend on family for financial support",
+                  source: "HSBC Future of Retirement India Study",
+                  accent: "#60A5FA",
+                },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.5 }}
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 20,
+                    padding: "36px 32px",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 3, background: item.accent, opacity: 0.8, borderRadius: "20px 20px 0 0" }} />
+                  <div className="landing-num" style={{ fontSize: "clamp(52px, 6vw, 72px)", fontWeight: 700, color: item.accent, lineHeight: 1, marginBottom: 12 }}>
+                    <AnimatedNumber target={item.stat} suffix={item.suffix} decimals={item.decimals} />
+                  </div>
+                  <p style={{ color: "#E5E7EB", fontSize: "16px", lineHeight: 1.5, marginBottom: 16, fontWeight: 500 }}>{item.label}</p>
+                  <p style={{ color: "#6B7280", fontSize: "11px" }}>Source: {item.source}</p>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── Planner (BELOW Why RetirePro) ─────────────────────────────── */}
-        <section id="planner" className="py-20 px-6" style={{ background: "linear-gradient(to bottom, #F8F9FA, #ffffff)" }}>
+        {/* ── Why RetirePro — 6-card grid + AI advisor ────────────────────── */}
+        <section className="px-6" style={{ padding: "80px 24px", background: "var(--ivory)" }}>
+          <div className="max-w-[1280px] mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
+              <h2 style={{ fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 12, fontFamily: "var(--font-serif)" }}>
+                Why RetirePro?
+              </h2>
+              <p style={{ fontSize: "18px", color: "var(--slate-mid)", maxWidth: 520, margin: "0 auto" }}>
+                Built for India. Designed for clarity. Free forever.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
+              {[
+                {
+                  icon: <BarChart3 className="h-6 w-6" />,
+                  iconBg: "rgba(241,90,36,0.1)", iconColor: "#C2410C",
+                  title: "Year-by-Year Projections",
+                  desc: "Get a complete cashflow and corpus projection for every year from now until 90 — not just a single number.",
+                },
+                {
+                  icon: <Users className="h-6 w-6" />,
+                  iconBg: "rgba(22,163,74,0.1)", iconColor: "#15803D",
+                  title: "Joint Retirement Planning",
+                  desc: "Model both spouses with independent retirement ages, income timelines, and expenses in one unified plan.",
+                },
+                {
+                  icon: <BookOpen className="h-6 w-6" />,
+                  iconBg: "rgba(59,130,246,0.1)", iconColor: "#1D4ED8",
+                  title: "Children's Goals Built-in",
+                  desc: "Factor in education costs, marriage expenses, and the exact years they hit — inflation-adjusted automatically.",
+                },
+                {
+                  icon: <Sliders className="h-6 w-6" />,
+                  iconBg: "rgba(139,92,246,0.1)", iconColor: "#7C3AED",
+                  title: "India-Specific Assumptions",
+                  desc: "EPF, NPS, ELSS, Indian inflation rates, and realistic post-retirement return assumptions — not US or global defaults.",
+                },
+                {
+                  icon: <Shield className="h-6 w-6" />,
+                  iconBg: "rgba(20,184,166,0.1)", iconColor: "#0F766E",
+                  title: "Loans & Mini-Retirements",
+                  desc: "Model existing EMIs that end mid-plan and career sabbaticals where savings pause but corpus grows.",
+                },
+                {
+                  icon: <FileText className="h-6 w-6" />,
+                  iconBg: "rgba(232,148,10,0.1)", iconColor: "#92660A",
+                  title: "PDF & Excel Export",
+                  desc: "Download your full plan as a professional report or spreadsheet — yours to keep, share, or show an advisor.",
+                },
+              ].map((f, i) => (
+                <motion.div key={f.title} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.45 }}>
+                  <TiltCard className="h-full">
+                    <div
+                      className="h-full rounded-2xl p-7"
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid rgba(0,0,0,0.07)",
+                        transition: "box-shadow 0.3s ease",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(0,0,0,0.1), 0 0 0 1px rgba(232,148,10,0.15)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
+                    >
+                      <div className="inline-flex p-2.5 rounded-xl mb-4" style={{ background: f.iconBg, color: f.iconColor }}>
+                        {f.icon}
+                      </div>
+                      <h3 className="font-bold mb-2" style={{ fontSize: "16px", color: "var(--ink)" }}>{f.title}</h3>
+                      <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.6 }}>{f.desc}</p>
+                    </div>
+                  </TiltCard>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* 7th card — AI Cashflow Advisor full-width */}
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+              <div
+                className="rounded-2xl p-8 md:p-10"
+                style={{
+                  background: "#0D1117",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  display: "grid",
+                  gridTemplateColumns: "1fr",
+                  gap: 32,
+                }}
+              >
+                <div className="md:flex md:items-start md:gap-10" style={{ flexWrap: "nowrap" }}>
+                  <div className="flex-1 mb-6 md:mb-0">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style={{ background: "rgba(163,230,53,0.12)", color: "#A3E635", border: "1px solid rgba(163,230,53,0.2)" }}>
+                      <Brain className="h-3 w-3" />
+                      AI Cashflow Advisor — Coming Soon
+                    </div>
+                    <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, color: "#F9FAFB", lineHeight: 1.2, marginBottom: 12 }}>
+                      Your plan, explained in plain language.
+                    </h3>
+                    <p style={{ color: "#9CA3AF", fontSize: "15px", lineHeight: 1.7, maxWidth: 440 }}>
+                      The AI advisor reads your numbers and surfaces the one move that matters most — not generic advice, but specific insight about your plan.
+                    </p>
+                  </div>
+
+                  {/* Typewriter demo terminal */}
+                  <div
+                    className="flex-shrink-0"
+                    style={{
+                      background: "#0A0F1A",
+                      border: "1px solid rgba(163,230,53,0.15)",
+                      borderRadius: 16,
+                      padding: "20px 24px",
+                      minHeight: 100,
+                      width: "100%",
+                      maxWidth: 480,
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5 mb-4">
+                      {["#FF5F56", "#FFBD2E", "#27C93F"].map(c => (
+                        <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
+                      ))}
+                      <span className="ml-2 text-xs" style={{ color: "#4B5563", fontFamily: "var(--font-mono)" }}>advisor.insight</span>
+                    </div>
+                    <div style={{ fontSize: "14px", lineHeight: 1.65, minHeight: 72, fontFamily: "var(--font-mono)" }}>
+                      <span style={{ color: "#6B7280" }}>{">"} </span>
+                      <TypewriterCycle />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── How it works ────────────────────────────────────────────────── */}
+        <section style={{ background: "#FFFFFF", padding: "80px 24px" }}>
+          <div className="max-w-[1280px] mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
+              <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 10, fontFamily: "var(--font-serif)" }}>
+                From blank page to full plan<br /><em style={{ color: "var(--saffron)" }}>in 60 seconds.</em>
+              </h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
+              {[
+                {
+                  step: "01",
+                  icon: <Users className="h-7 w-7" />,
+                  title: "Tell it your life",
+                  desc: "Enter your age, income, expenses, existing savings, and any children, loans, or planned career breaks.",
+                  accent: "var(--saffron)",
+                },
+                {
+                  step: "02",
+                  icon: <BarChart3 className="h-7 w-7" />,
+                  title: "See your gap",
+                  desc: "Get a year-by-year projection — when your corpus peaks, when it runs out, and exactly how large the gap is.",
+                  accent: "var(--orange)",
+                },
+                {
+                  step: "03",
+                  icon: <Zap className="h-7 w-7" />,
+                  title: "Act on the insights",
+                  desc: "Adjust inputs in real-time to see how small changes — more savings, earlier start — close the gap dramatically.",
+                  accent: "#22C55E",
+                },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.step}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15, duration: 0.5 }}
+                  className="relative flex flex-col items-center text-center px-8 py-10"
+                >
+                  {/* Dashed connector (desktop only) */}
+                  {i < 2 && (
+                    <div className="hidden md:block absolute top-[72px] left-[calc(50%+52px)] right-0 z-0"
+                      style={{ borderTop: "2px dashed rgba(0,0,0,0.12)", transform: "translateY(-50%)" }}
+                    />
+                  )}
+                  <div className="relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ background: s.accent, color: "#fff", boxShadow: `0 8px 24px ${s.accent}44` }}>
+                    {s.icon}
+                  </div>
+                  <div className="landing-num text-xs font-bold mb-3" style={{ color: s.accent, letterSpacing: "0.12em" }}>STEP {s.step}</div>
+                  <h3 className="font-bold mb-3" style={{ fontSize: "19px", color: "var(--ink)", fontFamily: "var(--font-serif)" }}>{s.title}</h3>
+                  <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.65, maxWidth: 260 }}>{s.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Planner (BELOW Why RetirePro) ───────────────────────────────── */}
+        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "80px 24px" }}>
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-center mb-12">
-              <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "#F15A24" }}>
+              <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "var(--orange)" }}>
                 Free · No Account Required · Full Planner
               </span>
-              <h2 className="font-bold text-slate-900 mb-4" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>
+              <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 12, fontFamily: "var(--font-serif)" }}>
                 Build Your Complete Retirement Plan
-                <span className="block text-slate-500" style={{ fontSize: "28px", fontWeight: 600 }}>No account required.</span>
+                <span className="block" style={{ fontSize: "22px", fontWeight: 500, color: "#94A3B8", fontFamily: "var(--font-sans)" }}>No account required.</span>
               </h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              <p style={{ fontSize: "17px", color: "var(--slate-mid)", maxWidth: 520, margin: "0 auto" }}>
                 Answer all the key questions — children's education, loans, mini-retirements — and get a detailed year-by-year plan with corpus projections and funding gap analysis.
               </p>
             </motion.div>
@@ -463,15 +912,15 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Blog ─────────────────────────────────────────────────────────── */}
+        {/* ── Blog ────────────────────────────────────────────────────────── */}
         <section className="py-20 px-6 bg-slate-50">
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10 flex-wrap gap-4">
               <div>
-                <h2 className="font-bold text-slate-900 mb-2" style={{ fontSize: "40px", fontWeight: 700, lineHeight: 1.15 }}>Learn Before You Plan</h2>
+                <h2 className="font-bold text-slate-900 mb-2" style={{ fontSize: "clamp(24px, 3.5vw, 38px)", fontFamily: "var(--font-serif)" }}>Learn Before You Plan</h2>
                 <p className="text-lg text-slate-600">India-specific retirement guides, written in plain language.</p>
               </div>
-              <Link href="/blog" className="hidden md:flex items-center gap-1 font-semibold hover:underline" style={{ color: "#F15A24" }}>
+              <Link href="/blog" className="hidden md:flex items-center gap-1 font-semibold hover:underline" style={{ color: "var(--orange)" }}>
                 All articles <ArrowRight className="h-4 w-4" />
               </Link>
             </motion.div>
@@ -531,7 +980,7 @@ export default function Landing() {
                       <p className="text-slate-500 text-sm mb-4">{post.excerpt}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="h-3 w-3" />{post.time}</span>
-                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: "#F15A24" }}>Read article <ArrowRight className="h-3.5 w-3.5" /></span>
+                        <span className="text-sm font-semibold flex items-center gap-1" style={{ color: "var(--orange)" }}>Read article <ArrowRight className="h-3.5 w-3.5" /></span>
                       </div>
                     </div>
                   </Link>
@@ -541,26 +990,51 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Final CTA ─────────────────────────────────────────────────────── */}
+        {/* ── Advisor / AMFI ──────────────────────────────────────────────── */}
+        <AdvisorSection />
+
+        {/* ── Final CTA ───────────────────────────────────────────────────── */}
         <section
-          className="relative py-24 overflow-hidden px-6"
-          style={{ background: "linear-gradient(135deg, #F4F9FF 0%, #FFFFFF 100%)" }}
+          className="relative py-28 overflow-hidden px-6 text-center"
+          style={{ background: "var(--ivory)" }}
         >
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full"
-              style={{ background: "rgba(241,90,36,0.06)", filter: "blur(64px)" }} />
+          {/* Orbiting-dot animation background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
+            <div style={{ position: "relative", width: 240, height: 240 }}>
+              {/* Outer ring */}
+              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px dashed rgba(232,148,10,0.2)" }} />
+              {/* Inner ring */}
+              <div style={{ position: "absolute", inset: 40, borderRadius: "50%", border: "1px dashed rgba(241,90,36,0.15)" }} />
+              {/* Saffron orbit dot A */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", width: 10, height: 10, marginTop: -5, marginLeft: -5, animation: "orbitA 8s linear infinite" }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--saffron-light)", boxShadow: "0 0 8px var(--saffron-light)" }} />
+              </div>
+              {/* Orange orbit dot B */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", width: 8, height: 8, marginTop: -4, marginLeft: -4, animation: "orbitB 6s linear infinite" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--orange)", boxShadow: "0 0 6px var(--orange)" }} />
+              </div>
+              {/* Leaf orbit dot C */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", width: 7, height: 7, marginTop: -3.5, marginLeft: -3.5, animation: "orbitC 10s linear infinite" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ADE80", boxShadow: "0 0 6px #4ADE80" }} />
+              </div>
+              {/* Small orbit dot D */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", width: 6, height: 6, marginTop: -3, marginLeft: -3, animation: "orbitD 5s linear infinite" }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#93C5FD", boxShadow: "0 0 5px #93C5FD" }} />
+              </div>
+            </div>
           </div>
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto text-center">
-            <h2 className="font-bold mb-6" style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15, color: "#0F172A" }}>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto">
+            <h2 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15, color: "var(--ink)", marginBottom: 20, fontFamily: "var(--font-serif)" }}>
               Your 65-year-old self<br />is counting on today's you.
             </h2>
-            <p className="text-xl mb-8" style={{ color: "#475569" }}>
+            <p style={{ fontSize: "19px", color: "var(--slate-mid)", marginBottom: 36 }}>
               Build a complete retirement plan free — no login, no email, no commitment.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 className="flex items-center justify-center gap-2 rounded-full font-bold text-base text-white"
-                style={{ background: "#F15A24", padding: "16px 40px", animation: "orangePulse 2.5s ease-in-out infinite" }}
+                style={{ background: "var(--orange)", padding: "16px 40px", animation: "orangePulse 2.5s ease-in-out infinite" }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.animation = "none";
                   (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)";
@@ -579,8 +1053,8 @@ export default function Landing() {
               </button>
               <button
                 className="flex items-center justify-center gap-2 rounded-full font-semibold text-base"
-                style={{ padding: "16px 40px", background: "transparent", border: "1.5px solid #2563EB", color: "#2563EB", transition: "background 0.2s ease" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(37,99,235,0.1)"; }}
+                style={{ padding: "16px 40px", background: "transparent", border: "1.5px solid rgba(26,18,8,0.2)", color: "var(--ink)", transition: "background 0.2s ease" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(26,18,8,0.06)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
                 onClick={() => { window.location.href = "/api/login"; }}
               >
@@ -590,7 +1064,7 @@ export default function Landing() {
           </motion.div>
         </section>
 
-        {/* ── Footer ───────────────────────────────────────────────────────── */}
+        {/* ── Footer ──────────────────────────────────────────────────────── */}
         <footer className="py-10 px-6" style={{ background: "#060E1A" }}>
           <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
