@@ -456,7 +456,20 @@ export class DatabaseStorage implements IStorage {
 
   // Lead operations
   async createLead(lead: InsertLead): Promise<Lead> {
-    const [newLead] = await db.insert(leads).values(lead).returning();
+    const [newLead] = await db
+      .insert(leads)
+      .values(lead)
+      .onConflictDoUpdate({
+        target: leads.phone,
+        set: {
+          name: lead.name,
+          email: lead.email,
+          scenarioId: lead.scenarioId ?? undefined,
+          utm: lead.utm ?? undefined,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return newLead;
   }
 

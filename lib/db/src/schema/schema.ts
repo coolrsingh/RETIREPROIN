@@ -10,6 +10,7 @@ import {
   decimal,
   boolean,
   date,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -157,7 +158,10 @@ export const leads = pgTable("leads", {
   phone: varchar("phone").notNull(),
   utm: jsonb("utm"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique("leads_phone_unique").on(table.phone),
+]);
 
 export const crmDefaults = pgTable("crm_defaults", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
