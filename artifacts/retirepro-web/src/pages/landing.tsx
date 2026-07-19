@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   ChartLine, Zap, Shield, BarChart3, ArrowRight, TrendingUp, Users, Clock,
-  AlertTriangle, BookOpen, Star, Lock, Brain, FileText, Sliders
+  AlertTriangle, BookOpen, Star, Lock, Brain, FileText, Sliders, Phone
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import logoUrl from "@/assets/retirepro-logo.png";
@@ -232,74 +232,102 @@ function CorpusCurve() {
   );
 }
 
-// ─── Advisor / AMFI Lead Capture ─────────────────────────────────────────────
+// ─── Advisor Call-to-Action / Lead Capture ───────────────────────────────────
 function AdvisorSection() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [phoneError, setPhoneError] = useState("");
 
-  const saveLead = async () => {
-    if (!phone.trim()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneError("");
+    if (!phone.trim() || phone.trim().replace(/\D/g, "").length < 10) {
+      setPhoneError("Enter a valid 10-digit mobile number");
+      return;
+    }
+    setStatus("submitting");
     try {
-      await fetch("/api/lead", {
+      const body: Record<string, string> = {
+        name: name.trim() || "Landing visitor",
+        phone: phone.trim(),
+      };
+      if (email.trim()) body.email = email.trim();
+      const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() || "Landing visitor", phone: phone.trim() }),
+        body: JSON.stringify(body),
       });
-      setStatus("saved");
+      if (!res.ok) throw new Error("api_error");
+      setStatus("success");
     } catch {
       setStatus("error");
     }
   };
 
-  const handleWhatsApp = () => {
-    void saveLead();
-    const msg = encodeURIComponent(`Hi! I'd like a free review of my retirement plan. Name: ${name || "—"}`);
-    window.open(`https://wa.me/919819590598?text=${msg}`, "_blank");
-  };
-
-  const handleEmail = () => {
-    void saveLead();
-    window.location.href = `mailto:hello@retirepro.in?subject=Free retirement plan review&body=Hi, I'd like a free review of my retirement plan. Name: ${name || "—"}`;
-  };
-
   return (
-    <section id="advisor" style={{ background: "#FFFFFF", borderTop: "1px solid rgba(0,0,0,0.06)", borderBottom: "1px solid rgba(0,0,0,0.06)", padding: "80px 24px" }}>
+    <section
+      id="advisor"
+      style={{
+        background: "linear-gradient(160deg, #FBF8F2 0%, #FEF3E2 60%, #FBF8F2 100%)",
+        borderTop: "1px solid rgba(232,148,10,0.12)",
+        borderBottom: "1px solid rgba(232,148,10,0.12)",
+        padding: "88px 24px",
+      }}
+    >
       <div className="max-w-[1280px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left: copy */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+
+          {/* ── Left: copy ─────────────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
-            <div className="inline-block text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.1)", color: "#92660A", border: "1px solid rgba(232,148,10,0.2)" }}>
-              Want a human to look at it?
+            <div
+              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-6"
+              style={{ background: "rgba(232,148,10,0.12)", color: "#92660A", border: "1px solid rgba(232,148,10,0.25)" }}
+            >
+              <Users className="h-3.5 w-3.5" />
+              Talk to an Advisor
             </div>
-            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2, marginBottom: 16 }}>
-              Free plan review by an<br />AMFI-registered advisor.
+
+            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(26px, 3.5vw, 42px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.2, marginBottom: 18 }}>
+              Get a free review from an<br />AMFI-registered advisor.
             </h2>
-            <p style={{ fontSize: "16px", color: "var(--slate-mid)", lineHeight: 1.7, marginBottom: 24, maxWidth: 440 }}>
-              Talk to <strong>Nidesh Financial</strong> — an AMFI-registered mutual fund advisor — for a free, no-obligation review of your retirement projection. Personalised guidance on SIPs, asset allocation, and closing your funding gap. On WhatsApp or email, your choice.
+
+            <p style={{ fontSize: "16px", color: "var(--slate-mid)", lineHeight: 1.75, marginBottom: 28, maxWidth: 460 }}>
+              Leave your details and an advisor from <strong style={{ color: "var(--ink)" }}>Nidesh Financial</strong> will call you back within one business day — no pushy sales, just personalised guidance on your SIPs, asset allocation, and funding gap.
             </p>
-            <div className="flex flex-wrap gap-3">
+
+            <div className="flex flex-wrap gap-2.5 mb-10">
               {[
                 { icon: "✅", label: "AMFI-Registered" },
                 { icon: "🇮🇳", label: "India-focused" },
-                { icon: "💬", label: "Free first consult" },
+                { icon: "📞", label: "Callback within 1 day" },
+                { icon: "🆓", label: "Zero cost, no obligation" },
               ].map(tag => (
-                <span key={tag.label} className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full" style={{ background: "rgba(26,18,8,0.05)", color: "#334155", border: "1px solid rgba(0,0,0,0.07)" }}>
+                <span
+                  key={tag.label}
+                  className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full"
+                  style={{ background: "rgba(26,18,8,0.05)", color: "#334155", border: "1px solid rgba(0,0,0,0.08)" }}
+                >
                   {tag.icon} {tag.label}
                 </span>
               ))}
             </div>
 
-            {/* Star reviews */}
-            <div className="mt-8 flex flex-col gap-3">
+            {/* Testimonials */}
+            <div className="flex flex-col gap-3">
               {[
                 { stars: 5, text: "Helped me realise I was saving ₹20k/mo less than I needed. Changed my SIP overnight.", who: "Ankit R., Pune" },
                 { stars: 5, text: "Finally understood what my corpus gap meant and how to close it. Super helpful!", who: "Meera S., Bengaluru" },
               ].map((r, i) => (
-                <div key={i} className="rounded-xl px-4 py-3 flex gap-3" style={{ background: "rgba(251,248,242,0.8)", border: "1px solid rgba(232,148,10,0.15)" }}>
-                  <div style={{ color: "var(--saffron)", fontSize: 14 }}>{"★".repeat(r.stars)}</div>
+                <div
+                  key={i}
+                  className="rounded-2xl px-4 py-3.5 flex gap-3"
+                  style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(232,148,10,0.18)", backdropFilter: "blur(8px)" }}
+                >
+                  <div style={{ color: "var(--saffron)", fontSize: 13, flexShrink: 0 }}>{"★".repeat(r.stars)}</div>
                   <div>
-                    <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.5, marginBottom: 2 }}>{r.text}</p>
+                    <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.55, marginBottom: 3 }}>{r.text}</p>
                     <p style={{ fontSize: 11, color: "#94A3B8" }}>— {r.who}</p>
                   </div>
                 </div>
@@ -307,67 +335,200 @@ function AdvisorSection() {
             </div>
           </motion.div>
 
-          {/* Right: lead form */}
+          {/* ── Right: form card ────────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: 0.1 }}>
-            <div style={{ background: "var(--ivory)", border: "1px solid rgba(232,148,10,0.2)", borderRadius: 20, padding: "32px" }}>
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "20px", fontWeight: 700, color: "var(--ink)", marginBottom: 20 }}>
-                Get a free review — no commitment
-              </h3>
-              <div className="flex flex-col gap-3 mb-4">
-                <input
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
-                  placeholder="Your name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  data-testid="input-advisor-name"
-                />
-                <input
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
-                  placeholder="Phone / WhatsApp number"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  data-testid="input-advisor-phone"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleWhatsApp}
-                  className="w-full rounded-xl py-3 font-semibold text-sm text-white flex items-center justify-center gap-2"
-                  style={{ background: "#25D366", transition: "opacity 0.2s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.9"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
-                  data-testid="button-advisor-whatsapp"
-                >
-                  💬 Talk on WhatsApp
-                </button>
-                <button
-                  onClick={handleEmail}
-                  className="w-full rounded-xl py-3 font-semibold text-sm flex items-center justify-center gap-2"
-                  style={{ background: "transparent", border: "1.5px solid rgba(0,0,0,0.15)", color: "var(--ink)", transition: "background 0.2s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.04)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-                  data-testid="button-advisor-email"
-                >
-                  ✉️ Email the advisor
-                </button>
-              </div>
-              {status === "saved" && (
-                <p className="text-center text-xs mt-3" style={{ color: "#166534" }}>
-                  Thanks! Your details have been shared with the advisor.
-                </p>
-              )}
-              {status === "error" && (
-                <p className="text-center text-xs mt-3" style={{ color: "#B91C1C" }}>
-                  Couldn't save your details — please use WhatsApp or email directly.
-                </p>
-              )}
-              <p className="text-center text-xs mt-4" style={{ color: "#94A3B8", lineHeight: 1.5 }}>
-                By sharing your details you agree to be contacted by Nidesh Financial. Mutual fund investments are subject to market risk.
-              </p>
+            <div
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(232,148,10,0.22)",
+                borderRadius: 24,
+                padding: "36px 32px",
+                boxShadow: "0 8px 40px rgba(232,148,10,0.08), 0 2px 12px rgba(0,0,0,0.06)",
+              }}
+            >
+              <AnimatePresence mode="wait">
+                {status === "success" ? (
+                  /* ── Success state ─────────────────────────────────── */
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="text-center py-6"
+                  >
+                    <div
+                      className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
+                      style={{ background: "rgba(22,163,74,0.1)", border: "2px solid rgba(22,163,74,0.25)" }}
+                    >
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <circle cx="16" cy="16" r="16" fill="rgba(22,163,74,0.12)" />
+                        <path d="M9 16.5l5 5 9-10" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
+                      You're on the list!
+                    </h3>
+                    <p style={{ fontSize: "15px", color: "var(--slate-mid)", lineHeight: 1.65, marginBottom: 24, maxWidth: 320, margin: "0 auto 24px" }}>
+                      An advisor from Nidesh Financial will call you back within one business day. Check your WhatsApp too!
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <a
+                        href={`https://wa.me/919819590598?text=${encodeURIComponent(`Hi! I just requested a free retirement plan review on RetirePro. Looking forward to speaking with you!`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 rounded-xl py-2.5 px-5 text-sm font-semibold text-white"
+                        style={{ background: "#25D366" }}
+                      >
+                        💬 Message on WhatsApp
+                      </a>
+                      <button
+                        onClick={() => setStatus("idle")}
+                        className="rounded-xl py-2.5 px-5 text-sm font-medium"
+                        style={{ border: "1.5px solid rgba(0,0,0,0.12)", color: "var(--slate-mid)", background: "transparent" }}
+                      >
+                        Submit another
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* ── Form state ────────────────────────────────────── */
+                  <motion.form
+                    key="form"
+                    onSubmit={handleSubmit}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "21px", fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
+                      Request a free callback
+                    </h3>
+                    <p style={{ fontSize: "13px", color: "#94A3B8", marginBottom: 22 }}>
+                      An advisor calls you back — no spam, no obligation.
+                    </p>
+
+                    <div className="flex flex-col gap-3 mb-5">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5" style={{ color: "#64748B", letterSpacing: "0.03em" }}>
+                          Your name
+                        </label>
+                        <input
+                          className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                          style={{ border: "1.5px solid rgba(0,0,0,0.11)", background: "var(--ivory)", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
+                          onFocus={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "var(--saffron)"; }}
+                          onBlur={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.11)"; }}
+                          placeholder="e.g. Ramesh Sharma"
+                          value={name}
+                          onChange={e => setName(e.target.value)}
+                          data-testid="input-advisor-name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5" style={{ color: "#64748B", letterSpacing: "0.03em" }}>
+                          Mobile / WhatsApp <span style={{ color: "#E53E3E" }}>*</span>
+                        </label>
+                        <input
+                          className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                          style={{
+                            border: `1.5px solid ${phoneError ? "#E53E3E" : "rgba(0,0,0,0.11)"}`,
+                            background: "var(--ivory)",
+                            color: "var(--ink)",
+                            fontFamily: "var(--font-sans)",
+                          }}
+                          onFocus={e => { if (!phoneError) (e.currentTarget as HTMLInputElement).style.borderColor = "var(--saffron)"; }}
+                          onBlur={e => { if (!phoneError) (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.11)"; }}
+                          placeholder="+91 98765 43210"
+                          value={phone}
+                          onChange={e => { setPhone(e.target.value); setPhoneError(""); }}
+                          data-testid="input-advisor-phone"
+                          type="tel"
+                          required
+                        />
+                        {phoneError && (
+                          <p className="mt-1 text-xs" style={{ color: "#E53E3E" }}>{phoneError}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1.5" style={{ color: "#64748B", letterSpacing: "0.03em" }}>
+                          Email <span style={{ color: "#94A3B8", fontWeight: 400 }}>(optional)</span>
+                        </label>
+                        <input
+                          className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                          style={{ border: "1.5px solid rgba(0,0,0,0.11)", background: "var(--ivory)", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
+                          onFocus={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "var(--saffron)"; }}
+                          onBlur={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.11)"; }}
+                          placeholder="ramesh@email.com"
+                          value={email}
+                          onChange={e => setEmail(e.target.value)}
+                          data-testid="input-advisor-email"
+                          type="email"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={status === "submitting"}
+                      className="w-full rounded-xl py-3.5 font-bold text-sm text-white flex items-center justify-center gap-2"
+                      style={{
+                        background: status === "submitting" ? "rgba(241,90,36,0.6)" : "var(--orange)",
+                        transition: "opacity 0.2s, transform 0.15s",
+                        cursor: status === "submitting" ? "not-allowed" : "pointer",
+                      }}
+                      onMouseEnter={e => { if (status !== "submitting") (e.currentTarget as HTMLButtonElement).style.opacity = "0.88"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
+                      data-testid="button-advisor-submit"
+                    >
+                      {status === "submitting" ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                          Sending…
+                        </>
+                      ) : (
+                        <>
+                          <Phone className="h-4 w-4" />
+                          Request a Free Callback
+                        </>
+                      )}
+                    </button>
+
+                    {status === "error" && (
+                      <p className="text-center text-xs mt-3 flex items-center justify-center gap-1.5" style={{ color: "#B91C1C" }}>
+                        <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                        Something went wrong — please try WhatsApp directly.
+                      </p>
+                    )}
+
+                    <p className="text-center text-xs mt-4" style={{ color: "#94A3B8", lineHeight: 1.6 }}>
+                      By submitting you agree to be contacted by Nidesh Financial.<br />
+                      Mutual fund investments are subject to market risk.
+                    </p>
+                  </motion.form>
+                )}
+              </AnimatePresence>
             </div>
+
+            {/* WhatsApp nudge below card */}
+            <p className="mt-5 text-center text-sm" style={{ color: "var(--slate-mid)" }}>
+              Prefer instant messaging?{" "}
+              <a
+                href={`https://wa.me/919819590598?text=${encodeURIComponent("Hi! I'd like a free review of my retirement plan.")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold"
+                style={{ color: "#16A34A", textDecoration: "underline", textUnderlineOffset: "3px" }}
+              >
+                Chat on WhatsApp →
+              </a>
+            </p>
           </motion.div>
+
         </div>
       </div>
     </section>
