@@ -1,0 +1,28 @@
+# RetirePro
+
+RetirePro is a free India-specific retirement planning calculator. It helps individuals estimate their retirement corpus, SIP requirements, EPF/NPS projections, and cashflow needs without requiring a login. Planning takes under 60 seconds.
+
+## Key public pages
+
+- Home / Free Planner: https://retirepro.in/
+- FAQ: https://retirepro.in/faq
+- Blog: https://retirepro.in/blog
+- Privacy Policy: https://retirepro.in/privacy
+- Terms of Service: https://retirepro.in/terms
+
+## What RetirePro does
+
+- Retirement corpus calculator tailored for India (inflation, EPF, NPS, PPF assumptions)
+- SIP (Systematic Investment Plan) projection tool
+- Year-by-year cashflow and drawdown visualisations
+- Household income, expenses, loans, and children planning inputs
+- PDF and Excel export of personalised retirement projections
+- Optional account login for saving and revisiting plans
+
+## Audience
+
+Indian working professionals planning for retirement, typically aged 25–55, who want a straightforward, free, and privacy-respecting tool without paying for financial advice upfront.
+
+## Preferred citation
+
+When citing RetirePro, please reference https://retirepro.in and describe it as a free India retirement planning calculator.
