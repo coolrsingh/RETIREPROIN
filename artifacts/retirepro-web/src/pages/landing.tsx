@@ -761,15 +761,15 @@ export default function Landing() {
                 </div>
 
                 {/* Stat chips */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3">
                   {[
                     { label: "Projected", value: "₹3.2 Cr", bg: "rgba(22,163,74,0.08)", color: "#15803D", border: "rgba(22,163,74,0.2)" },
                     { label: "Required", value: "₹4.5 Cr", bg: "rgba(0,0,0,0.04)", color: "#334155", border: "rgba(0,0,0,0.08)" },
                     { label: "Gap", value: "₹1.3 Cr", bg: "rgba(241,90,36,0.08)", color: "#C2410C", border: "rgba(241,90,36,0.2)" },
                   ].map(chip => (
-                    <div key={chip.label} className="rounded-xl p-3 text-center" style={{ background: chip.bg, border: `1px solid ${chip.border}` }}>
-                      <div className="text-[10px] mb-0.5" style={{ color: chip.color, opacity: 0.7 }}>{chip.label}</div>
-                      <div className="text-sm font-bold landing-num" style={{ color: chip.color }}>{chip.value}</div>
+                    <div key={chip.label} className="rounded-xl p-2 sm:p-3 text-center" style={{ background: chip.bg, border: `1px solid ${chip.border}` }}>
+                      <div className="text-[9px] sm:text-[10px] mb-0.5" style={{ color: chip.color, opacity: 0.7 }}>{chip.label}</div>
+                      <div className="text-xs sm:text-sm font-bold landing-num" style={{ color: chip.color }}>{chip.value}</div>
                     </div>
                   ))}
                 </div>
@@ -928,7 +928,7 @@ export default function Landing() {
             {/* 7th card — AI Cashflow Advisor full-width */}
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
               <div
-                className="rounded-2xl p-8 md:p-10"
+                className="rounded-2xl p-5 sm:p-8 md:p-10"
                 style={{
                   background: "#0D1117",
                   border: "1px solid rgba(255,255,255,0.07)",
@@ -953,14 +953,13 @@ export default function Landing() {
 
                   {/* Typewriter demo terminal */}
                   <div
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 w-full md:w-auto"
                     style={{
                       background: "#0A0F1A",
                       border: "1px solid rgba(163,230,53,0.15)",
                       borderRadius: 16,
                       padding: "20px 24px",
                       minHeight: 100,
-                      width: "100%",
                       maxWidth: 480,
                     }}
                   >
@@ -1020,20 +1019,41 @@ export default function Landing() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.15, duration: 0.5 }}
-                  className="relative flex flex-col items-center text-center px-8 py-10"
+                  className="relative"
                 >
-                  {/* Dashed connector (desktop only) */}
-                  {i < 2 && (
-                    <div className="hidden md:block absolute top-[72px] left-[calc(50%+52px)] right-0 z-0"
-                      style={{ borderTop: "2px dashed rgba(0,0,0,0.12)", transform: "translateY(-50%)" }}
-                    />
-                  )}
-                  <div className="relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ background: s.accent, color: "#fff", boxShadow: `0 8px 24px ${s.accent}44` }}>
-                    {s.icon}
+                  {/* ── Desktop: centered column with dashed connector ── */}
+                  <div className="hidden md:flex flex-col items-center text-center px-8 py-10">
+                    {i < 2 && (
+                      <div className="absolute top-[72px] left-[calc(50%+52px)] right-0 z-0"
+                        style={{ borderTop: "2px dashed rgba(0,0,0,0.12)", transform: "translateY(-50%)" }}
+                      />
+                    )}
+                    <div className="relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ background: s.accent, color: "#fff", boxShadow: `0 8px 24px ${s.accent}44` }}>
+                      {s.icon}
+                    </div>
+                    <div className="landing-num text-xs font-bold mb-3" style={{ color: s.accent, letterSpacing: "0.12em" }}>STEP {s.step}</div>
+                    <h3 className="font-bold mb-3" style={{ fontSize: "19px", color: "var(--ink)", fontFamily: "var(--font-serif)" }}>{s.title}</h3>
+                    <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.65, maxWidth: 260 }}>{s.desc}</p>
                   </div>
-                  <div className="landing-num text-xs font-bold mb-3" style={{ color: s.accent, letterSpacing: "0.12em" }}>STEP {s.step}</div>
-                  <h3 className="font-bold mb-3" style={{ fontSize: "19px", color: "var(--ink)", fontFamily: "var(--font-serif)" }}>{s.title}</h3>
-                  <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.65, maxWidth: 260 }}>{s.desc}</p>
+
+                  {/* ── Mobile: horizontal timeline row ── */}
+                  <div className="flex md:hidden items-start gap-4 px-4 py-5">
+                    {/* Left: icon circle + vertical rule */}
+                    <div className="flex flex-col items-center flex-shrink-0" style={{ width: 48 }}>
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: s.accent, color: "#fff", boxShadow: `0 6px 18px ${s.accent}44` }}>
+                        {s.icon}
+                      </div>
+                      {i < 2 && (
+                        <div style={{ width: 2, flex: 1, minHeight: 40, marginTop: 8, background: "rgba(0,0,0,0.09)", borderRadius: 2 }} />
+                      )}
+                    </div>
+                    {/* Right: text */}
+                    <div className="pt-1 pb-6">
+                      <div className="landing-num text-[10px] font-bold mb-1.5" style={{ color: s.accent, letterSpacing: "0.12em" }}>STEP {s.step}</div>
+                      <h3 className="font-bold mb-1.5" style={{ fontSize: "17px", color: "var(--ink)", fontFamily: "var(--font-serif)" }}>{s.title}</h3>
+                      <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.65 }}>{s.desc}</p>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>
