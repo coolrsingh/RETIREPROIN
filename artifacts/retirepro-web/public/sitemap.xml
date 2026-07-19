@@ -6,9 +6,14 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://retirepro.in/free-planner</loc>
+    <loc>https://retirepro.in/free-plan</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://retirepro.in/plan/preview</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://retirepro.in/blog</loc>
@@ -16,17 +21,17 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://retirepro.in/blog/retirement-planning-india</loc>
+    <loc>https://retirepro.in/blog/why-indians-fail-retirement</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://retirepro.in/blog/sip-vs-lumpsum</loc>
+    <loc>https://retirepro.in/blog/nps-vs-ppf-vs-sip</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://retirepro.in/blog/corpus-calculation</loc>
+    <loc>https://retirepro.in/blog/real-estate-rich-retirement-illusion</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
