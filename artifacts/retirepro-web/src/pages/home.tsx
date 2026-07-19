@@ -47,10 +47,10 @@ export default function Home() {
 
   if (isLoading || scenariosLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ivory)" }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F15A24] mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E8940A] mx-auto mb-4"></div>
+          <p style={{ color: "var(--slate-mid)" }}>Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -59,70 +59,102 @@ export default function Home() {
   const isAdmin = (user as any)?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: "var(--ivory)" }}>
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: "rgba(251,248,242,0.92)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(232,148,10,0.18)",
+          boxShadow: "0 1px 8px rgba(26,18,8,0.06)",
+        }}
+      >
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <BrandLogo textClassName="text-slate-800" />
               <nav className="hidden md:flex space-x-6">
-                <span className="text-primary-600 font-medium">Dashboard</span>
+                <span className="font-semibold" style={{ color: "var(--saffron)" }}>Dashboard</span>
                 {isAdmin && (
-                  <Link href="/leads" className="text-slate-600 hover:text-primary-600 font-medium flex items-center gap-1">
+                  <Link href="/leads" className="font-medium hover:opacity-80 flex items-center gap-1" style={{ color: "var(--slate-mid)" }}>
                     <Users className="h-4 w-4" />
                     Ad Leads
                   </Link>
                 )}
               </nav>
             </div>
-            <div className="flex items-center space-x-3">
-              <ProfileMenu user={user} isAdmin={isAdmin} />
-            </div>
+            <ProfileMenu user={user} isAdmin={isAdmin} />
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          <h1
+            className="text-3xl font-bold mb-2"
+            style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+          >
             Welcome back, {(user as any)?.firstName || 'there'}!
           </h1>
-          <p className="text-slate-600">
+          <p style={{ color: "var(--slate-mid)" }}>
             Manage your retirement plans and track your financial goals
           </p>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 col-span-full">
-            <CardHeader>
-              <CardTitle className="flex items-center text-orange-700">
-                <Zap className="mr-2 h-5 w-5 text-orange-500" />
-                Create a New Retirement Plan
-              </CardTitle>
-              <CardDescription>
-                Fill in your household income, savings, children and goals — get a full year-by-year projection instantly
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/plan?mode=quick">
-                <Button className="bg-[#F15A24] hover:bg-[#d44d1e] text-white font-semibold px-6" data-testid="button-create-quick-plan">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Retirement Plan
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+        <div className="mb-8">
+          <div
+            className="rounded-2xl p-6"
+            style={{
+              background: "linear-gradient(135deg, rgba(232,148,10,0.10) 0%, rgba(251,159,11,0.06) 100%)",
+              border: "1px solid rgba(232,148,10,0.22)",
+            }}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <Zap className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: "var(--saffron)" }} />
+              <div>
+                <h2
+                  className="text-lg font-semibold mb-1"
+                  style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                >
+                  Create a New Retirement Plan
+                </h2>
+                <p className="text-sm" style={{ color: "var(--slate-mid)" }}>
+                  Fill in your household income, savings, children and goals — get a full year-by-year projection instantly
+                </p>
+              </div>
+            </div>
+            <Link href="/plan?mode=quick">
+              <Button
+                className="text-white font-semibold px-6"
+                style={{ background: "var(--saffron)", borderColor: "transparent" }}
+                data-testid="button-create-quick-plan"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Retirement Plan
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Existing Plans */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Your Plans</h2>
+            <h2
+              className="text-2xl font-bold"
+              style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+            >
+              Your Plans
+            </h2>
             {scenarios && scenarios.length > 0 && (
-              <Button variant="outline" size="sm" data-testid="button-view-all">
+              <Button
+                variant="outline"
+                size="sm"
+                style={{ borderColor: "rgba(232,148,10,0.35)", color: "var(--saffron)" }}
+                data-testid="button-view-all"
+              >
                 <FileText className="mr-2 h-4 w-4" />
                 View All
               </Button>
@@ -132,55 +164,95 @@ export default function Home() {
           {scenarios && scenarios.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {scenarios.map((scenario: any) => (
-                <Card key={scenario.id} className="hover:shadow-md transition-shadow" data-testid={`card-scenario-${scenario.id}`}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{scenario.name}</CardTitle>
-                    </div>
-                    <CardDescription>
+                <div
+                  key={scenario.id}
+                  className="rounded-2xl p-5 transition-shadow hover:shadow-md"
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid rgba(232,148,10,0.18)",
+                    boxShadow: "0 1px 6px rgba(26,18,8,0.05)",
+                  }}
+                  data-testid={`card-scenario-${scenario.id}`}
+                >
+                  <div className="mb-1">
+                    <h3
+                      className="text-lg font-semibold"
+                      style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                    >
+                      {scenario.name}
+                    </h3>
+                    <p className="text-sm mt-0.5" style={{ color: "var(--slate-mid)" }}>
                       Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex space-x-2">
-                      <Link href={`/plan/${scenario.id}`}>
-                        <Button size="sm" className="flex-1" data-testid={`button-view-${scenario.id}`}>
-                          <ChartLine className="mr-2 h-4 w-4" />
-                          View Plan
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </p>
+                  </div>
+                  <div className="mt-4">
+                    <Link href={`/plan/${scenario.id}`}>
+                      <Button
+                        size="sm"
+                        className="text-white font-medium"
+                        style={{ background: "var(--saffron)", borderColor: "transparent" }}
+                        data-testid={`button-view-${scenario.id}`}
+                      >
+                        <ChartLine className="mr-2 h-4 w-4" />
+                        View Plan
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <ChartLine className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">No plans yet</h3>
-                <p className="text-slate-600 mb-4">
-                  Get started by creating your first retirement plan
+            <div
+              className="rounded-2xl text-center py-14 px-6"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(232,148,10,0.18)",
+                boxShadow: "0 1px 6px rgba(26,18,8,0.05)",
+              }}
+            >
+              <ChartLine className="h-14 w-14 mx-auto mb-4" style={{ color: "rgba(232,148,10,0.3)" }} />
+              <h3
+                className="text-xl font-semibold mb-2"
+                style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+              >
+                No plans yet
+              </h3>
+              <p className="mb-5 text-sm" style={{ color: "var(--slate-mid)" }}>
+                Get started by creating your first retirement plan
+              </p>
+
+              <div
+                className="inline-block rounded-xl px-5 py-3 mb-6 text-left max-w-md"
+                style={{
+                  background: "rgba(232,148,10,0.08)",
+                  border: "1px solid rgba(232,148,10,0.20)",
+                }}
+              >
+                <h4
+                  className="font-semibold text-sm mb-1"
+                  style={{ color: "var(--ink)" }}
+                >
+                  💡 Did you know?
+                </h4>
+                <p className="text-sm" style={{ color: "var(--slate-mid)" }}>
+                  Starting to save for retirement at age 25 vs 35 can result in 2× more wealth at retirement,
+                  thanks to the power of compound interest. Every year matters!
                 </p>
-                
-                <div className="bg-orange-50 rounded-lg px-4 py-3 mb-6 border border-orange-200">
-                  <h4 className="font-semibold text-orange-900 mb-2">💡 Did you know?</h4>
-                  <p className="text-orange-800 text-sm">
-                    Starting to save for retirement at age 25 vs 35 can result in 2x more wealth at retirement, 
-                    thanks to the power of compound interest. Every year matters!
-                  </p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/plan?mode=quick">
-                    <Button className="bg-[#F15A24] hover:bg-[#d44d1e] text-white" data-testid="button-first-quick-plan">
-                      <Zap className="mr-2 h-4 w-4" />
-                      Create Retirement Plan
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/plan?mode=quick">
+                  <Button
+                    className="text-white font-semibold"
+                    style={{ background: "var(--saffron)", borderColor: "transparent" }}
+                    data-testid="button-first-quick-plan"
+                  >
+                    <Zap className="mr-2 h-4 w-4" />
+                    Create Retirement Plan
+                  </Button>
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </main>
