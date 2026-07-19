@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetirePro — Plan Your Retirement Free | India's Retirement Planner</title>
+<meta name="description" content="Free India-specific retirement calculator. Find your required corpus, funding gap, and monthly SIP needed — EPF, NPS, PPF aware. No login required.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#131B2E;          /* deep midnight navy */
+  --ivory:#FBF8F2;        /* warm paper */
+  --saffron:#E8641F;      /* brand orange, deepened */
+  --saffron-soft:#FCEADF;
+  --leaf:#178A5B;         /* on-track green */
+  --leaf-soft:#E4F4EC;
+  --slate:#5B6478;
+  --line:#E8E2D6;
+  --card:#FFFFFF;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Instrument Sans',sans-serif;background:var(--ivory);color:var(--ink);line-height:1.6;overflow-x:hidden}
+::selection{background:var(--saffron);color:#fff}
+
+/* ---------- NAV ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,5vw,64px);background:rgba(251,248,242,.82);backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.scrolled{border-bottom-color:var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.2rem;text-decoration:none;color:var(--ink)}
+.logo-mark{width:34px;height:34px;border-radius:9px;background:var(--ink);display:grid;place-items:center;position:relative;overflow:hidden}
+.logo-mark svg{width:20px;height:20px}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{text-decoration:none;color:var(--slate);font-weight:500;font-size:.95rem;transition:color .2s}
+.nav-links a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:100px;font-weight:600;font-size:.98rem;text-decoration:none;cursor:pointer;border:none;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s}
+.btn-primary{background:var(--saffron);color:#fff;box-shadow:0 6px 20px rgba(232,100,31,.35)}
+.btn-primary:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 10px 28px rgba(232,100,31,.45)}
+.btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--ink);transform:translateY(-2px)}
+.btn-lg{padding:16px 34px;font-size:1.05rem}
+
+/* ---------- HERO ---------- */
+.hero{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:clamp(24px,4vw,60px);padding:120px clamp(20px,5vw,64px) 40px;position:relative}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-bg .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:drift 16s ease-in-out infinite alternate}
+.blob-a{width:520px;height:520px;background:#FBD8BF;top:-160px;right:-120px}
+.blob-b{width:420px;height:420px;background:#DCEFE5;bottom:-180px;left:-140px;animation-delay:-8s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(-40px,50px) scale(1.12)}}
+
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--saffron-soft);color:var(--saffron);border:1px solid #F5C9A8;padding:8px 18px;border-radius:100px;font-weight:600;font-size:.88rem;margin-bottom:26px}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--saffron);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+
+h1{font-family:'Fraunces',serif;font-size:clamp(2.6rem,5.6vw,4.6rem);line-height:1.04;font-weight:700;letter-spacing:-.02em}
+h1 .accent{font-style:italic;color:var(--saffron);font-weight:600;position:relative;display:inline-block}
+h1 .accent::after{content:'';position:absolute;left:0;bottom:6px;height:.14em;width:100%;background:var(--saffron);opacity:.25;transform:scaleX(0);transform-origin:left;animation:underline 1s .9s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes underline{to{transform:scaleX(1)}}
+.hero-sub{margin:26px 0 34px;font-size:1.13rem;color:var(--slate);max-width:520px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+.trust-row{margin-top:34px;display:flex;gap:26px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:8px;color:var(--slate);font-size:.9rem;font-weight:500}
+.trust-item svg{width:17px;height:17px;color:var(--leaf);flex-shrink:0}
+
+/* staged hero entrance */
+.stage{opacity:0;transform:translateY(26px);animation:rise .8s cubic-bezier(.22,1,.36,1) forwards}
+.stage:nth-child(1){animation-delay:.05s}
+.d1{animation-delay:.15s}.d2{animation-delay:.3s}.d3{animation-delay:.45s}.d4{animation-delay:.6s}
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+/* ---------- HERO VISUAL: the living plan ---------- */
+.hero-visual{position:relative;min-height:520px}
+.plan-card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 24px 60px rgba(19,27,46,.12);padding:26px;position:relative;z-index:2;opacity:0;transform:translateY(30px) rotate(-1deg);animation:cardIn 1s .5s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes cardIn{to{opacity:1;transform:translateY(0) rotate(0)}}
+.plan-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.plan-avatar{width:38px;height:38px;border-radius:50%;background:var(--saffron-soft);display:grid;place-items:center;color:var(--saffron)}
+.plan-title{font-weight:600}
+.plan-title small{display:block;color:var(--slate);font-weight:400;font-size:.8rem}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{border-radius:14px;padding:14px;border:1px solid var(--line)}
+.stat label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600}
+.stat .val{font-family:var(--mono);font-size:1.25rem;font-weight:500;margin-top:4px}
+.stat.gap{background:var(--saffron-soft);border-color:#F5C9A8}
+.stat.gap .val{color:var(--saffron)}
+.stat.ok{background:var(--leaf-soft);border-color:#BCE3CF}
+.stat.ok .val{color:var(--leaf)}
+.chart-wrap{border:1px solid var(--line);border-radius:14px;padding:16px 12px 8px;position:relative}
+.chart-wrap .chart-label{position:absolute;top:12px;left:16px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:600}
+#curve{width:100%;height:180px;display:block}
+.sip-pill{position:absolute;bottom:-22px;left:26px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;box-shadow:0 14px 34px rgba(19,27,46,.3);display:flex;align-items:center;gap:10px;z-index:3;opacity:0;transform:translateY(16px);animation:rise .7s 1.6s cubic-bezier(.22,1,.36,1) forwards}
+.sip-pill .amt{font-family:var(--mono);font-weight:500;color:#FFD9BE}
+.float-chip{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:0 12px 30px rgba(19,27,46,.1);font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px;z-index:1;animation:bob 5s ease-in-out infinite}
+.chip-a{top:-14px;right:-8px;color:var(--leaf);animation-delay:-1s}
+.chip-b{bottom:64px;right:-26px;animation-delay:-3s}
+.chip-b .mini{font-family:var(--mono);color:var(--saffron)}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+/* ---------- TICKER ---------- */
+.ticker{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff;overflow:hidden;padding:13px 0}
+.ticker-track{display:flex;gap:48px;width:max-content;animation:scroll 32s linear infinite;font-family:var(--mono);font-size:.82rem;color:var(--slate);white-space:nowrap}
+.ticker-track span b{color:var(--ink);font-weight:500}
+.ticker-track .up{color:var(--leaf)}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ---------- SECTIONS ---------- */
+section{padding:clamp(70px,9vw,120px) clamp(20px,5vw,64px)}
+.eyebrow{font-family:var(--mono);font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:var(--saffron);font-weight:500;margin-bottom:16px}
+h2{font-family:'Fraunces',serif;font-size:clamp(1.9rem,3.6vw,2.9rem);line-height:1.12;font-weight:600;letter-spacing:-.01em;max-width:640px}
+.sec-sub{color:var(--slate);font-size:1.08rem;max-width:560px;margin-top:16px}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.reveal.dl1{transition-delay:.1s}.reveal.dl2{transition-delay:.2s}.reveal.dl3{transition-delay:.3s}
+
+/* ---------- WAKE-UP STATS ---------- */
+.wake{background:var(--ink);color:var(--ivory);position:relative;overflow:hidden}
+.wake .eyebrow{color:#FFA26B}
+.wake h2{color:#fff}
+.wake .sec-sub{color:#9AA3B8}
+.wake-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.wake-card{border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:34px 28px;background:rgba(255,255,255,.03);transition:transform .3s,border-color .3s}
+.wake-card:hover{transform:translateY(-6px);border-color:rgba(255,162,107,.5)}
+.wake-num{font-family:'Fraunces',serif;font-size:clamp(2.6rem,4.5vw,3.8rem);font-weight:700;color:#FFA26B;line-height:1}
+.wake-num .unit{font-size:.45em;font-weight:600}
+.wake-card p{margin-top:14px;color:#B7BECF;font-size:.98rem}
+.wake-src{margin-top:40px;font-size:.8rem;color:#6E7891;font-family:var(--mono)}
+.grain-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,162,107,.4),transparent)}
+
+/* ---------- FEATURES ---------- */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px;transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}
+.feat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--saffron);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.22,1,.36,1)}
+.feat:hover{transform:translateY(-6px);box-shadow:0 18px 44px rgba(19,27,46,.1)}
+.feat:hover::before{transform:scaleX(1)}
+.feat-icon{width:46px;height:46px;border-radius:13px;background:var(--saffron-soft);color:var(--saffron);display:grid;place-items:center;margin-bottom:18px}
+.feat-icon svg{width:23px;height:23px}
+.feat h3{font-size:1.12rem;font-weight:600;margin-bottom:8px}
+.feat p{color:var(--slate);font-size:.95rem}
+.feat.ai{grid-column:span 3;display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center;background:linear-gradient(120deg,#FFF7F1,#FDFCFA)}
+.feat.ai .feat-icon{background:var(--ink);color:#FFA26B}
+.ai-demo{background:var(--ink);border-radius:16px;padding:22px;font-family:var(--mono);font-size:.82rem;color:#C9D0E0;line-height:1.7;box-shadow:0 18px 44px rgba(19,27,46,.25)}
+.ai-demo .u{color:#8B94AB}
+.ai-demo .a{color:#FFD9BE}
+.type-caret{display:inline-block;width:8px;height:14px;background:#FFA26B;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- HOW IT WORKS ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:60px;position:relative}
+.step{padding:0 30px;position:relative}
+.step:not(:last-child)::after{content:'';position:absolute;top:26px;right:-40px;width:80px;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 8px,transparent 8px 16px)}
+.step-num{width:54px;height:54px;border-radius:50%;border:2px solid var(--saffron);color:var(--saffron);display:grid;place-items:center;font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin-bottom:20px;background:var(--ivory);position:relative;z-index:1}
+.step h3{font-size:1.15rem;font-weight:600;margin-bottom:8px}
+.step p{color:var(--slate);font-size:.95rem}
+.step-time{margin-top:12px;font-family:var(--mono);font-size:.78rem;color:var(--saffron)}
+
+/* ---------- ADVISOR ---------- */
+.advisor{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.advisor-wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.review-stack{display:grid;gap:16px}
+.review{background:var(--ivory);border:1px solid var(--line);border-radius:18px;padding:24px}
+.review .stars{color:#F5A623;letter-spacing:2px;margin-bottom:10px;font-size:.95rem}
+.review p{font-size:.95rem;color:var(--ink)}
+.review .who{margin-top:12px;font-size:.83rem;color:var(--slate);font-weight:600}
+.review.placeholder{border-style:dashed;color:var(--slate)}
+.amfi-tags{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 28px}
+.tag{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--ivory);border-radius:100px;padding:8px 16px;font-size:.85rem;font-weight:600}
+.tag svg{width:15px;height:15px;color:var(--leaf)}
+
+/* ---------- CTA ---------- */
+.cta-final{text-align:center;position:relative;overflow:hidden}
+.cta-final h2{margin:0 auto}
+.cta-final .sec-sub{margin-left:auto;margin-right:auto}
+.cta-final .btn{margin-top:36px}
+.orbit{position:absolute;border:1px solid var(--line);border-radius:50%;pointer-events:none}
+.orbit-1{width:600px;height:600px;left:50%;top:50%;transform:translate(-50%,-50%)}
+.orbit-2{width:840px;height:840px;left:50%;top:50%;transform:translate(-50%,-50%)}
+.orbit .sat{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--saffron);top:-6px;left:50%;box-shadow:0 0 0 6px rgba(232,100,31,.15)}
+.spin{animation:spin 30s linear infinite}
+.spin-slow{animation:spin 48s linear infinite reverse}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+footer{padding:40px clamp(20px,5vw,64px);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);color:var(--slate);font-size:.88rem;flex-wrap:wrap;gap:16px}
+footer .fine{max-width:560px;font-size:.78rem}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr;min-height:auto;padding-top:110px}
+  .hero-visual{min-height:auto;margin-top:20px}
+  .wake-grid,.feat-grid,.steps{grid-template-columns:1fr}
+  .feat.ai{grid-column:span 1;grid-template-columns:1fr}
+  .step:not(:last-child)::after{display:none}
+  .step{padding:0 0 40px}
+  .advisor-wrap{grid-template-columns:1fr}
+  .nav-links a:not(.btn){display:none}
+  .chip-b{right:0}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .reveal{opacity:1;transform:none}
+  .stage,.plan-card,.sip-pill{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a class="logo" href="#">
+    <span class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FFA26B" stroke-width="2.4" stroke-linecap="round"><path d="M4 18 L10 11 L14 14 L20 6"/><path d="M15 6 h5 v5"/></svg>
+    </span>
+    RetirePro
+  </a>
+  <div class="nav-links">
+    <a href="#why">Why now</a>
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#advisor">Human review</a>
+    <a href="#" class="btn btn-primary">Sign In</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="hero-bg">
+    <div class="blob blob-a"></div>
+    <div class="blob blob-b"></div>
+  </div>
+
+  <div>
+    <div class="badge stage"><span class="dot"></span> Free. No account required.</div>
+    <h1 class="stage d1">Know your number<br><span class="accent">before</span> it's too late.</h1>
+    <p class="hero-sub stage d2">A complete, India-specific retirement plan — income, expenses, EPF, NPS, children's education, loans, even mini-retirement breaks. Your required corpus, your funding gap, and the exact monthly SIP to close it. In minutes.</p>
+    <div class="hero-ctas stage d3">
+      <a href="#" class="btn btn-primary btn-lg">Start My Free Plan
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a href="#" class="btn btn-ghost btn-lg">Sign In to Save</a>
+    </div>
+    <div class="trust-row stage d4">
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> India-specific math</span>
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> No login to try</span>
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> AI-guided insights</span>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="float-chip chip-a">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+      On track for retirement
+    </div>
+    <div class="plan-card">
+      <div class="plan-head">
+        <div class="plan-avatar">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 18 L10 11 L14 14 L20 6"/></svg>
+        </div>
+        <div class="plan-title">Priya's Retirement Plan <small>Recalculated live · age 32 → 60</small></div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><label>Projected</label><div class="val" data-count="3.2" data-prefix="₹" data-suffix=" Cr">₹0.0 Cr</div></div>
+        <div class="stat"><label>Required</label><div class="val" data-count="4.5" data-prefix="₹" data-suffix=" Cr">₹0.0 Cr</div></div>
+        <div class="stat gap"><label>Gap</label><div class="val" data-count="1.3" data-prefix="₹" data-suffix=" Cr">₹0.0 Cr</div></div>
+      </div>
+      <div class="chart-wrap">
+        <span class="chart-label">Net worth projection</span>
+        <svg id="curve" viewBox="0 0 440 180" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#E8641F" stop-opacity=".22"/>
+              <stop offset="100%" stop-color="#E8641F" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g stroke="#EFEAE0" stroke-width="1">
+            <line x1="0" y1="45" x2="440" y2="45"/><line x1="0" y1="90" x2="440" y2="90"/><line x1="0" y1="135" x2="440" y2="135"/>
+          </g>
+          <path id="area" d="M10,168 C90,164 150,150 220,118 C290,86 350,52 424,22 L424,180 L10,180 Z" fill="url(#fill)" opacity="0"/>
+          <path id="line" d="M10,168 C90,164 150,150 220,118 C290,86 350,52 424,22" fill="none" stroke="#E8641F" stroke-width="3" stroke-linecap="round"/>
+          <circle id="tip" cx="424" cy="22" r="6" fill="#178A5B" opacity="0"/>
+          <circle id="tipRing" cx="424" cy="22" r="6" fill="none" stroke="#178A5B" stroke-width="2" opacity="0"/>
+        </svg>
+      </div>
+      <div class="sip-pill">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFD9BE" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v20M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Monthly SIP needed&nbsp;<span class="amt">₹12,400/mo</span>
+      </div>
+    </div>
+    <div class="float-chip chip-b">Retire <span class="mini">2 yrs earlier?</span></div>
+  </div>
+</header>
+
+<!-- ============ TICKER ============ -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack">
+    <span>NIFTY 50 <b class="up">▲ 24,850</b></span>
+    <span>SENSEX <b class="up">▲ 81,200</b></span>
+    <span>INFLATION <b>6.8%</b></span>
+    <span>AVG EQUITY RETURN <b>12.4%</b></span>
+    <span>RETIREMENT AGE <b>60</b></span>
+    <span>LIFE EXPECTANCY <b>85 yrs</b></span>
+    <span>EPF RATE FY26 <b>8.25%</b></span>
+    <span>SIP STEP-UP <b>10%/yr</b></span>
+  </div>
+</div>
+
+<!-- ============ WAKE-UP ============ -->
+<section class="wake" id="why">
+  <div class="grain-line" style="top:0"></div>
+  <p class="eyebrow reveal">The uncomfortable math</p>
+  <h2 class="reveal dl1">Most of India is planning retirement on instinct. Instinct doesn't compound.</h2>
+  <p class="sec-sub reveal dl2">Recent surveys of Indians approaching retirement reveal a confidence gap that only shows up when it's too late to fix cheaply.</p>
+  <div class="wake-grid">
+    <div class="wake-card reveal dl1">
+      <div class="wake-num"><span data-count="75.5" data-suffix="%">0</span></div>
+      <p>of Indians aged 40–60 have <b style="color:#fff">no detailed retirement plan</b> — yet most still feel confident about retiring on time.</p>
+    </div>
+    <div class="wake-card reveal dl2">
+      <div class="wake-num"><span data-count="3.6" data-suffix="×">0</span></div>
+      <p>the median gap between the corpus people <b style="color:#fff">have</b> and the corpus they <b style="color:#fff">expect to retire with</b>. At higher incomes, it stretches to nearly 8×.</p>
+    </div>
+    <div class="wake-card reveal dl3">
+      <div class="wake-num"><span data-count="59" data-suffix="%">0</span></div>
+      <p>expect their money to run out <b style="color:#fff">before age 80</b> — while urban Indians reaching 60 typically live another 22–24 years.</p>
+    </div>
+  </div>
+  <p class="wake-src reveal dl3">Sources: 1 Finance retirement readiness survey 2026 (n=1,218) · PGIM India Retirement Readiness Survey 2025</p>
+  <div class="grain-line" style="bottom:0"></div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section id="features">
+  <p class="eyebrow reveal">What you get, free</p>
+  <h2 class="reveal dl1">Not a calculator. A complete plan that recalculates as your life changes.</h2>
+  <div class="feat-grid">
+    <div class="feat reveal dl1">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <h3>Required vs. projected corpus</h3>
+      <p>See your target and your trajectory side by side — and the exact funding gap in rupees, not a vague score.</p>
+    </div>
+    <div class="feat reveal dl2">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19 L10 12 L14 15 L20 7"/><path d="M15 7h5v5"/></svg></div>
+      <h3>Lifetime net-worth curve</h3>
+      <p>Year-by-year projection to age 85+, with your retirement year marked. Toggle 10Y, 25Y, or full life view.</p>
+    </div>
+    <div class="feat reveal dl3">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="13" y="8" width="3" height="10" rx="1"/></svg></div>
+      <h3>Full cashflow analysis</h3>
+      <p>Income, expenses, EMIs, net savings, and post-retirement drawdown — yearly or monthly, line or bar.</p>
+    </div>
+    <div class="feat reveal dl1">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+      <h3>Your assumptions, editable</h3>
+      <p>Inflation, pre- and post-retirement returns, life expectancy, retirement age — all yours to set, not hard-coded.</p>
+    </div>
+    <div class="feat reveal dl2">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <h3>Built for India</h3>
+      <p>EPF, NPS, PPF, SIP step-ups, Indian inflation — the instruments and assumptions your money actually lives in.</p>
+    </div>
+    <div class="feat reveal dl3">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 21h14"/></svg></div>
+      <h3>Save & export</h3>
+      <p>Try everything without an account. Sign in only when you want to save your plan and download the full Excel report.</p>
+    </div>
+
+    <div class="feat ai reveal">
+      <div>
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a4 4 0 0 1 4 4c2.5.5 4 2.5 4 5a5 5 0 0 1-3 4.6V18a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3v-2.4A5 5 0 0 1 4 11c0-2.5 1.5-4.5 4-5a4 4 0 0 1 4-4Z"/><path d="M9 9h.01M15 9h.01"/></svg></div>
+        <h3 style="font-size:1.4rem">The Cashflow Advisor reads your numbers — then tells you what to do next</h3>
+        <p style="margin-top:10px">Not generic tips. AI-generated insights from <em>your</em> plan: whether to raise equity allocation, add a SIP step-up, build a separate emergency fund — even whether you could retire a year or two earlier than you thought.</p>
+      </div>
+      <div class="ai-demo">
+        <div><span class="u">▸ analysing priya_plan.json…</span></div>
+        <div style="margin-top:8px"><span class="a" id="typeTarget"></span><span class="type-caret"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how" style="padding-top:0">
+  <p class="eyebrow reveal">How it works</p>
+  <h2 class="reveal dl1">From "roughly fine" to an actual plan, in one sitting.</h2>
+  <div class="steps">
+    <div class="step reveal dl1">
+      <div class="step-num">1</div>
+      <h3>Tell it your life</h3>
+      <p>Income, expenses, loans, existing EPF/NPS/SIP investments, kids' education goals — even planned career breaks.</p>
+      <div class="step-time">~ 5 minutes</div>
+    </div>
+    <div class="step reveal dl2">
+      <div class="step-num">2</div>
+      <h3>See your gap</h3>
+      <p>Required corpus, projected corpus, funding gap, and the monthly SIP that closes it — recalculated live as you tweak.</p>
+      <div class="step-time">instant</div>
+    </div>
+    <div class="step reveal dl3">
+      <div class="step-num">3</div>
+      <h3>Act on the insights</h3>
+      <p>Follow the Cashflow Advisor's specific next steps, save your plan, export to Excel — or get a free human review.</p>
+      <div class="step-time">you're ahead of 75% of India</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ADVISOR ============ -->
+<section class="advisor" id="advisor">
+  <div class="advisor-wrap">
+    <div>
+      <p class="eyebrow reveal">Want a human to look at it?</p>
+      <h2 class="reveal dl1">Free plan review by an AMFI-registered advisor.</h2>
+      <p class="sec-sub reveal dl2">Talk to Nidesh Financial Services — an AMFI-registered mutual fund advisor — for a free, no-obligation review of your retirement projection. Personalised guidance on SIPs, asset allocation, and closing your funding gap. On WhatsApp or email, your choice.</p>
+      <div class="amfi-tags reveal dl2">
+        <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> AMFI-registered</span>
+        <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> India-focused</span>
+        <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Free first consult</span>
+      </div>
+      <a href="#" class="btn btn-primary reveal dl3">Talk on WhatsApp</a>
+    </div>
+    <div class="review-stack">
+      <div class="review placeholder reveal dl1">
+        <div class="stars">★★★★★</div>
+        <p>[ Paste a real client review here — e.g. from Nidesh Financial Services' Google Business profile ]</p>
+        <div class="who">— Client name, City</div>
+      </div>
+      <div class="review placeholder reveal dl2">
+        <div class="stars">★★★★★</div>
+        <p>[ Second real review — keep it specific: what problem was solved, what changed ]</p>
+        <div class="who">— Client name, City</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="cta-final">
+  <div class="orbit orbit-1 spin"><span class="sat"></span></div>
+  <div class="orbit orbit-2 spin-slow"><span class="sat" style="background:#178A5B;box-shadow:0 0 0 6px rgba(23,138,91,.15)"></span></div>
+  <p class="eyebrow reveal">Five minutes. Zero cost. One number.</p>
+  <h2 class="reveal dl1">You can't fix a number<br>you've never calculated.</h2>
+  <p class="sec-sub reveal dl2">Run your plan now — no signup, no card, no catch.</p>
+  <a href="#" class="btn btn-primary btn-lg reveal dl3">Start My Free Plan
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </a>
+</section>
+
+<footer>
+  <span>© 2026 RetirePro · retirepro.in</span>
+  <span class="fine">RetirePro provides educational projections, not investment advice. Mutual fund investments are subject to market risks; read all scheme-related documents carefully.</span>
+</footer>
+
+<script>
+// nav shadow
+const nav=document.getElementById('nav');
+addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10),{passive:true});
+
+// duplicate ticker for seamless loop
+const track=document.getElementById('tickerTrack');
+track.innerHTML+=track.innerHTML;
+
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// hero curve draw
+const line=document.getElementById('line');
+if(line){
+  const len=line.getTotalLength();
+  line.style.strokeDasharray=len;
+  line.style.strokeDashoffset=len;
+  if(!reduced){
+    setTimeout(()=>{
+      line.style.transition='stroke-dashoffset 1.6s cubic-bezier(.22,1,.36,1)';
+      line.style.strokeDashoffset=0;
+      setTimeout(()=>{
+        document.getElementById('area').style.transition='opacity .8s';
+        document.getElementById('area').style.opacity=1;
+        const tip=document.getElementById('tip'),ring=document.getElementById('tipRing');
+        tip.style.opacity=1;ring.style.opacity=1;
+        ring.animate([{r:6,opacity:.8},{r:16,opacity:0}],{duration:1600,iterations:Infinity});
+      },1400);
+    },900);
+  }else{line.style.strokeDashoffset=0;document.getElementById('area').style.opacity=1;document.getElementById('tip').style.opacity=1}
+}
+
+// count-up (hero card + wake stats)
+function countUp(el){
+  const target=parseFloat(el.dataset.count),pre=el.dataset.prefix||'',suf=el.dataset.suffix||'';
+  const dec=(''+el.dataset.count).includes('.')?1:0;
+  if(reduced){el.textContent=pre+target.toFixed(dec)+suf;return}
+  const dur=1400,t0=performance.now();
+  function tick(t){
+    const p=Math.min((t-t0)/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent=pre+(target*e).toFixed(dec)+suf;
+    if(p<1)requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+// hero counters start with card entrance
+setTimeout(()=>document.querySelectorAll('.plan-card [data-count]').forEach(countUp),reduced?0:800);
+
+// scroll reveal + lazy counters
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    e.target.classList.add('in');
+    e.target.querySelectorAll('[data-count]').forEach(c=>{if(!c.dataset.done){c.dataset.done=1;countUp(c)}});
+    io.unobserve(e.target);
+  }
+}),{threshold:.18});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// AI typewriter
+const lines=[
+  "You're ₹1.3 Cr short. A ₹12,400/mo step-up SIP closes it by 58.",
+  "Your surplus supports retiring 2 years earlier than planned.",
+  "Move 6 months' expenses out of your corpus into a liquid fund.",
+  "Raising equity from 40% → 60% adds ~₹0.8 Cr by age 60."
+];
+const target=document.getElementById('typeTarget');
+let li=0;
+function typeLine(){
+  const text=lines[li%lines.length];li++;
+  if(reduced){target.textContent=text;return}
+  let i=0;target.textContent='';
+  const iv=setInterval(()=>{
+    target.textContent=text.slice(0,++i);
+    if(i>=text.length){clearInterval(iv);setTimeout(typeLine,2600)}
+  },28);
+}
+typeLine();
+</script>
+</body>
+</html>
