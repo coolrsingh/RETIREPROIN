@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import NewsletterWidget from "@/components/newsletter-widget";
 
 const ARTICLE_META = {
   headline: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
@@ -284,6 +285,8 @@ export default function Blog2() {
               ))}
             </div>
           </div>
+
+          <NewsletterWidget source="blog-nps-ppf-sip" />
 
           <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-8 text-center text-white">
             <h2 className="text-2xl font-bold mb-3">See How NPS, PPF, and SIP Work Together For You</h2>

@@ -409,25 +409,27 @@ export default function Landing() {
             backgroundSize: "56px 56px",
           }} />
 
-          <div className="relative max-w-[1280px] mx-auto px-6 py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
+          <div className="relative max-w-[1400px] mx-auto px-8 lg:px-16 pt-20 pb-28 lg:pt-28 lg:pb-40 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center w-full">
             {/* Left: copy */}
             <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="hero-badge inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-6"
+                className="hero-badge inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-8"
                 style={{ background: "rgba(232,148,10,0.12)", border: "1px solid rgba(232,148,10,0.3)", color: "#92660A" }}
               >
                 <Star className="h-3.5 w-3.5" style={{ fill: "#92660A" }} />
                 Free · No account required · India-specific
               </motion.div>
 
-              <h1 className="hero-heading" style={{ fontSize: "clamp(42px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.06, color: "var(--ink)", marginBottom: "24px", fontFamily: "var(--font-serif)" }}>
-                Know your number<br />
-                <em style={{ color: "var(--saffron)", fontStyle: "italic" }}>before it's too late.</em>
+              <h1 className="hero-heading" style={{ fontSize: "clamp(44px, 5.5vw, 80px)", fontWeight: 700, lineHeight: 1.04, color: "var(--ink)", marginBottom: "10px", fontFamily: "var(--font-serif)" }}>
+                You can't fix a number
+              </h1>
+              <h1 className="hero-heading" style={{ fontSize: "clamp(44px, 5.5vw, 80px)", fontWeight: 700, lineHeight: 1.04, color: "var(--ink)", marginBottom: "28px", fontFamily: "var(--font-serif)" }}>
+                <em style={{ color: "var(--saffron)", fontStyle: "italic" }}>you've never calculated.</em>
               </h1>
 
-              <p className="hero-subtext" style={{ fontSize: "19px", lineHeight: 1.65, color: "var(--slate-mid)", marginBottom: "32px", maxWidth: "480px" }}>
-                Build a complete, personalised retirement plan — income, expenses, children's education, loans, mini-retirement breaks, and more. Takes 60 seconds.
+              <p className="hero-subtext" style={{ fontSize: "20px", lineHeight: 1.7, color: "var(--slate-mid)", marginBottom: "36px", maxWidth: "520px" }}>
+                Build a complete, personalised retirement plan in 60 seconds — income, expenses, children's education, loans, mini-retirement breaks, and more. Free. No login required.
               </p>
 
               <div className="hero-cta-row flex flex-wrap gap-3">

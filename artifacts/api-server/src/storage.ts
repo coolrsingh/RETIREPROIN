@@ -11,6 +11,7 @@ import {
   miniRetirements,
   leads,
   crmDefaults,
+  subscribers,
   type User,
   type UpsertUser,
   type Scenario,
@@ -35,6 +36,7 @@ import {
   type InsertLead,
   type CrmDefaults,
   type InsertCrmDefaults,
+  type Subscriber,
 } from "@workspace/db";
 import { db } from "./db";
 import { eq, and, or, sql } from "drizzle-orm";
@@ -58,6 +60,9 @@ export interface IStorage {
   updateUserProfile(userId: string, profile: Partial<UpsertUser>): Promise<User>;
   incrementShareCount(userId: string): Promise<User>;
   
+  // Subscriber operations
+  subscribeEmail(email: string, source?: string): Promise<Subscriber>;
+
   // Scenario operations
   getScenario(id: string): Promise<Scenario | undefined>;
   getScenariosByUser(userId: string): Promise<Scenario[]>;
@@ -500,6 +505,15 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedDefaults;
+  }
+
+  async subscribeEmail(email: string, source = 'blog'): Promise<Subscriber> {
+    const [row] = await db
+      .insert(subscribers)
+      .values({ email, source })
+      .onConflictDoUpdate({ target: subscribers.email, set: { source } })
+      .returning();
+    return row;
   }
 }
 

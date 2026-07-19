@@ -32,6 +32,7 @@ function Router() {
     <Switch>
       {/* Always-public pages */}
       <Route path="/go" component={AdLanding} />
+      <Route path="/landing" component={Landing} />
       <Route path="/blog" component={BlogIndex} />
       <Route path="/blog/why-indians-fail-retirement" component={Blog1} />
       <Route path="/blog/nps-vs-ppf-vs-sip" component={Blog2} />

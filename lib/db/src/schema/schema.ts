@@ -163,6 +163,13 @@ export const leads = pgTable("leads", {
   unique("leads_phone_unique").on(table.phone),
 ]);
 
+export const subscribers = pgTable("subscribers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique().notNull(),
+  source: varchar("source").default('blog'),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const crmDefaults = pgTable("crm_defaults", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   inflationHeadline: decimal("inflation_headline", { precision: 5, scale: 2 }).default('6.0'),
@@ -421,3 +428,10 @@ export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type CrmDefaults = typeof crmDefaults.$inferSelect;
 export type InsertCrmDefaults = z.infer<typeof insertCrmDefaultsSchema>;
 export type QuickPlan = z.infer<typeof quickPlanSchema>;
+export type Subscriber = typeof subscribers.$inferSelect;
+export type InsertSubscriber = typeof subscribers.$inferInsert;
+
+export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
+  id: true,
+  createdAt: true,
+});

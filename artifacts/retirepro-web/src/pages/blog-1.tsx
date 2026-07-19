@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ChartLine, ArrowRight, BookOpen, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import NewsletterWidget from "@/components/newsletter-widget";
 
 const ARTICLE_META = {
   headline: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
@@ -264,6 +265,8 @@ export default function Blog1() {
               ))}
             </div>
           </div>
+
+          <NewsletterWidget source="blog-why-indians-fail" />
 
           {/* CTA */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-center text-white">

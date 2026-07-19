@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, AlertTriangle, CheckCircle, TrendingDown } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import NewsletterWidget from "@/components/newsletter-widget";
 import {
   AreaChart, Area, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Cell,
@@ -430,6 +431,8 @@ export default function Blog3() {
               number on a net worth statement, tells you whether a retirement plan actually works.
             </Callout>
           </ArticleSection>
+
+          <NewsletterWidget source="blog-real-estate" />
 
           <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-8 text-center text-white mt-12">
             <h2 className="text-2xl font-bold mb-3 text-white">

@@ -805,6 +805,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Newsletter subscription — stores email for future campaigns
+  app.post('/api/subscribe', async (req, res) => {
+    try {
+      const schema = z.object({
+        email: z.string().email("Please enter a valid email address"),
+        source: z.string().optional(),
+      });
+      const { email, source } = schema.parse(req.body);
+      const subscriber = await storage.subscribeEmail(email.toLowerCase().trim(), source || 'blog');
+      res.json({ success: true, id: subscriber.id });
+    } catch (error: any) {
+      if (error?.issues) {
+        return res.status(400).json({ message: error.issues[0]?.message || "Invalid email" });
+      }
+      console.error("Error saving subscriber:", error);
+      res.status(500).json({ message: "Failed to subscribe" });
+    }
+  });
+
   app.get('/api/healthz', (_req, res) => {
     res.json({ status: 'ok' });
   });

@@ -8,7 +8,7 @@ interface ScenarioSummary {
 }
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartLine, Plus, FileText, Zap, Users } from "lucide-react";
+import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -80,8 +80,20 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <BrandLogo textClassName="text-slate-800" />
-              <nav className="hidden md:flex space-x-6">
+              <nav className="hidden md:flex space-x-6 items-center">
                 <span className="font-semibold" style={{ color: "var(--saffron)" }}>Dashboard</span>
+                <Link href="/blog" className="font-medium hover:opacity-80 flex items-center gap-1.5" style={{ color: "var(--slate-mid)" }}>
+                  <BookOpen className="h-4 w-4" />
+                  Blog
+                </Link>
+                <Link href="/faq" className="font-medium hover:opacity-80 flex items-center gap-1.5" style={{ color: "var(--slate-mid)" }}>
+                  <HelpCircle className="h-4 w-4" />
+                  FAQ
+                </Link>
+                <Link href="/landing" className="font-medium hover:opacity-80 flex items-center gap-1.5" style={{ color: "var(--slate-mid)" }}>
+                  <ChartLine className="h-4 w-4" />
+                  About
+                </Link>
                 {isAdmin && (
                   <Link href="/leads" className="font-medium hover:opacity-80 flex items-center gap-1" style={{ color: "var(--slate-mid)" }}>
                     <Users className="h-4 w-4" />

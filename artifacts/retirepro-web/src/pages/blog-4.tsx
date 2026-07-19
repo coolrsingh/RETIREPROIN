@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import NewsletterWidget from "@/components/newsletter-widget";
 
 const ARTICLE_META = {
   headline: "How Much Money Do You Need to Retire in India? [2026 Complete Guide]",
@@ -413,6 +414,8 @@ export default function Blog4() {
               </div>
             ))}
           </div>
+
+          <NewsletterWidget source="blog-how-much-retire" />
 
           {/* CTA */}
           <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl p-8 text-center text-white mt-10">
