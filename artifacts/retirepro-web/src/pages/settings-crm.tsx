@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ChartLine, ArrowLeft, Save, Shield } from "lucide-react";
+import { ArrowLeft, Save, Shield } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { Link, useLocation } from "wouter";
 
@@ -120,7 +120,6 @@ export default function SettingsCrm() {
     }
   }, [crmDefaults, form]);
 
-  // Check if user is admin
   useEffect(() => {
     if (user && user.role !== 'admin') {
       toast({
@@ -138,10 +137,10 @@ export default function SettingsCrm() {
 
   if (isLoading || defaultsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ivory)" }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading settings...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: "var(--saffron)" }}></div>
+          <p style={{ color: "var(--slate-mid)" }}>Loading settings…</p>
         </div>
       </div>
     );
@@ -149,14 +148,18 @@ export default function SettingsCrm() {
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--ivory)" }}>
+        <Card className="w-full max-w-md mx-4 border-0 shadow-lg" style={{ background: "white" }}>
           <CardContent className="pt-6 text-center">
-            <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h1>
-            <p className="text-slate-600 mb-4">You need admin privileges to access this page.</p>
+            <Shield className="h-16 w-16 mx-auto mb-4" style={{ color: "var(--orange)" }} />
+            <h1 className="text-2xl font-serif font-bold mb-2" style={{ color: "var(--ink)" }}>Access Denied</h1>
+            <p className="mb-4" style={{ color: "var(--slate-mid)" }}>You need admin privileges to access this page.</p>
             <Link href="/">
-              <Button data-testid="button-back-home">
+              <Button
+                data-testid="button-back-home"
+                style={{ background: "var(--saffron)", borderColor: "transparent" }}
+                className="text-white hover:opacity-90"
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
               </Button>
@@ -168,29 +171,34 @@ export default function SettingsCrm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FF] to-white">
+    <div className="min-h-screen" style={{ background: "var(--ivory)" }}>
       {/* Header */}
-      <header className="bg-white/85 backdrop-blur-xl shadow-sm border-b border-slate-200/60 sticky top-0 z-50">
+      <header
+        className="backdrop-blur-xl shadow-sm sticky top-0 z-50"
+        style={{ background: "rgba(251,248,242,0.90)", borderBottom: "1px solid rgba(232,148,10,0.18)" }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <BrandLogo textClassName="text-slate-800" />
               <nav className="hidden md:flex space-x-6">
-                <Link href="/" className="text-slate-600 hover:text-primary-600 font-medium">
+                <Link href="/" className="font-medium hover:opacity-80" style={{ color: "var(--slate-mid)" }}>
                   <a data-testid="link-dashboard">Dashboard</a>
                 </Link>
-                <span className="text-primary-600 font-medium">Settings</span>
+                <span className="font-semibold" style={{ color: "var(--saffron)" }}>Settings</span>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-slate-600" data-testid="text-username">
+              <span style={{ color: "var(--slate-mid)" }} data-testid="text-username">
                 {user?.firstName || user?.email || 'Admin'}
               </span>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => window.location.href = '/api/logout'}
                 data-testid="button-logout"
+                className="hover:bg-amber-50"
+                style={{ color: "var(--slate-mid)" }}
               >
                 Sign Out
               </Button>
@@ -203,103 +211,112 @@ export default function SettingsCrm() {
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <Link href="/">
-              <Button variant="outline" size="sm" data-testid="button-back">
+              <Button
+                variant="outline"
+                size="sm"
+                data-testid="button-back"
+                className="hover:bg-amber-50"
+                style={{ borderColor: "rgba(232,148,10,0.35)", color: "var(--saffron)" }}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
               </Button>
             </Link>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center">
-            <Shield className="mr-3 h-8 w-8 text-primary-600" />
+          <h1 className="text-3xl font-serif font-bold flex items-center" style={{ color: "var(--ink)" }}>
+            <Shield className="mr-3 h-8 w-8" style={{ color: "var(--saffron)" }} />
             CRM Settings
           </h1>
-          <p className="text-slate-600 mt-2">Manage default assumptions used across all retirement plans</p>
+          <p className="mt-2" style={{ color: "var(--slate-mid)" }}>Manage default assumptions used across all retirement plans</p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
             {/* Inflation Assumptions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Inflation Assumptions</CardTitle>
-                <CardDescription>Default inflation rates used for different categories</CardDescription>
+            <Card className="border-0 shadow-sm" style={{ background: "white" }}>
+              <CardHeader className="pb-4" style={{ borderBottom: "1px solid rgba(232,148,10,0.12)" }}>
+                <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>Inflation Assumptions</CardTitle>
+                <CardDescription style={{ color: "var(--slate-mid)" }}>Default inflation rates used for different categories</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-5">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
                     name="inflationHeadline"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>General Inflation Rate</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>General Inflation Rate</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              max="20" 
+                            <Input
+                              type="number"
+                              min="0"
+                              max="20"
                               step="0.1"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               data-testid="input-inflation-headline"
+                              className="focus-visible:ring-amber-400"
                             />
-                            <span className="absolute right-3 top-2 text-slate-500">%</span>
+                            <span className="absolute right-3 top-2 text-sm" style={{ color: "var(--slate-mid)" }}>%</span>
                           </div>
                         </FormControl>
-                        <FormDescription>Used for general expenses and cost of living</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Used for general expenses and cost of living</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="inflationEdu"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Education Inflation Rate</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>Education Inflation Rate</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              max="20" 
+                            <Input
+                              type="number"
+                              min="0"
+                              max="20"
                               step="0.1"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               data-testid="input-inflation-education"
+                              className="focus-visible:ring-amber-400"
                             />
-                            <span className="absolute right-3 top-2 text-slate-500">%</span>
+                            <span className="absolute right-3 top-2 text-sm" style={{ color: "var(--slate-mid)" }}>%</span>
                           </div>
                         </FormControl>
-                        <FormDescription>Used for children's education costs</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Used for children's education costs</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="inflationHealth"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Healthcare Inflation Rate</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>Healthcare Inflation Rate</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              max="20" 
+                            <Input
+                              type="number"
+                              min="0"
+                              max="20"
                               step="0.1"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               data-testid="input-inflation-health"
+                              className="focus-visible:ring-amber-400"
                             />
-                            <span className="absolute right-3 top-2 text-slate-500">%</span>
+                            <span className="absolute right-3 top-2 text-sm" style={{ color: "var(--slate-mid)" }}>%</span>
                           </div>
                         </FormControl>
-                        <FormDescription>Used for healthcare and medical expenses</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Used for healthcare and medical expenses</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -309,60 +326,62 @@ export default function SettingsCrm() {
             </Card>
 
             {/* Return Assumptions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Investment Return Assumptions</CardTitle>
-                <CardDescription>Default expected returns for different life phases</CardDescription>
+            <Card className="border-0 shadow-sm" style={{ background: "white" }}>
+              <CardHeader className="pb-4" style={{ borderBottom: "1px solid rgba(232,148,10,0.12)" }}>
+                <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>Investment Return Assumptions</CardTitle>
+                <CardDescription style={{ color: "var(--slate-mid)" }}>Default expected returns for different life phases</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="returnPre"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pre-Retirement Return</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>Pre-Retirement Return</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              max="30" 
+                            <Input
+                              type="number"
+                              min="0"
+                              max="30"
                               step="0.1"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               data-testid="input-return-pre"
+                              className="focus-visible:ring-amber-400"
                             />
-                            <span className="absolute right-3 top-2 text-slate-500">%</span>
+                            <span className="absolute right-3 top-2 text-sm" style={{ color: "var(--slate-mid)" }}>%</span>
                           </div>
                         </FormControl>
-                        <FormDescription>Expected return during accumulation phase (equity-heavy)</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Expected return during accumulation phase (equity-heavy)</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="returnPost"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Post-Retirement Return</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>Post-Retirement Return</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              max="30" 
+                            <Input
+                              type="number"
+                              min="0"
+                              max="30"
                               step="0.1"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               data-testid="input-return-post"
+                              className="focus-visible:ring-amber-400"
                             />
-                            <span className="absolute right-3 top-2 text-slate-500">%</span>
+                            <span className="absolute right-3 top-2 text-sm" style={{ color: "var(--slate-mid)" }}>%</span>
                           </div>
                         </FormControl>
-                        <FormDescription>Expected return during withdrawal phase (conservative)</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Expected return during withdrawal phase (conservative)</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -372,47 +391,48 @@ export default function SettingsCrm() {
             </Card>
 
             {/* Other Assumptions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Other Planning Assumptions</CardTitle>
-                <CardDescription>General assumptions for retirement planning</CardDescription>
+            <Card className="border-0 shadow-sm" style={{ background: "white" }}>
+              <CardHeader className="pb-4" style={{ borderBottom: "1px solid rgba(232,148,10,0.12)" }}>
+                <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>Other Planning Assumptions</CardTitle>
+                <CardDescription style={{ color: "var(--slate-mid)" }}>General assumptions for retirement planning</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="lifeExpectancy"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Life Expectancy</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>Life Expectancy</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="60" 
+                            <Input
+                              type="number"
+                              min="60"
                               max="100"
                               {...field}
                               onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                               data-testid="input-life-expectancy"
+                              className="focus-visible:ring-amber-400"
                             />
-                            <span className="absolute right-3 top-2 text-slate-500">years</span>
+                            <span className="absolute right-3 top-2 text-sm" style={{ color: "var(--slate-mid)" }}>years</span>
                           </div>
                         </FormControl>
-                        <FormDescription>Expected age for retirement planning calculations</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Expected age for retirement planning calculations</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="taxRegime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Default Tax Regime</FormLabel>
+                        <FormLabel style={{ color: "var(--ink)" }}>Default Tax Regime</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger data-testid="select-tax-regime">
+                            <SelectTrigger data-testid="select-tax-regime" className="focus:ring-amber-400">
                               <SelectValue placeholder="Select tax regime" />
                             </SelectTrigger>
                           </FormControl>
@@ -421,7 +441,7 @@ export default function SettingsCrm() {
                             <SelectItem value="new">New Tax Regime</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>Default tax regime for new plans</FormDescription>
+                        <FormDescription style={{ color: "var(--slate-mid)" }}>Default tax regime for new plans</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -431,25 +451,28 @@ export default function SettingsCrm() {
             </Card>
 
             {/* Form Actions */}
-            <div className="flex justify-between items-center">
-              <Button 
-                type="button" 
+            <div className="flex justify-between items-center pt-2">
+              <Button
+                type="button"
                 variant="outline"
                 onClick={() => form.reset()}
                 data-testid="button-reset"
+                className="hover:bg-amber-50"
+                style={{ borderColor: "rgba(232,148,10,0.35)", color: "var(--slate-mid)" }}
               >
                 Reset to Defaults
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updateDefaultsMutation.isPending}
-                className="px-8"
+                className="px-8 text-white hover:opacity-90"
                 data-testid="button-save"
+                style={{ background: "var(--saffron)", borderColor: "transparent" }}
               >
                 {updateDefaultsMutation.isPending ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
+                    Saving…
                   </>
                 ) : (
                   <>
