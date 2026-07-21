@@ -110,11 +110,10 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
           {/* ── Right: form card ────────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: 0.1 }}>
             <div
-              className="p-5 sm:p-8 lg:p-9"
+              className="p-5 sm:p-8 lg:p-9 rounded-2xl sm:rounded-3xl"
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(232,148,10,0.22)",
-                borderRadius: 24,
                 boxShadow: "0 8px 40px rgba(232,148,10,0.08), 0 2px 12px rgba(0,0,0,0.06)",
               }}
             >
