@@ -6,6 +6,17 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 
 const POSTS = [
   {
+    slug: "retirement-corpus-calculator-india-serious-planners",
+    title: "Why Serious Retirement Planners in India Are Ditching Quick Google Calculators",
+    excerpt: "That number you got from a two-box calculator is almost certainly wrong. Here's what actually changes your retirement corpus — and why 76% of Indians are flying blind.",
+    readTime: "11 min read",
+    tag: "Serious Planning",
+    tagColor: "bg-amber-100 text-amber-700",
+    gradient: "from-slate-900 via-amber-950 to-orange-900",
+    date: "19 Jul 2026",
+    dateTime: "2026-07-19",
+  },
+  {
     slug: "how-much-to-retire-india",
     title: "How Much Money Do You Need to Retire in India? [2026 Complete Guide]",
     excerpt: "₹1.5 crore or ₹6.5 crore? The answer depends on your city, lifestyle, and one number most calculators ignore: inflation. Here's the complete India-specific formula.",

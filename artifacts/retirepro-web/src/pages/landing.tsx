@@ -928,13 +928,22 @@ export default function Landing() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 {
+                  href: "/blog/retirement-corpus-calculator-india-serious-planners",
+                  gradient: "from-slate-900 via-amber-950 to-orange-900",
+                  tag: "Serious Planning · New",
+                  title: "Why Serious Planners Are Ditching Quick Google Calculators for RetirePro",
+                  excerpt: "76% of Indians will retire without a plan. That number you got from a two-box calculator? Almost certainly wrong. Here's what changes when you plan seriously.",
+                  time: "11 min read",
+                  isNew: true,
+                },
+                {
                   href: "/blog/real-estate-rich-retirement-illusion",
                   gradient: "from-[#0B1628] to-slate-800",
-                  tag: "HNI Planning · New",
+                  tag: "HNI Planning",
                   title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are the Most Exposed",
                   excerpt: "Most HNIs believe their net worth guarantees comfort. Here's the quiet arithmetic that says otherwise — and what to do about it.",
                   time: "9 min read",
-                  isNew: true,
+                  isNew: false,
                 },
                 {
                   href: "/blog/why-indians-fail-retirement",
@@ -943,15 +952,6 @@ export default function Landing() {
                   title: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
                   excerpt: "93% of Indians over 50 regret not planning sooner. Here's what goes wrong and the one habit that changes everything.",
                   time: "8 min read",
-                  isNew: false,
-                },
-                {
-                  href: "/blog/nps-vs-ppf-vs-sip",
-                  gradient: "from-emerald-800 to-teal-900",
-                  tag: "Investment Guide",
-                  title: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
-                  excerpt: "Real numbers. No fluff. We compare all three with India-specific context so you can stop guessing and start investing.",
-                  time: "9 min read",
                   isNew: false,
                 },
               ].map((post, i) => (
@@ -987,6 +987,117 @@ export default function Landing() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ── Serious Planner Manifesto ────────────────────────────────── */}
+        <section style={{ background: "#080C12", padding: "96px 24px" }}>
+          <div className="max-w-[1280px] mx-auto">
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+
+              {/* Top label */}
+              <div className="flex items-center gap-3 mb-8">
+                <div style={{ width: 3, height: 32, background: "#E8940A", borderRadius: 2 }} />
+                <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: "#E8940A" }}>For the serious retirement enthusiast</span>
+              </div>
+
+              {/* Headline */}
+              <div className="max-w-3xl mb-12">
+                <h2 style={{ fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 800, lineHeight: 1.1, color: "#F8F4EE", fontFamily: "var(--font-serif)", marginBottom: 24 }}>
+                  76% of Indians will retire<br />
+                  <span style={{ color: "#E8940A" }}>without a plan.</span>
+                </h2>
+                <p style={{ fontSize: "clamp(16px, 2vw, 20px)", color: "#94A3B8", lineHeight: 1.7, maxWidth: 600 }}>
+                  Not because they didn't earn enough. Because they never sat down with the real numbers. RetirePro is built for the other 24% — and the people who want to join them.
+                </p>
+              </div>
+
+              {/* 3 Persona Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+                {[
+                  {
+                    age: "34",
+                    profile: "Has an SIP running. Never checked if it adds up.",
+                    gap: "Knows the instrument. Doesn't know the number.",
+                    urgency: "26 years to retirement. Still fixable — but compounding doesn't wait.",
+                    accentColor: "#60A5FA",
+                  },
+                  {
+                    age: "42",
+                    profile: "EPF, NPS, mutual funds in three different places.",
+                    gap: "Has the pieces. Has never seen the full picture.",
+                    urgency: "18 years to retirement. Every year of drift costs multiples.",
+                    accentColor: "#E8940A",
+                  },
+                  {
+                    age: "48",
+                    profile: "Realised retirement is 12 years away, not distant.",
+                    gap: "Needs the honest number, not reassurance.",
+                    urgency: "The gap is still closable — if you start now.",
+                    accentColor: "#34D399",
+                  },
+                ].map((persona) => (
+                  <div
+                    key={persona.age}
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: `1px solid rgba(255,255,255,0.08)`,
+                      borderTop: `3px solid ${persona.accentColor}`,
+                      borderRadius: 16,
+                      padding: "28px 24px",
+                    }}
+                  >
+                    <div style={{ fontSize: 48, fontWeight: 900, color: persona.accentColor, lineHeight: 1, marginBottom: 12, fontFamily: "var(--font-serif)" }}>
+                      {persona.age}
+                    </div>
+                    <p style={{ color: "#E2E8F0", fontWeight: 600, marginBottom: 8, fontSize: 15 }}>{persona.profile}</p>
+                    <p style={{ color: "#64748B", fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>{persona.gap}</p>
+                    <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "10px 14px" }}>
+                      <p style={{ color: persona.accentColor, fontSize: 12, fontWeight: 600 }}>{persona.urgency}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom row */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-10" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                <div>
+                  <p style={{ color: "#94A3B8", fontSize: 14, marginBottom: 8 }}>Used by planners across India. Free. No login. Your data stays yours.</p>
+                  <div className="flex flex-wrap gap-6">
+                    {[
+                      { stat: "No hidden assumptions", icon: "🎛️" },
+                      { stat: "Year-by-year projections", icon: "📈" },
+                      { stat: "India-specific (EPF, NPS, SIP)", icon: "🇮🇳" },
+                    ].map(item => (
+                      <div key={item.stat} className="flex items-center gap-2">
+                        <span style={{ fontSize: 16 }}>{item.icon}</span>
+                        <span style={{ color: "#CBD5E1", fontSize: 13, fontWeight: 500 }}>{item.stat}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Link href="/free-plan">
+                  <button
+                    style={{
+                      background: "#E8940A",
+                      color: "#080C12",
+                      fontWeight: 800,
+                      fontSize: 15,
+                      padding: "14px 32px",
+                      borderRadius: 50,
+                      border: "none",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      letterSpacing: "0.01em",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#F5A623")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "#E8940A")}
+                  >
+                    Find My Real Retirement Number →
+                  </button>
+                </Link>
+              </div>
+            </motion.div>
           </div>
         </section>
 
