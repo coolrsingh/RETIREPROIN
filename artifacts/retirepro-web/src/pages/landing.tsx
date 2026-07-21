@@ -405,6 +405,40 @@ export default function Landing() {
           .hero-cta-row {
             flex-direction: column !important;
           }
+
+          /* ── Below-hero section fixes ── */
+
+          /* Uncomfortable Math — reduce card padding so the large clamp numbers don't feel cramped */
+          .stat-dark-card {
+            padding: 22px 18px !important;
+          }
+
+          /* AI Cashflow badge — drop tracking and allow the text to wrap inside the pill */
+          .ai-advisor-chip {
+            white-space: normal !important;
+            letter-spacing: 0.04em !important;
+            text-align: left !important;
+            line-height: 1.4 !important;
+            max-width: 100% !important;
+          }
+
+          /* Terminal typewriter — mono text must break on narrow viewports */
+          .ai-terminal-text {
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          /* Blog section heading row — stack vertically so the "All articles" link doesn't crowd */
+          .blog-header-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+
+          /* Final CTA orbit decoration — shrink so it stays inside overflow-hidden boundary */
+          .cta-orbit-wrap {
+            width: 180px !important;
+            height: 180px !important;
+          }
         }
 
         .trust-row {
@@ -607,7 +641,7 @@ export default function Landing() {
         <DataTicker />
 
         {/* ── The Uncomfortable Math ──────────────────────────────────────── */}
-        <section style={{ background: "#111827", padding: "80px 24px" }}>
+        <section style={{ background: "#111827", padding: "80px 24px", overflowX: "hidden" }}>
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <div className="inline-block text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.15)", color: "var(--saffron-light)", border: "1px solid rgba(232,148,10,0.25)" }}>
@@ -648,6 +682,7 @@ export default function Landing() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.12, duration: 0.5 }}
+                  className="stat-dark-card"
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
@@ -670,7 +705,7 @@ export default function Landing() {
         </section>
 
         {/* ── Why RetirePro — 6-card grid + AI advisor ────────────────────── */}
-        <section className="px-6" style={{ padding: "80px 24px", background: "var(--ivory)" }}>
+        <section className="px-6" style={{ padding: "80px 24px", background: "var(--ivory)", overflowX: "hidden" }}>
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <h2 style={{ fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 12, fontFamily: "var(--font-serif)" }}>
@@ -758,8 +793,8 @@ export default function Landing() {
               >
                 <div className="md:flex md:items-start md:gap-10" style={{ flexWrap: "nowrap" }}>
                   <div className="flex-1 mb-6 md:mb-0">
-                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style={{ background: "rgba(163,230,53,0.12)", color: "#A3E635", border: "1px solid rgba(163,230,53,0.2)" }}>
-                      <Brain className="h-3 w-3" />
+                    <div className="ai-advisor-chip inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5" style={{ background: "rgba(163,230,53,0.12)", color: "#A3E635", border: "1px solid rgba(163,230,53,0.2)" }}>
+                      <Brain className="h-3 w-3 flex-shrink-0" />
                       AI Cashflow Advisor — Coming Soon
                     </div>
                     <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, color: "#F9FAFB", lineHeight: 1.2, marginBottom: 12 }}>
@@ -788,7 +823,7 @@ export default function Landing() {
                       ))}
                       <span className="ml-2 text-xs" style={{ color: "#4B5563", fontFamily: "var(--font-mono)" }}>advisor.insight</span>
                     </div>
-                    <div style={{ fontSize: "14px", lineHeight: 1.65, minHeight: 72, fontFamily: "var(--font-mono)" }}>
+                    <div className="ai-terminal-text" style={{ fontSize: "14px", lineHeight: 1.65, minHeight: 72, fontFamily: "var(--font-mono)" }}>
                       <span style={{ color: "#6B7280" }}>{">"} </span>
                       <TypewriterCycle />
                     </div>
@@ -800,7 +835,7 @@ export default function Landing() {
         </section>
 
         {/* ── How it works ────────────────────────────────────────────────── */}
-        <section style={{ background: "#FFFFFF", padding: "80px 24px" }}>
+        <section style={{ background: "#FFFFFF", padding: "80px 24px", overflowX: "hidden" }}>
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 10, fontFamily: "var(--font-serif)" }}>
@@ -880,7 +915,7 @@ export default function Landing() {
         </section>
 
         {/* ── Planner (BELOW Why RetirePro) ───────────────────────────────── */}
-        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "80px 24px" }}>
+        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "80px 24px", overflowX: "hidden" }}>
           <div className="max-w-[1280px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-center mb-12">
               <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "var(--orange)" }}>
@@ -913,9 +948,9 @@ export default function Landing() {
         </section>
 
         {/* ── Blog ────────────────────────────────────────────────────────── */}
-        <section className="py-20 px-6 bg-slate-50">
+        <section className="py-20 px-6 bg-slate-50 overflow-x-hidden">
           <div className="max-w-[1280px] mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10 flex-wrap gap-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="blog-header-row flex items-end justify-between mb-10 flex-wrap gap-4">
               <div>
                 <h2 className="font-bold text-slate-900 mb-2" style={{ fontSize: "clamp(24px, 3.5vw, 38px)", fontFamily: "var(--font-serif)" }}>Learn Before You Plan</h2>
                 <p className="text-lg text-slate-600">India-specific retirement guides, written in plain language.</p>
@@ -1111,7 +1146,7 @@ export default function Landing() {
         >
           {/* Orbiting-dot animation background */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-            <div style={{ position: "relative", width: 240, height: 240 }}>
+            <div className="cta-orbit-wrap" style={{ position: "relative", width: 240, height: 240 }}>
               {/* Outer ring */}
               <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px dashed rgba(232,148,10,0.2)" }} />
               {/* Inner ring */}
