@@ -11,7 +11,10 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 
 const leadSchema = z.object({
   name: z.string().min(2, "Please enter your name"),
-  phone: z.string().min(10, "Enter a valid 10-digit mobile number").max(15),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^\d{10,}$/, "Enter a valid 10-digit mobile number"),
   email: z.string().email("Enter a valid email address"),
 });
 
@@ -41,7 +44,7 @@ export default function AdLanding() {
 
   const form = useForm<LeadForm>({
     resolver: zodResolver(leadSchema),
-    defaultValues: { name: "", phone: "+91 ", email: "" },
+    defaultValues: { name: "", phone: "", email: "" },
   });
 
   const leadMutation = useMutation({

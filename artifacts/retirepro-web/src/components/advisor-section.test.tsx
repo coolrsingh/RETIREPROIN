@@ -60,7 +60,7 @@ describe("AdvisorSection — valid submission", () => {
 
     await user.type(
       screen.getByTestId("input-advisor-phone"),
-      "+91 98765 43210",
+      "9876543210",
     );
     await user.click(screen.getByTestId("button-advisor-submit"));
 

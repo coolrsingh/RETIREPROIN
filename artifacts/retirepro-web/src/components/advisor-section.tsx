@@ -16,7 +16,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError("");
-    if (!phone.trim() || phone.trim().replace(/\D/g, "").length < 10) {
+    if (!/^\d{10,}$/.test(phone.trim())) {
       setPhoneError("Enter a valid 10-digit mobile number");
       return;
     }
@@ -210,7 +210,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                           }}
                           onFocus={e => { if (!phoneError) (e.currentTarget as HTMLInputElement).style.borderColor = "var(--saffron)"; }}
                           onBlur={e => { if (!phoneError) (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.11)"; }}
-                          placeholder="+91 98765 43210"
+                          placeholder="9876543210"
                           value={phone}
                           onChange={e => { setPhone(e.target.value); setPhoneError(""); }}
                           data-testid="input-advisor-phone"

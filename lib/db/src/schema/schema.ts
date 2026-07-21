@@ -316,6 +316,11 @@ export const insertLiabilitySchema = createInsertSchema(liabilities).omit({
 export const insertLeadSchema = createInsertSchema(leads).omit({
   id: true,
   createdAt: true,
+}).extend({
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^\d{10,}$/, "Phone must contain at least 10 digits and only numeric characters"),
 });
 
 export const insertCrmDefaultsSchema = createInsertSchema(crmDefaults).omit({

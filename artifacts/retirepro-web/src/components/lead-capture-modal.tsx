@@ -15,7 +15,10 @@ import { X, Download } from "lucide-react";
 const leadSchema = z.object({
   name: z.string().min(1, "Full name is required"),
   email: z.string().email("Valid email is required"),
-  phone: z.string().min(10, "Valid phone number is required"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^\d{10,}$/, "Enter a valid 10-digit mobile number"),
   consent: z.boolean().refine(val => val === true, "You must agree to receive updates"),
 });
 
@@ -36,7 +39,7 @@ export default function LeadCaptureModal({ isOpen, onClose, scenarioId, onSucces
     defaultValues: {
       name: "",
       email: "",
-      phone: "+91",
+      phone: "",
       consent: false,
     },
   });
@@ -139,7 +142,7 @@ export default function LeadCaptureModal({ isOpen, onClose, scenarioId, onSucces
                   <FormControl>
                     <Input 
                       type="tel"
-                      placeholder="+91 98765 43210" 
+                      placeholder="9876543210" 
                       {...field}
                       data-testid="input-lead-phone"
                     />
