@@ -157,6 +157,8 @@ DO $$ BEGIN
   ALTER TABLE leads ADD CONSTRAINT leads_phone_unique UNIQUE (phone);
 EXCEPTION WHEN duplicate_table OR duplicate_object THEN NULL;
 END $$;
+-- Backfill updated_at column if table existed before it was added to schema
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now();
 
 -- subscribers
 CREATE TABLE IF NOT EXISTS subscribers (
