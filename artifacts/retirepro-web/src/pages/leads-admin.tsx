@@ -1,18 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChartLine, ArrowLeft, Download, Users, Mail, Phone, Globe } from "lucide-react";
+import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
+type SortKey = "name" | "createdAt" | "updatedAt";
+type SortDir = "asc" | "desc";
+
+function isReEngaged(lead: any): boolean {
+  if (!lead.updatedAt || !lead.createdAt) return false;
+  const diff = Math.abs(
+    new Date(lead.updatedAt).getTime() - new Date(lead.createdAt).getTime()
+  );
+  return diff > 60_000;
+}
+
+function SortIcon({ col, sortBy, sortDir }: { col: SortKey; sortBy: SortKey; sortDir: SortDir }) {
+  if (sortBy !== col) return <ArrowUpDown className="inline ml-1 h-3.5 w-3.5 text-slate-400" />;
+  return sortDir === "asc"
+    ? <ArrowUp className="inline ml-1 h-3.5 w-3.5 text-blue-500" />
+    : <ArrowDown className="inline ml-1 h-3.5 w-3.5 text-blue-500" />;
+}
+
 export default function LeadsAdmin() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [sortBy, setSortBy] = useState<SortKey>("updatedAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery<any[]>({
     queryKey: ["/api/leads"],
@@ -25,17 +45,48 @@ export default function LeadsAdmin() {
     }
   }, [isAuthenticated, isLoading]);
 
+  const handleSort = (col: SortKey) => {
+    if (sortBy === col) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("desc");
+    }
+  };
+
+  const sortedLeads = [...leads].sort((a, b) => {
+    let aVal: string | number = "";
+    let bVal: string | number = "";
+    if (sortBy === "name") {
+      aVal = (a.name || "").toLowerCase();
+      bVal = (b.name || "").toLowerCase();
+    } else if (sortBy === "createdAt") {
+      aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    } else {
+      aVal = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      bVal = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    }
+    if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const reEngagedCount = leads.filter(isReEngaged).length;
+
   const downloadCSV = () => {
     if (!leads || leads.length === 0) return;
-    const headers = ["Name", "Email", "Phone", "Source", "Medium", "Campaign", "Date"];
-    const rows = leads.map((l: any) => [
+    const headers = ["Name", "Email", "Phone", "Source", "Medium", "Campaign", "First contact", "Last contact", "Re-engaged"];
+    const rows = sortedLeads.map((l: any) => [
       l.name,
       l.email,
       l.phone,
       l.utm?.utm_source || "direct",
       l.utm?.utm_medium || "",
       l.utm?.utm_campaign || "",
-      new Date(l.createdAt).toLocaleDateString("en-IN"),
+      l.createdAt ? new Date(l.createdAt).toLocaleDateString("en-IN") : "",
+      l.updatedAt ? new Date(l.updatedAt).toLocaleDateString("en-IN") : "",
+      isReEngaged(l) ? "Yes" : "No",
     ]);
     const csv = [headers, ...rows].map(r => r.map((v: string) => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -111,7 +162,22 @@ export default function LeadsAdmin() {
               </div>
             </CardContent>
           </Card>
-          {Object.entries(sourceStats).slice(0, 3).map(([src, count]) => (
+          {reEngagedCount > 0 && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="pt-5">
+                <div className="flex items-center gap-3">
+                  <div className="bg-amber-100 rounded-lg p-2">
+                    <Users className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-amber-700">{reEngagedCount}</div>
+                    <div className="text-xs text-amber-600">Re-engaged</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {Object.entries(sourceStats).slice(0, reEngagedCount > 0 ? 2 : 3).map(([src, count]) => (
             <Card key={src}>
               <CardContent className="pt-5">
                 <div className="flex items-center gap-3">
@@ -150,42 +216,83 @@ export default function LeadsAdmin() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 text-left">
-                      <th className="pb-3 text-slate-500 font-medium">Name</th>
+                      <th
+                        className="pb-3 text-slate-500 font-medium cursor-pointer select-none hover:text-slate-700"
+                        onClick={() => handleSort("name")}
+                      >
+                        Name <SortIcon col="name" sortBy={sortBy} sortDir={sortDir} />
+                      </th>
                       <th className="pb-3 text-slate-500 font-medium">Contact</th>
                       <th className="pb-3 text-slate-500 font-medium">Source</th>
                       <th className="pb-3 text-slate-500 font-medium">Campaign</th>
-                      <th className="pb-3 text-slate-500 font-medium">Date</th>
+                      <th
+                        className="pb-3 text-slate-500 font-medium cursor-pointer select-none hover:text-slate-700 whitespace-nowrap"
+                        onClick={() => handleSort("createdAt")}
+                      >
+                        First contact <SortIcon col="createdAt" sortBy={sortBy} sortDir={sortDir} />
+                      </th>
+                      <th
+                        className="pb-3 text-slate-500 font-medium cursor-pointer select-none hover:text-slate-700 whitespace-nowrap"
+                        onClick={() => handleSort("updatedAt")}
+                      >
+                        Last contact <SortIcon col="updatedAt" sortBy={sortBy} sortDir={sortDir} />
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {[...leads].reverse().map((lead: any) => (
-                      <tr key={lead.id} className="hover:bg-slate-50">
-                        <td className="py-3 font-medium text-slate-800">{lead.name}</td>
-                        <td className="py-3">
-                          <div className="flex items-center gap-1.5 text-slate-600">
-                            <Mail className="h-3.5 w-3.5 text-slate-400" />
-                            {lead.email}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-slate-500 text-xs mt-0.5">
-                            <Phone className="h-3 w-3 text-slate-400" />
-                            {lead.phone}
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <Badge variant="secondary" className="capitalize text-xs">
-                            {lead.utm?.utm_source || "direct"}
-                          </Badge>
-                        </td>
-                        <td className="py-3 text-slate-500 text-xs">
-                          {lead.utm?.utm_campaign || lead.utm?.utm_medium || "—"}
-                        </td>
-                        <td className="py-3 text-slate-400 text-xs">
-                          {new Date(lead.createdAt).toLocaleDateString("en-IN", {
-                            day: "numeric", month: "short", year: "numeric",
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                    {sortedLeads.map((lead: any) => {
+                      const reEngaged = isReEngaged(lead);
+                      return (
+                        <tr key={lead.id} className="hover:bg-slate-50">
+                          <td className="py-3 font-medium text-slate-800">
+                            {lead.name}
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-1.5 text-slate-600">
+                              <Mail className="h-3.5 w-3.5 text-slate-400" />
+                              {lead.email}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-slate-500 text-xs mt-0.5">
+                              <Phone className="h-3 w-3 text-slate-400" />
+                              {lead.phone}
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <Badge variant="secondary" className="capitalize text-xs">
+                              {lead.utm?.utm_source || "direct"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 text-slate-500 text-xs">
+                            {lead.utm?.utm_campaign || lead.utm?.utm_medium || "—"}
+                          </td>
+                          <td className="py-3 text-slate-400 text-xs whitespace-nowrap">
+                            {lead.createdAt
+                              ? new Date(lead.createdAt).toLocaleDateString("en-IN", {
+                                  day: "numeric", month: "short", year: "numeric",
+                                })
+                              : "—"}
+                          </td>
+                          <td className="py-3 text-xs whitespace-nowrap">
+                            {lead.updatedAt ? (
+                              <div className="flex flex-col gap-1">
+                                <span className={reEngaged ? "text-amber-700 font-medium" : "text-slate-400"}>
+                                  {new Date(lead.updatedAt).toLocaleDateString("en-IN", {
+                                    day: "numeric", month: "short", year: "numeric",
+                                  })}
+                                </span>
+                                {reEngaged && (
+                                  <Badge className="text-[10px] px-1.5 py-0 h-4 bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-100 w-fit">
+                                    Re-engaged
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
