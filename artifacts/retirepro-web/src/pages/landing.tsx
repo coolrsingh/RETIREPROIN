@@ -312,6 +312,62 @@ export default function Landing() {
           }
         }
 
+        /* ── Extra blobs for ultra-wide screens (hidden on smaller viewports) ── */
+        .hero-blob-extra-tr,
+        .hero-blob-extra-bl,
+        .hero-blob-extra-center {
+          display: none;
+        }
+
+        @media (min-width: 1920px) {
+          /* Scale up the anchor blobs so they fill the wider margins */
+          .hero-blob-tl-wrap {
+            width: 900px !important;
+            height: 900px !important;
+            top: -280px !important;
+            left: -280px !important;
+          }
+          .hero-blob-br-wrap {
+            width: 780px !important;
+            height: 780px !important;
+            bottom: -220px !important;
+            right: -220px !important;
+          }
+          /* Show extra decorative blobs in the exposed side columns */
+          .hero-blob-extra-tr { display: block; }
+          .hero-blob-extra-bl { display: block; }
+          .hero-blob-extra-center { display: block; }
+          /* Give the hero section more breathing room vertically */
+          .hero-inner-grid {
+            padding-top: 10rem !important;
+            padding-bottom: 12rem !important;
+          }
+          /* Allow the plan card to grow a touch on very wide screens */
+          .hero-plan-card {
+            max-width: 480px !important;
+          }
+        }
+
+        @media (min-width: 2560px) {
+          /* 2K / 1440p-double: push blobs even further */
+          .hero-blob-tl-wrap {
+            width: 1200px !important;
+            height: 1200px !important;
+            top: -400px !important;
+            left: -400px !important;
+          }
+          .hero-blob-br-wrap {
+            width: 1000px !important;
+            height: 1000px !important;
+            bottom: -320px !important;
+            right: -320px !important;
+          }
+          .hero-inner-grid {
+            padding-top: 12rem !important;
+            padding-bottom: 14rem !important;
+          }
+        }
+
         @media (max-width: 359px) {
           .hero-heading {
             font-size: 28px !important;
@@ -392,24 +448,47 @@ export default function Landing() {
           style={{ background: "var(--ivory)" }}
         >
           {/* Warm saffron blob top-left */}
-          <div className="absolute pointer-events-none" style={{
+          <div className="hero-blob-tl-wrap absolute pointer-events-none" style={{
             top: -120, left: -120, width: 500, height: 500,
             background: "radial-gradient(circle, rgba(232,148,10,0.18) 0%, transparent 65%)",
             animation: "blobDrift1 14s ease-in-out infinite",
           }} />
           {/* Warm peach blob bottom-right */}
-          <div className="absolute pointer-events-none" style={{
+          <div className="hero-blob-br-wrap absolute pointer-events-none" style={{
             bottom: -80, right: -80, width: 420, height: 420,
             background: "radial-gradient(circle, rgba(241,90,36,0.12) 0%, transparent 65%)",
             animation: "blobDrift2 18s ease-in-out infinite",
           }} />
+
+          {/* Extra accent blob top-right — visible on 1920px+ */}
+          <div className="hero-blob-extra-tr absolute pointer-events-none" style={{
+            top: "5%", right: "4%",
+            width: 360, height: 360,
+            background: "radial-gradient(circle, rgba(241,90,36,0.09) 0%, transparent 65%)",
+            animation: "blobDrift2 20s ease-in-out infinite",
+          }} />
+          {/* Extra accent blob bottom-left — visible on 1920px+ */}
+          <div className="hero-blob-extra-bl absolute pointer-events-none" style={{
+            bottom: "12%", left: "5%",
+            width: 320, height: 320,
+            background: "radial-gradient(circle, rgba(232,148,10,0.11) 0%, transparent 65%)",
+            animation: "blobDrift1 24s ease-in-out infinite",
+          }} />
+          {/* Subtle center warmth — visible on 1920px+ */}
+          <div className="hero-blob-extra-center absolute pointer-events-none" style={{
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 700, height: 500,
+            background: "radial-gradient(ellipse, rgba(232,148,10,0.05) 0%, transparent 70%)",
+          }} />
+
           {/* Subtle grid */}
           <div className="absolute inset-0 pointer-events-none" style={{
             backgroundImage: "linear-gradient(rgba(26,18,8,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(26,18,8,0.04) 1px, transparent 1px)",
             backgroundSize: "56px 56px",
           }} />
 
-          <div className="relative max-w-[1400px] mx-auto px-8 lg:px-16 pt-20 pb-28 lg:pt-28 lg:pb-40 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center w-full">
+          <div className="hero-inner-grid relative max-w-[1400px] mx-auto px-8 lg:px-16 pt-20 pb-28 lg:pt-28 lg:pb-40 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center w-full">
             {/* Left: copy */}
             <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
               <motion.div
