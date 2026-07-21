@@ -2,6 +2,30 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Phone, AlertTriangle } from "lucide-react";
 
+const advisorStyles = `
+  @media (max-width: 359px) {
+    .advisor-badge {
+      font-size: 11px !important;
+      padding: 5px 10px !important;
+      gap: 4px !important;
+    }
+    .advisor-testimonial-card {
+      padding: 10px 12px !important;
+      gap: 8px !important;
+    }
+    .advisor-testimonial-text {
+      font-size: 12px !important;
+    }
+    .advisor-testimonial-who {
+      font-size: 10px !important;
+    }
+    .advisor-section-outer {
+      padding-left: 14px !important;
+      padding-right: 14px !important;
+    }
+  }
+`;
+
 interface AdvisorSectionProps {
   defaultName?: string;
 }
@@ -40,8 +64,10 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
   };
 
   return (
+    <>
+    <style>{advisorStyles}</style>
     <section
-      className="px-5 sm:px-6 py-14 sm:py-20 lg:py-[88px]"
+      className="advisor-section-outer px-5 sm:px-6 py-14 sm:py-20 lg:py-[88px]"
       style={{
         background: "linear-gradient(160deg, #FBF8F2 0%, #FEF3E2 60%, #FBF8F2 100%)",
         borderTop: "1px solid rgba(232,148,10,0.12)",
@@ -78,7 +104,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
               ].map(tag => (
                 <span
                   key={tag.label}
-                  className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full"
+                  className="advisor-badge flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full"
                   style={{ background: "rgba(26,18,8,0.05)", color: "#334155", border: "1px solid rgba(0,0,0,0.08)" }}
                 >
                   {tag.icon} {tag.label}
@@ -94,13 +120,13 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
               ].map((r, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl px-4 py-3.5 flex gap-3"
+                  className="advisor-testimonial-card rounded-2xl px-4 py-3.5 flex gap-3"
                   style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(232,148,10,0.18)", backdropFilter: "blur(8px)" }}
                 >
                   <div style={{ color: "var(--saffron)", fontSize: 13, flexShrink: 0 }}>{"★".repeat(r.stars)}</div>
                   <div>
-                    <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.55, marginBottom: 3 }}>{r.text}</p>
-                    <p style={{ fontSize: 11, color: "#94A3B8" }}>— {r.who}</p>
+                    <p className="advisor-testimonial-text" style={{ fontSize: 13, color: "#334155", lineHeight: 1.55, marginBottom: 3 }}>{r.text}</p>
+                    <p className="advisor-testimonial-who" style={{ fontSize: 11, color: "#94A3B8" }}>— {r.who}</p>
                   </div>
                 </div>
               ))}
@@ -302,5 +328,6 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
         </div>
       </div>
     </section>
+    </>
   );
 }
