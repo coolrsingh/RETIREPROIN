@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { quickPlanSchema, type QuickPlan } from "@shared/schema";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Zap, Coffee, CreditCard } from "lucide-react";
+import { Plus, Trash2, Zap, Coffee, CreditCard, TrendingUp, Calculator, Lock } from "lucide-react";
 
 interface QuickPlanFormProps {
   onSubmit: (data: QuickPlan) => void;
@@ -29,6 +29,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
   const [children, setChildren] = useState<any[]>([]);
   const [hasMiniRetirement, setHasMiniRetirement] = useState(false);
   const [hasExistingEMI, setHasExistingEMI] = useState(false);
+  const [savingsAutoMode, setSavingsAutoMode] = useState(true);
 
   const form = useForm<QuickPlan>({
     resolver: zodResolver(quickPlanSchema),
@@ -53,14 +54,19 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
     }
   });
 
+  // Auto-calculate savings = income - expenses when in auto mode
+  const income = form.watch("monthlyIncomeTotal");
+  const expenses = form.watch("monthlyExpenseTotal");
+
+  useEffect(() => {
+    if (savingsAutoMode) {
+      const computed = Math.max(0, (Number(income) || 0) - (Number(expenses) || 0));
+      form.setValue("monthlySavings", computed, { shouldValidate: false });
+    }
+  }, [income, expenses, savingsAutoMode]);
+
   const addChild = () => {
-    const newChild = {
-      name: "",
-      dob: "",
-      eduTodaysCost: 0,
-      marriageTodaysCost: 0
-    };
-    
+    const newChild = { name: "", dob: "", eduTodaysCost: 0, marriageTodaysCost: 0 };
     const updated = [...children, newChild];
     setChildren(updated);
     form.setValue("children", updated);
@@ -81,6 +87,8 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
     };
     onSubmit(cleanedData);
   };
+
+  const computedSavings = Math.max(0, (Number(income) || 0) - (Number(expenses) || 0));
 
   return (
     <Form {...form}>
@@ -131,9 +139,9 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <FormItem>
                     <FormLabel>Retirement Age</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="60" 
+                      <Input
+                        type="number"
+                        placeholder="60"
                         data-testid="input-retirement-age"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -151,10 +159,11 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
         <Card data-testid="card-financial-overview">
           <CardHeader>
             <CardTitle>Financial Overview</CardTitle>
-            <CardDescription>Your current income, expenses, and savings</CardDescription>
+            <CardDescription>Your current income, expenses, and how much you invest each month</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="space-y-5">
+            {/* Income + Expenses row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="monthlyIncomeTotal"
@@ -162,9 +171,9 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <FormItem>
                     <FormLabel>Monthly Income (₹)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="50000" 
+                      <Input
+                        type="number"
+                        placeholder="50000"
                         data-testid="input-monthly-income"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -181,9 +190,9 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <FormItem>
                     <FormLabel>Monthly Expenses (₹)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="30000" 
+                      <Input
+                        type="number"
+                        placeholder="30000"
                         data-testid="input-monthly-expense"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -193,21 +202,106 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Monthly Savings — auto-calculated with override option */}
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-blue-600" />
+                  <span className="font-semibold text-sm text-blue-900">Monthly Savings / Investment</span>
+                  {savingsAutoMode && (
+                    <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium">Auto</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSavingsAutoMode(!savingsAutoMode)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 transition-colors"
+                >
+                  {savingsAutoMode ? (
+                    <><Lock className="h-3 w-3" />Enter custom amount</>
+                  ) : (
+                    <><Calculator className="h-3 w-3" />Auto-calculate</>
+                  )}
+                </button>
+              </div>
+
+              {savingsAutoMode ? (
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-blue-700">
+                      ₹{computedSavings.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-sm text-blue-600">/month</span>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Calculated as Income − Expenses. Click "Enter custom amount" to override.
+                    {Number(income) > 0 && Number(expenses) > 0 && (
+                      <span className="ml-1 font-medium">
+                        ({Math.round((computedSavings / (Number(income) || 1)) * 100)}% savings rate)
+                      </span>
+                    )}
+                  </p>
+                  {/* hidden field keeps value in sync */}
+                  <input type="hidden" {...form.register("monthlySavings", { valueAsNumber: true })} />
+                </div>
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="monthlySavings"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder={String(computedSavings || 20000)}
+                          data-testid="input-monthly-savings"
+                          className="bg-white"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Income − Expenses = ₹{computedSavings.toLocaleString("en-IN")}. You're entering a custom amount.
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            {/* Salary growth rate assumption */}
+            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="h-4 w-4 text-amber-600" />
+                <span className="font-semibold text-sm text-amber-900">Salary Growth Assumption</span>
+                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Optional</span>
+              </div>
               <FormField
                 control={form.control}
-                name="monthlySavings"
+                name="incomeGrowthRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Monthly Savings (₹)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="20000" 
-                        data-testid="input-monthly-savings"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
+                    <div className="flex items-center gap-3">
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.5"
+                          min={0}
+                          max={30}
+                          className="w-28 bg-white"
+                          data-testid="input-income-growth-rate"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <span className="text-sm font-medium text-amber-800">% per year</span>
+                      <span className="text-xs text-amber-600">
+                        (Average Indian salary hike is 8–10% /year)
+                      </span>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -221,10 +315,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Children (Optional)</span>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={addChild}
                 data-testid="button-add-child"
               >
@@ -232,14 +326,14 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 Add Child
               </Button>
             </CardTitle>
-            <CardDescription>Add children for education and marriage planning</CardDescription>
+            <CardDescription>Add children to automatically mark education and marriage milestones on your projection chart</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {children.map((child, index) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-lg">
                 <div>
                   <Label>Child Name</Label>
-                  <Input 
+                  <Input
                     placeholder="Child's name"
                     value={child.name}
                     onChange={(e) => {
@@ -253,7 +347,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </div>
                 <div>
                   <Label>Date of Birth</Label>
-                  <Input 
+                  <Input
                     type="date"
                     value={child.dob}
                     onChange={(e) => {
@@ -267,10 +361,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </div>
                 <div>
                   <Label>Education Cost Today (₹)</Label>
-                  <Input 
+                  <Input
                     type="number"
                     placeholder="Enter amount"
-                    value={child.eduTodaysCost || ''}
+                    value={child.eduTodaysCost || ""}
                     onChange={(e) => {
                       const updated = [...children];
                       updated[index].eduTodaysCost = Number(e.target.value) || 0;
@@ -282,10 +376,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </div>
                 <div>
                   <Label>Marriage Cost Today (₹)</Label>
-                  <Input 
+                  <Input
                     type="number"
                     placeholder="Enter amount"
-                    value={child.marriageTodaysCost || ''}
+                    value={child.marriageTodaysCost || ""}
                     onChange={(e) => {
                       const updated = [...children];
                       updated[index].marriageTodaysCost = Number(e.target.value) || 0;
@@ -296,10 +390,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   />
                 </div>
                 <div className="flex items-end gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => removeChild(index)}
                     data-testid={`button-remove-child-${index}`}
                   >
@@ -310,7 +404,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             ))}
             {children.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No children added. This is optional for quick planning.
+                No children added. Education 🎓 and marriage 💍 milestones will appear on the chart when you add a child.
               </div>
             )}
           </CardContent>
@@ -330,9 +424,9 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 <FormItem>
                   <FormLabel>Total Current Assets (₹)</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="1000000" 
+                    <Input
+                      type="number"
+                      placeholder="1000000"
                       data-testid="input-current-assets"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
@@ -356,11 +450,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </CardTitle>
                 <CardDescription>Planning a career break or sabbatical? During this period, no new savings will be added — your portfolio will only grow through investment returns.</CardDescription>
               </div>
-              <Switch
-                checked={hasMiniRetirement}
-                onCheckedChange={setHasMiniRetirement}
-                data-testid="toggle-mini-retirement"
-              />
+              <Switch checked={hasMiniRetirement} onCheckedChange={setHasMiniRetirement} data-testid="toggle-mini-retirement" />
             </div>
           </CardHeader>
           {hasMiniRetirement && (
@@ -425,11 +515,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </CardTitle>
                 <CardDescription>Do you have an ongoing loan? This EMI will reduce your monthly savings capacity until the tenure ends.</CardDescription>
               </div>
-              <Switch
-                checked={hasExistingEMI}
-                onCheckedChange={setHasExistingEMI}
-                data-testid="toggle-existing-emi"
-              />
+              <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" />
             </div>
           </CardHeader>
           {hasExistingEMI && (
@@ -497,10 +583,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <FormItem>
                     <FormLabel>Annual Inflation (%)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         step="0.1"
-                        placeholder="7" 
+                        placeholder="7"
                         data-testid="input-inflation"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -517,10 +603,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <FormItem>
                     <FormLabel>Pre-retirement Return (%)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         step="0.1"
-                        placeholder="12" 
+                        placeholder="12"
                         data-testid="input-pre-return"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -537,10 +623,10 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <FormItem>
                     <FormLabel>Post-retirement Return (%)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         step="0.1"
-                        placeholder="8" 
+                        placeholder="8"
                         data-testid="input-post-return"
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
@@ -555,9 +641,9 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
         </Card>
 
         <div className="flex justify-end">
-          <Button 
-            type="submit" 
-            disabled={isLoading} 
+          <Button
+            type="submit"
+            disabled={isLoading}
             className="px-8"
             data-testid="button-create-plan"
           >

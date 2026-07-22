@@ -18,6 +18,7 @@ import CashflowChart from "@/components/cashflow-chart";
 import CashflowAdvisor from "@/components/cashflow-advisor";
 import KpiCards from "@/components/kpi-cards";
 import AssumptionsPanel from "@/components/assumptions-panel";
+import SavingsInsightsChart from "@/components/savings-insights-chart";
 import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
 import { useQuery } from "@tanstack/react-query";
@@ -344,64 +345,74 @@ export default function PlanDashboard() {
           </Card>
         )}
 
-        {/* Charts and Analysis */}
+        {/* Net Worth Projection — full width */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center space-x-2">
+                <CardTitle>Net Worth Projection</CardTitle>
+                <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md text-xs">
+                  <Star className="h-3 w-3 mr-1" />
+                  EXPORT
+                </Badge>
+              </div>
+              <div className="flex items-center space-x-2">
+                {["10Y", "25Y", "Life"].map(range => (
+                  <Button
+                    key={range}
+                    variant="outline"
+                    size="sm"
+                    className={chartTimeRange === range ? "border" : ""}
+                    style={chartTimeRange === range ? { background: "rgba(232,148,10,0.1)", color: "#92660A", borderColor: "rgba(232,148,10,0.35)" } : {}}
+                    onClick={() => setChartTimeRange(range)}
+                    data-testid={`button-chart-${range.toLowerCase()}`}
+                  >
+                    {range}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {calculations && !calculationsLoading ? (
+              <PlanChart calculations={calculations} timeRange={chartTimeRange} />
+            ) : (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Savings Insights + Assumptions — side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Net Worth Chart */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <CardTitle>Net Worth Projection</CardTitle>
-                    <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md text-xs">
-                      <Star className="h-3 w-3 mr-1" />
-                      EXPORT
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {["10Y", "25Y", "Life"].map(range => (
-                      <Button
-                        key={range}
-                        variant="outline"
-                        size="sm"
-                        className={chartTimeRange === range ? "border" : ""}
-                        style={chartTimeRange === range ? { background: "rgba(232,148,10,0.1)", color: "#92660A", borderColor: "rgba(232,148,10,0.35)" } : {}}
-                        onClick={() => setChartTimeRange(range)}
-                        data-testid={`button-chart-${range.toLowerCase()}`}
-                      >
-                        {range}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+            <Card className="h-full">
+              <CardHeader className="pb-2">
+                <CardTitle>Savings Insights — Income, Expenses &amp; Rate</CardTitle>
+                <p className="text-xs text-slate-500">How your monthly savings and savings rate evolve over time before retirement</p>
               </CardHeader>
               <CardContent>
                 {calculations && !calculationsLoading ? (
-                  <PlanChart calculations={calculations} timeRange={chartTimeRange} />
+                  <SavingsInsightsChart calculations={calculations} />
                 ) : (
-                  <div className="h-80 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
-                      <p className="text-slate-500">Calculating projections...</p>
-                    </div>
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
-
-          {/* Assumptions Panel */}
           <div>
             <AssumptionsPanel scenario={scenario} />
           </div>
         </div>
 
-        {/* Cashflow Analysis */}
-        <Card>
+        {/* Cashflow Analysis — full width */}
+        <Card className="mb-8">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Cashflow Analysis — Income vs Expenses</CardTitle>
-            </div>
+            <CardTitle>Cashflow Analysis — Income vs Expenses</CardTitle>
+            <p className="text-xs text-slate-500 mt-0.5">Year-by-year cashflow showing income growth, expense inflation, and retirement spending</p>
           </CardHeader>
           <CardContent>
             {calculations && !calculationsLoading ? (

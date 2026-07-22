@@ -114,7 +114,11 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   // Add retirement marker
   markers.push({ year: retirementYear, type: 'retirement', label: 'Retirement' });
 
-  const incomeGrowthRate = 0.08;
+  // Read salary growth rate from the income item (set by user in the form), falling back to assumptions or 8%
+  const salaryGrowthFromItem = salaryIncome?.growthRate ? parseFloat(salaryIncome.growthRate) : null;
+  const incomeGrowthRate = salaryGrowthFromItem != null
+    ? salaryGrowthFromItem / 100
+    : parseFloat(assumptions.incomeGrowthRate || '8') / 100;
   const baseAnnualIncome = monthlyIncome * 12;
   
   let currentNetWorth = totalAssets;
