@@ -473,6 +473,11 @@ export default function Landing() {
             padding: 22px 18px !important;
           }
 
+          /* Why RetirePro feature cards — reduce padding so text has more breathing room */
+          .feature-card {
+            padding: 16px !important;
+          }
+
           /* AI Cashflow badge — drop tracking and allow the text to wrap inside the pill */
           .ai-advisor-chip {
             white-space: normal !important;
@@ -823,7 +828,7 @@ export default function Landing() {
                 <motion.div key={f.title} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.45 }}>
                   <TiltCard className="h-full">
                     <div
-                      className="h-full rounded-2xl p-7"
+                      className="feature-card h-full rounded-2xl p-7"
                       style={{
                         background: "#FFFFFF",
                         border: "1px solid rgba(0,0,0,0.07)",
