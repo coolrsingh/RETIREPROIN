@@ -4,11 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 interface ScenarioSummary {
   id: string;
   name: string;
+  mode: 'quick' | 'detailed';
   updatedAt: string | Date;
+  selfRetirementAge: number | null;
 }
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle } from "lucide-react";
+import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -198,18 +200,46 @@ export default function Home() {
                   }}
                   data-testid={`card-scenario-${scenario.id}`}
                 >
-                  <div className="mb-1">
-                    <h3
-                      className="text-lg font-semibold"
-                      style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
-                    >
-                      {scenario.name}
-                    </h3>
-                    <p className="text-sm mt-0.5" style={{ color: "var(--slate-mid)" }}>
-                      Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN')}
+                  <div className="mb-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3
+                        className="text-lg font-semibold leading-snug"
+                        style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                      >
+                        {scenario.name}
+                      </h3>
+                      <span
+                        className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          background: scenario.mode === 'quick'
+                            ? "rgba(232,148,10,0.12)"
+                            : "rgba(59,130,246,0.10)",
+                          color: scenario.mode === 'quick' ? "var(--saffron)" : "#2563EB",
+                        }}
+                      >
+                        {scenario.mode === 'quick' ? 'Quick' : 'Detailed'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <Target
+                        className="h-4 w-4 shrink-0"
+                        style={{ color: scenario.selfRetirementAge != null ? "var(--saffron)" : "rgba(26,18,8,0.25)" }}
+                      />
+                      {scenario.selfRetirementAge != null ? (
+                        <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                          Retires at age {scenario.selfRetirementAge}
+                        </span>
+                      ) : (
+                        <span className="text-sm" style={{ color: "var(--slate-mid)" }}>
+                          Retirement age not set
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs mt-1.5" style={{ color: "var(--slate-mid)" }}>
+                      Updated {new Date(scenario.updatedAt).toLocaleDateString('en-IN')}
                     </p>
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <Link href={`/plan/${scenario.id}`}>
                       <Button
                         size="sm"

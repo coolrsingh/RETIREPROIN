@@ -66,7 +66,7 @@ export interface IStorage {
 
   // Scenario operations
   getScenario(id: string): Promise<Scenario | undefined>;
-  getScenariosByUser(userId: string): Promise<Scenario[]>;
+  getScenariosByUser(userId: string): Promise<(Scenario & { selfRetirementAge: number | null })[]>;
   createScenario(scenario: InsertScenario): Promise<Scenario>;
   updateScenario(id: string, scenario: Partial<InsertScenario>): Promise<Scenario>;
   deleteScenario(id: string): Promise<void>;
@@ -212,8 +212,31 @@ export class DatabaseStorage implements IStorage {
     return scenario;
   }
 
-  async getScenariosByUser(userId: string): Promise<Scenario[]> {
-    return db.select().from(scenarios).where(eq(scenarios.userId, userId));
+  async getScenariosByUser(userId: string): Promise<(Scenario & { selfRetirementAge: number | null })[]> {
+    const rows = await db
+      .select({
+        id: scenarios.id,
+        userId: scenarios.userId,
+        name: scenarios.name,
+        mode: scenarios.mode,
+        leadId: scenarios.leadId,
+        createdAt: scenarios.createdAt,
+        updatedAt: scenarios.updatedAt,
+        selfRetirementAge: householdMembers.retirementAge,
+      })
+      .from(scenarios)
+      .leftJoin(
+        householdMembers,
+        and(
+          eq(householdMembers.scenarioId, scenarios.id),
+          eq(householdMembers.relation, 'self'),
+        ),
+      )
+      .where(eq(scenarios.userId, userId));
+    return rows.map((r) => ({
+      ...r,
+      selfRetirementAge: r.selfRetirementAge != null ? Number(r.selfRetirementAge) : null,
+    }));
   }
 
   async createScenario(scenario: InsertScenario): Promise<Scenario> {
