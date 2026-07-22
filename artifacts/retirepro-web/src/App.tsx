@@ -18,6 +18,11 @@ import Blog2 from "@/pages/blog-2";
 import Blog3 from "@/pages/blog-3";
 import Blog4 from "@/pages/blog-4";
 import Blog5 from "@/pages/blog-5";
+import Blog6 from "@/pages/blog-6";
+import Blog7 from "@/pages/blog-7";
+import Blog8 from "@/pages/blog-8";
+import Blog9 from "@/pages/blog-9";
+import BlogSubscribePopup from "@/components/blog-subscribe-popup";
 import GuestPlanPreview from "@/pages/guest-plan-preview";
 import FreePlan from "@/pages/free-plan";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -34,6 +39,7 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
+    <>
     <Switch>
       {/* Always-public pages */}
       <Route path="/go" component={AdLanding} />
@@ -44,6 +50,10 @@ function Router() {
       <Route path="/blog/real-estate-rich-retirement-illusion" component={Blog3} />
       <Route path="/blog/how-much-to-retire-india" component={Blog4} />
       <Route path="/blog/retirement-corpus-calculator-india-serious-planners" component={Blog5} />
+      <Route path="/blog/nps-vs-ups-vs-ops-which-is-better" component={Blog6} />
+      <Route path="/blog/how-much-money-to-retire-in-india" component={Blog7} />
+      <Route path="/blog/retirement-planning-self-employed-india" component={Blog8} />
+      <Route path="/blog/nps-withdrawal-rules-2026" component={Blog9} />
       <Route path="/plan/preview" component={GuestPlanPreview} />
       <Route path="/free-plan" component={FreePlan} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
@@ -66,6 +76,8 @@ function Router() {
       )}
       <Route component={NotFound} />
     </Switch>
+    <BlogSubscribePopup />
+    </>
   );
 }
 
