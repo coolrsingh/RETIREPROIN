@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartLine, ArrowLeft, FileSpreadsheet, Star, RefreshCw } from "lucide-react";
+import { ChartLine, ArrowLeft, FileSpreadsheet, Star, RefreshCw, Mail, Lock } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
@@ -215,14 +215,36 @@ export default function PlanDashboard() {
                 </span>
               </div>
             </div>
-            <a
-              href={`/api/export/excel/${scenario.id}`}
-              download
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Download Excel
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/api/export/excel/${scenario.id}`}
+                download
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Excel
+              </a>
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    window.location.href = "/api/login";
+                  }
+                }}
+                className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
+                style={
+                  isAuthenticated
+                    ? { background: "#f1f5f9", color: "#475569", borderColor: "#e2e8f0", cursor: "not-allowed", opacity: 0.7 }
+                    : { background: "#fef3e2", color: "#92660A", borderColor: "rgba(232,148,10,0.35)", cursor: "pointer" }
+                }
+                title={isAuthenticated ? "Email report — coming soon" : "Sign in to unlock"}
+              >
+                {isAuthenticated ? <Lock className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                Email report
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: isAuthenticated ? "#e2e8f0" : "rgba(232,148,10,0.2)", color: isAuthenticated ? "#64748b" : "#92660A" }}>
+                  {isAuthenticated ? "Soon" : "Sign in"}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -313,7 +335,7 @@ export default function PlanDashboard() {
           </div>
         )}
 
-        {/* AI Insights — above the chart */}
+        {/* Cashflow Advisor — What You Should Do (sits directly above the Net Worth projection) */}
         {calculations && !calculationsLoading && (
           <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
             <CardContent className="pt-4 pb-4">
