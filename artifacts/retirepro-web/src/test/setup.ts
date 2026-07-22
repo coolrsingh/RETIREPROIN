@@ -7,4 +7,11 @@ class MockIntersectionObserver {
   unobserve() {}
 }
 
+class MockResizeObserver {
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+}
+
 vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+vi.stubGlobal("ResizeObserver", MockResizeObserver);
