@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,23 +20,9 @@ import KpiCards from "@/components/kpi-cards";
 import AssumptionsPanel from "@/components/assumptions-panel";
 import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-
-interface ScenarioData {
-  id: string;
-  name: string;
-  updatedAt: string | Date;
-  assumptions?: {
-    inflationHeadline?: string;
-    inflationEdu?: string;
-    inflationHealth?: string;
-    returnPre?: string;
-    returnPost?: string;
-    lifeExpectancy?: number;
-    taxRegime?: string;
-    source?: string;
-  };
-}
+import { useGetScenario, getGetScenarioQueryKey } from "@workspace/api-client-react";
 
 export default function PlanDashboard() {
   const [match, params] = useRoute("/plan/:id");
@@ -50,10 +36,10 @@ export default function PlanDashboard() {
   // Live return rate override (user can tweak without saving a new plan)
   const [liveRates, setLiveRates] = useState<{ pre: string; post: string } | null>(null);
 
-  const { data: scenario, isLoading: scenarioLoading } = useQuery<ScenarioData>({
-    queryKey: ["/api/scenarios", params?.id],
-    enabled: isAuthenticated && !!params?.id,
-  });
+  const { data: scenario, isLoading: scenarioLoading } = useGetScenario(
+    params?.id ?? "",
+    { query: { queryKey: getGetScenarioQueryKey(params?.id ?? ""), enabled: isAuthenticated && !!params?.id } },
+  );
 
   const { data: calculations, isLoading: calculationsLoading } = useQuery({
     queryKey: ["/api/calc", params?.id, liveRates],
@@ -219,7 +205,7 @@ export default function PlanDashboard() {
               </h1>
               <div className="flex items-center space-x-4 mt-1">
                 <span style={{ color: "var(--slate-mid)" }}>
-                  Last updated: {new Date(scenario.updatedAt).toLocaleDateString('en-IN', {
+                  Last updated: {new Date(scenario.updatedAt ?? '').toLocaleDateString('en-IN', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',

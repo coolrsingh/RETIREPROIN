@@ -1,20 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useGetAuthUser, getGetAuthUserQueryKey } from "@workspace/api-client-react";
 
-export interface AuthUser {
-  id: string;
-  email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  profileImageUrl?: string | null;
-  role?: "client" | "admin" | null;
-  isPremium?: boolean | null;
-  planCount?: number;
-}
+export type { AuthUser } from "@workspace/api-client-react";
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery<AuthUser | null>({
-    queryKey: ["/api/auth/user"],
-    retry: false,
+  const { data: user, isLoading } = useGetAuthUser({
+    query: { queryKey: getGetAuthUserQueryKey(), retry: false },
   });
 
   return {

@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: scenarios
+    description: Scenario operations
+  - name: crm
+    description: CRM operations
 paths:
   /healthz:
     get:
@@ -24,6 +30,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      operationId: getAuthUser
+      tags: [auth]
+      summary: Get authenticated user
+      description: Returns the currently authenticated user's profile
+      responses:
+        "200":
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthenticated
+
+  /scenarios:
+    get:
+      operationId: listScenarios
+      tags: [scenarios]
+      summary: List user scenarios
+      description: Returns all retirement scenarios for the authenticated user
+      responses:
+        "200":
+          description: List of scenario summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScenarioSummary"
+        "401":
+          description: Unauthenticated
+
+  /scenarios/{id}:
+    get:
+      operationId: getScenario
+      tags: [scenarios]
+      summary: Get a single scenario with all data
+      description: Returns a retirement scenario with all associated data (assumptions, members, income, etc.)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scenario with full data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioData"
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Scenario not found
+
+  /crm/defaults:
+    get:
+      operationId: getCrmDefaults
+      tags: [crm]
+      summary: Get CRM planning defaults
+      description: Returns the global CRM planning assumption defaults
+      responses:
+        "200":
+          description: CRM defaults
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrmDefaultsData"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +113,141 @@ components:
       required:
         - status
 
+    AuthUser:
+      type: object
+      description: Authenticated user profile
+      properties:
+        id:
+          type: string
+        email:
+          type: ["string", "null"]
+        firstName:
+          type: ["string", "null"]
+        lastName:
+          type: ["string", "null"]
+        profileImageUrl:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+          enum: ["client", "admin", null]
+        isPremium:
+          type: ["boolean", "null"]
+        planCount:
+          type: integer
+      required:
+        - id
+        - planCount
+
+    ScenarioSummary:
+      type: object
+      description: Brief scenario info for list views
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        mode:
+          type: string
+          enum: ["quick", "detailed"]
+        leadId:
+          type: ["string", "null"]
+        createdAt:
+          type: ["string", "null"]
+        updatedAt:
+          type: ["string", "null"]
+        selfRetirementAge:
+          type: ["integer", "null"]
+      required:
+        - id
+        - userId
+        - name
+        - mode
+
+    ScenarioAssumptions:
+      type: object
+      description: Planning assumptions attached to a scenario
+      properties:
+        id:
+          type: string
+        scenarioId:
+          type: string
+        inflationHeadline:
+          type: ["string", "null"]
+        inflationEdu:
+          type: ["string", "null"]
+        inflationHealth:
+          type: ["string", "null"]
+        returnPre:
+          type: ["string", "null"]
+        returnPost:
+          type: ["string", "null"]
+        lifeExpectancy:
+          type: ["integer", "null"]
+        equityAllocation:
+          type: ["string", "null"]
+        debtAllocation:
+          type: ["string", "null"]
+        equityReturn:
+          type: ["string", "null"]
+        debtReturn:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+          enum: ["crm", "user", null]
+
+    ScenarioData:
+      type: object
+      description: Full scenario with all associated data
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        mode:
+          type: string
+          enum: ["quick", "detailed"]
+        leadId:
+          type: ["string", "null"]
+        createdAt:
+          type: ["string", "null"]
+        updatedAt:
+          type: ["string", "null"]
+        assumptions:
+          oneOf:
+            - $ref: "#/components/schemas/ScenarioAssumptions"
+            - type: "null"
+      required:
+        - id
+        - userId
+        - name
+        - mode
+
+    CrmDefaultsData:
+      type: object
+      description: Global CRM planning assumption defaults
+      properties:
+        id:
+          type: string
+        inflationHeadline:
+          type: ["string", "null"]
+        inflationEdu:
+          type: ["string", "null"]
+        inflationHealth:
+          type: ["string", "null"]
+        returnPre:
+          type: ["string", "null"]
+        returnPost:
+          type: ["string", "null"]
+        lifeExpectancy:
+          type: ["integer", "null"]
+        taxRegime:
+          type: ["string", "null"]
+          enum: ["old", "new", null]
+        updatedAt:
+          type: ["string", "null"]
+      required:
+        - id

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useGetCrmDefaults, getGetCrmDefaultsQueryKey } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,24 +30,13 @@ const crmDefaultsSchema = z.object({
 
 type CrmDefaults = z.infer<typeof crmDefaultsSchema>;
 
-interface CrmDefaultsResponse {
-  inflationHeadline?: string | null;
-  inflationEdu?: string | null;
-  inflationHealth?: string | null;
-  returnPre?: string | null;
-  returnPost?: string | null;
-  lifeExpectancy?: number | null;
-  taxRegime?: "old" | "new" | null;
-}
-
 export default function SettingsCrm() {
   const [location, navigate] = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
 
-  const { data: crmDefaults, isLoading: defaultsLoading } = useQuery<CrmDefaultsResponse>({
-    queryKey: ["/api/crm/defaults"],
-    enabled: isAuthenticated,
+  const { data: crmDefaults, isLoading: defaultsLoading } = useGetCrmDefaults({
+    query: { queryKey: getGetCrmDefaultsQueryKey(), enabled: isAuthenticated },
   });
 
   const form = useForm<CrmDefaults>({

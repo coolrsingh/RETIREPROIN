@@ -11,15 +11,14 @@ interface AssumptionsPanelProps {
   scenario: {
     id: string;
     assumptions?: {
-      inflationHeadline?: string;
-      inflationEdu?: string;
-      inflationHealth?: string;
-      returnPre?: string;
-      returnPost?: string;
-      lifeExpectancy?: number;
-      taxRegime?: string;
-      source?: string;
-    };
+      inflationHeadline?: string | null;
+      inflationEdu?: string | null;
+      inflationHealth?: string | null;
+      returnPre?: string | null;
+      returnPost?: string | null;
+      lifeExpectancy?: number | null;
+      source?: string | null;
+    } | null;
   };
 }
 
@@ -78,12 +77,12 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
     setIsEditing(false);
   };
 
-  const formatPercentage = (value: string | undefined, defaultValue: string) => {
+  const formatPercentage = (value: string | null | undefined, defaultValue: string) => {
     if (!value) return `${defaultValue}%`;
     return `${parseFloat(value).toFixed(1)}%`;
   };
 
-  const isFromCrm = (source?: string) => source === 'crm' || !source;
+  const isFromCrm = (source?: string | null) => source === 'crm' || !source;
 
   return (
     <Card data-testid="assumptions-panel">

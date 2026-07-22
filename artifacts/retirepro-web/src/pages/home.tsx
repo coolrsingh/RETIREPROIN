@@ -1,16 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-
-interface ScenarioSummary {
-  id: string;
-  name: string;
-  mode: 'quick' | 'detailed';
-  updatedAt: string | Date;
-  selfRetirementAge: number | null;
-}
+import { useListScenarios, getListScenariosQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target } from "lucide-react";
+import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target, Mail } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -23,9 +15,8 @@ export default function Home() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  const { data: scenarios, isLoading: scenariosLoading } = useQuery<ScenarioSummary[]>({
-    queryKey: ["/api/scenarios"],
-    enabled: isAuthenticated,
+  const { data: scenarios, isLoading: scenariosLoading } = useListScenarios({
+    query: { queryKey: getListScenariosQueryKey(), enabled: isAuthenticated },
   });
 
   useEffect(() => {

@@ -17,6 +17,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _defaultCredentials: RequestCredentials | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -42,6 +43,20 @@ export function setBaseUrl(url: string | null): void {
  */
 export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   _authTokenGetter = getter;
+}
+
+/**
+ * Set a default `credentials` value applied to every fetch request that does
+ * not already have `credentials` explicitly provided in its options.
+ *
+ * Web apps that rely on session cookies should call
+ * `setDefaultCredentials('include')` once during app initialisation so that
+ * generated hooks automatically send cookies on every request.
+ *
+ * Pass `null` to clear the default (useful in tests).
+ */
+export function setDefaultCredentials(credentials: RequestCredentials | null): void {
+  _defaultCredentials = credentials;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -360,7 +375,10 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  const credentials =
+    init.credentials !== undefined ? init.credentials : (_defaultCredentials ?? undefined);
+
+  const response = await fetch(input, { ...init, method, headers, credentials });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);
