@@ -10,9 +10,20 @@ import {
   users, scenarios, leads,
   assumptions, householdMembers, incomeItems, expenseItems, goals, assets, liabilities, miniRetirements,
 } from "@workspace/db";
+
 import { db } from "../db";
 import { eq, and, or, sql } from "drizzle-orm";
 import * as XLSX from "xlsx";
+
+const crmDefaultsUpdateSchema = z.object({
+  inflationHeadline: z.number().min(0).max(20).transform(v => v.toString()),
+  inflationEdu: z.number().min(0).max(20).transform(v => v.toString()),
+  inflationHealth: z.number().min(0).max(20).transform(v => v.toString()),
+  returnPre: z.number().min(0).max(30).transform(v => v.toString()),
+  returnPost: z.number().min(0).max(30).transform(v => v.toString()),
+  lifeExpectancy: z.number().int().min(60).max(100),
+  taxRegime: z.enum(['old', 'new']),
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -50,7 +61,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const defaults = await storage.updateCrmDefaults(req.body);
+      const parsed = crmDefaultsUpdateSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid CRM defaults", issues: parsed.error.issues });
+      }
+
+      const defaults = await storage.updateCrmDefaults(parsed.data);
       res.json(defaults);
     } catch (error) {
       console.error("Error updating CRM defaults:", error);

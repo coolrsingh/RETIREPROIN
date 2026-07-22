@@ -48,6 +48,7 @@ export default function SettingsCrm() {
       returnPre: 10.0,
       returnPost: 7.0,
       lifeExpectancy: 85,
+      taxRegime: "new",
     },
   });
 
