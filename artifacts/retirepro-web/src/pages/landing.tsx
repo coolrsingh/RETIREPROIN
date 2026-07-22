@@ -368,6 +368,66 @@ export default function Landing() {
           }
         }
 
+        /* ── Wide-screen section layout ──────────────────────────────────── */
+        .section-inner {
+          width: 100%;
+          max-width: 1280px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        @media (min-width: 1920px) {
+          .section-inner {
+            max-width: 1600px;
+          }
+          /* Show decorative side glow accents */
+          .section-side-glow { display: block !important; }
+          /* Scale up the Final CTA orbit ring so it doesn't look tiny */
+          .cta-orbit-wrap {
+            width: 380px !important;
+            height: 380px !important;
+          }
+          /* Header inner also gets wider */
+          .header-inner {
+            max-width: 1600px;
+          }
+        }
+
+        @media (min-width: 2560px) {
+          .section-inner {
+            max-width: 1920px;
+          }
+          .header-inner {
+            max-width: 1920px;
+          }
+          .cta-orbit-wrap {
+            width: 540px !important;
+            height: 540px !important;
+          }
+        }
+
+        /* Dot-grid decoration for light sections at wide screens */
+        .section-dot-grid-left,
+        .section-dot-grid-right {
+          display: none;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 200px;
+          pointer-events: none;
+          opacity: 0.35;
+          background-image: radial-gradient(circle, rgba(26,18,8,0.12) 1px, transparent 1px);
+          background-size: 22px 22px;
+        }
+
+        .section-dot-grid-left  { left: 0; mask-image: linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%); -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%); }
+        .section-dot-grid-right { right: 0; mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%); -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%); }
+
+        @media (min-width: 1920px) {
+          .section-dot-grid-left,
+          .section-dot-grid-right { display: block; }
+        }
+
         @media (max-width: 359px) {
           .hero-heading {
             font-size: 28px !important;
@@ -459,7 +519,7 @@ export default function Landing() {
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{ background: "rgba(251,248,242,0.9)", backdropFilter: "blur(16px)", borderColor: "rgba(0,0,0,0.08)" }}>
-          <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16">
+          <div className="header-inner mx-auto px-6 flex items-center justify-between h-16" style={{ maxWidth: 1280 }}>
             <BrandLogo href={null} textClassName="text-slate-900" />
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/blog" className="text-sm font-medium" style={{ color: "#64748B" }}>Blog</Link>
@@ -641,8 +701,11 @@ export default function Landing() {
         <DataTicker />
 
         {/* ── The Uncomfortable Math ──────────────────────────────────────── */}
-        <section style={{ background: "#111827", padding: "80px 24px", overflowX: "hidden" }}>
-          <div className="max-w-[1280px] mx-auto">
+        <section style={{ background: "#111827", padding: "80px 24px", overflowX: "hidden", position: "relative" }}>
+          {/* Wide-screen side glow accents */}
+          <div className="section-side-glow" style={{ display: "none", position: "absolute", top: "10%", left: "2%", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.12) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div className="section-side-glow" style={{ display: "none", position: "absolute", bottom: "10%", right: "2%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <div className="inline-block text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.15)", color: "var(--saffron-light)", border: "1px solid rgba(232,148,10,0.25)" }}>
                 Data-backed reality
@@ -705,8 +768,10 @@ export default function Landing() {
         </section>
 
         {/* ── Why RetirePro — 6-card grid + AI advisor ────────────────────── */}
-        <section className="px-6" style={{ padding: "80px 24px", background: "var(--ivory)", overflowX: "hidden" }}>
-          <div className="max-w-[1280px] mx-auto">
+        <section className="px-6" style={{ padding: "80px 24px", background: "var(--ivory)", overflowX: "hidden", position: "relative" }}>
+          <div className="section-dot-grid-left" />
+          <div className="section-dot-grid-right" />
+          <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <h2 style={{ fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 12, fontFamily: "var(--font-serif)" }}>
                 Why RetirePro?
@@ -835,8 +900,10 @@ export default function Landing() {
         </section>
 
         {/* ── How it works ────────────────────────────────────────────────── */}
-        <section style={{ background: "#FFFFFF", padding: "80px 24px", overflowX: "hidden" }}>
-          <div className="max-w-[1280px] mx-auto">
+        <section style={{ background: "#FFFFFF", padding: "80px 24px", overflowX: "hidden", position: "relative" }}>
+          <div className="section-dot-grid-left" />
+          <div className="section-dot-grid-right" />
+          <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, color: "var(--ink)", lineHeight: 1.15, marginBottom: 10, fontFamily: "var(--font-serif)" }}>
                 From blank page to full plan<br /><em style={{ color: "var(--saffron)" }}>in 60 seconds.</em>
@@ -915,8 +982,10 @@ export default function Landing() {
         </section>
 
         {/* ── Planner (BELOW Why RetirePro) ───────────────────────────────── */}
-        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "80px 24px", overflowX: "hidden" }}>
-          <div className="max-w-[1280px] mx-auto">
+        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "80px 24px", overflowX: "hidden", position: "relative" }}>
+          <div className="section-dot-grid-left" style={{ opacity: 0.25 }} />
+          <div className="section-dot-grid-right" style={{ opacity: 0.25 }} />
+          <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-center mb-12">
               <span className="inline-block text-sm font-semibold px-4 py-1.5 rounded-full mb-4" style={{ background: "rgba(241,90,36,0.1)", color: "var(--orange)" }}>
                 Free · No Account Required · Full Planner
@@ -948,8 +1017,10 @@ export default function Landing() {
         </section>
 
         {/* ── Blog ────────────────────────────────────────────────────────── */}
-        <section className="py-20 px-6 bg-slate-50 overflow-x-hidden">
-          <div className="max-w-[1280px] mx-auto">
+        <section className="py-20 px-6 bg-slate-50 overflow-x-hidden" style={{ position: "relative" }}>
+          <div className="section-dot-grid-left" style={{ backgroundImage: "radial-gradient(circle, rgba(100,116,139,0.18) 1px, transparent 1px)" }} />
+          <div className="section-dot-grid-right" style={{ backgroundImage: "radial-gradient(circle, rgba(100,116,139,0.18) 1px, transparent 1px)" }} />
+          <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="blog-header-row flex items-end justify-between mb-10 flex-wrap gap-4">
               <div>
                 <h2 className="font-bold text-slate-900 mb-2" style={{ fontSize: "clamp(24px, 3.5vw, 38px)", fontFamily: "var(--font-serif)" }}>Learn Before You Plan</h2>
@@ -1026,8 +1097,11 @@ export default function Landing() {
         </section>
 
         {/* ── Serious Planner Manifesto ────────────────────────────────── */}
-        <section style={{ background: "#080C12", padding: "96px 24px" }}>
-          <div className="max-w-[1280px] mx-auto">
+        <section style={{ background: "#080C12", padding: "96px 24px", position: "relative" }}>
+          {/* Wide-screen side glow accents */}
+          <div className="section-side-glow" style={{ display: "none", position: "absolute", top: "15%", left: "1.5%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.1) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div className="section-side-glow" style={{ display: "none", position: "absolute", bottom: "15%", right: "1.5%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
 
               {/* Top label */}
@@ -1212,7 +1286,7 @@ export default function Landing() {
 
         {/* ── Footer ──────────────────────────────────────────────────────── */}
         <footer className="py-10 px-6" style={{ background: "#060E1A" }}>
-          <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="section-inner flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
                 <img src={logoUrl} alt="RetirePro logo" className="w-6 h-6 object-contain" />

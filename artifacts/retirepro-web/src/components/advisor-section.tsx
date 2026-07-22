@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Users, Phone, AlertTriangle } from "lucide-react";
 
 const advisorStyles = `
+  @media (min-width: 1920px) {
+    .advisor-section-inner { max-width: 1600px !important; }
+  }
+  @media (min-width: 2560px) {
+    .advisor-section-inner { max-width: 1920px !important; }
+  }
   @media (max-width: 359px) {
     .advisor-badge {
       font-size: 11px !important;
@@ -74,7 +80,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
         borderBottom: "1px solid rgba(232,148,10,0.12)",
       }}
     >
-      <div className="max-w-[1280px] mx-auto">
+      <div className="advisor-section-inner mx-auto" style={{ maxWidth: 1280, width: "100%" }}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
 
           {/* ── Left: copy ─────────────────────────────────────────────── */}
