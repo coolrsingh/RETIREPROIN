@@ -5,13 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
 type SortKey = "name" | "createdAt" | "updatedAt";
 type SortDir = "asc" | "desc";
+type FilterKey = "all" | "re-engaged" | "7d" | "30d";
 
 function isReEngaged(lead: any): boolean {
   if (!lead.updatedAt || !lead.createdAt) return false;
@@ -33,6 +34,7 @@ export default function LeadsAdmin() {
   const { toast } = useToast();
   const [sortBy, setSortBy] = useState<SortKey>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery<any[]>({
     queryKey: ["/api/leads"],
@@ -54,7 +56,20 @@ export default function LeadsAdmin() {
     }
   };
 
-  const sortedLeads = [...leads].sort((a, b) => {
+  const filteredLeads = leads.filter((lead) => {
+    if (activeFilter === "re-engaged") return isReEngaged(lead);
+    if (activeFilter === "7d") {
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      return lead.updatedAt && new Date(lead.updatedAt).getTime() >= cutoff;
+    }
+    if (activeFilter === "30d") {
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      return lead.updatedAt && new Date(lead.updatedAt).getTime() >= cutoff;
+    }
+    return true;
+  });
+
+  const sortedLeads = [...filteredLeads].sort((a, b) => {
     let aVal: string | number = "";
     let bVal: string | number = "";
     if (sortBy === "name") {
@@ -75,7 +90,7 @@ export default function LeadsAdmin() {
   const reEngagedCount = leads.filter(isReEngaged).length;
 
   const downloadCSV = () => {
-    if (!leads || leads.length === 0) return;
+    if (!sortedLeads || sortedLeads.length === 0) return;
     const headers = ["Name", "Email", "Phone", "Source", "Medium", "Campaign", "First contact", "Last contact", "Re-engaged"];
     const rows = sortedLeads.map((l: any) => [
       l.name,
@@ -147,12 +162,12 @@ export default function LeadsAdmin() {
           </div>
           <Button
             onClick={downloadCSV}
-            disabled={!leads || leads.length === 0}
+            disabled={sortedLeads.length === 0}
             className="text-white hover:opacity-90"
             style={{ background: "var(--leaf)", borderColor: "transparent" }}
           >
             <Download className="mr-2 h-4 w-4" />
-            Export CSV
+            Export CSV{activeFilter !== "all" ? ` (${sortedLeads.length})` : ""}
           </Button>
         </div>
 
@@ -206,7 +221,54 @@ export default function LeadsAdmin() {
         {/* Leads Table */}
         <Card className="border-0 shadow-sm" style={{ background: "white" }}>
           <CardHeader style={{ borderBottom: "1px solid rgba(232,148,10,0.12)" }}>
-            <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>All Leads</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>
+                {activeFilter === "all" ? "All Leads" : (
+                  <span>
+                    Filtered Leads{" "}
+                    <span className="text-sm font-normal" style={{ color: "var(--slate-mid)" }}>
+                      ({sortedLeads.length} of {leads.length})
+                    </span>
+                  </span>
+                )}
+              </CardTitle>
+              {/* Filter Bar */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Filter className="h-3.5 w-3.5 mr-0.5 flex-shrink-0" style={{ color: "var(--slate-mid)" }} />
+                {(
+                  [
+                    { key: "all", label: "All" },
+                    { key: "re-engaged", label: "Re-engaged" },
+                    { key: "7d", label: "Last 7 days" },
+                    { key: "30d", label: "Last 30 days" },
+                  ] as { key: FilterKey; label: string }[]
+                ).map(({ key, label }) => {
+                  const isActive = activeFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setActiveFilter(key)}
+                      className="text-xs px-3 py-1 rounded-full transition-all font-medium border"
+                      style={
+                        isActive
+                          ? {
+                              background: "var(--saffron)",
+                              color: "white",
+                              borderColor: "var(--saffron)",
+                            }
+                          : {
+                              background: "transparent",
+                              color: "var(--slate-mid)",
+                              borderColor: "rgba(232,148,10,0.30)",
+                            }
+                      }
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="pt-4">
             {leads.length === 0 ? (
@@ -219,6 +281,18 @@ export default function LeadsAdmin() {
                 <div className="mt-4 rounded-lg px-4 py-2 inline-block text-sm font-mono" style={{ background: "rgba(232,148,10,0.08)", color: "var(--slate-mid)" }}>
                   {window.location.origin}/go
                 </div>
+              </div>
+            ) : sortedLeads.length === 0 ? (
+              <div className="text-center py-12">
+                <Filter className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                <p className="font-medium" style={{ color: "var(--slate-mid)" }}>No leads match this filter</p>
+                <button
+                  className="mt-3 text-sm underline underline-offset-2"
+                  style={{ color: "var(--saffron)" }}
+                  onClick={() => setActiveFilter("all")}
+                >
+                  Clear filter
+                </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
