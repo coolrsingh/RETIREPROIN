@@ -1,0 +1,49 @@
+Build/update my retirement calculator page (theme: light orange 
+#F15A24 accent, white cards, soft peach 
+#FFF6EF backgrounds, dark teal 
+#1F4E4A for headings, rounded 16px cards with subtle orange-tinted shadows, font: Inter/Segoe UI). Implement these 4 features:
+
+1. Lifestyle Expense Selector (dropdown + linked input)
+
+A field labelled "Choose your lifestyle" with a custom dropdown (not native select) containing:
+Custom (Enter manually)
+Minimalist – ₹30,000/month
+Basic – ₹50,000/month
+Comfortable – ₹75,000/month
+Premium – ₹1,00,000/month
+Luxurious – ₹2,00,000/month
+No emojis. Instead, show a small colored dot before each option (green, blue, amber, orange, deep orange).
+Selecting a preset auto-fills the "Monthly expense (₹)" input below with that amount.
+If the user types a custom amount in the input, the dropdown switches back to "Custom (Enter manually)".
+Selected option shows a checkmark and light orange highlight. Dropdown has smooth open/close animation, closes on outside click.
+
+2. Retirement Progress Card
+
+White card titled "Your Retirement Progress".
+A horizontal progress bar with a gradient from dark teal → orange, showing achieved % (e.g., 64.5%) as a label inside the filled portion; unfilled portion is light gray.
+Below the bar, 3 columns: Current Corpus (teal), Target Corpus (orange), Gap Remaining (red), each with label on top and ₹ value in Cr below.
+Under that, a full-width light-blue rounded banner with a dynamic motivational message based on %:
+<30%: "Just getting started — increase your SIP to close the gap."
+30–70%: "Good progress! Keep investing consistently."
+
+70%: "Almost there! You're on track for your goal."
+
+Below the card: full-width orange "Download PDF" button and full-width dark teal "Share via Email" button, both rounded with icons.
+
+3. Year-wise Corpus Growth Table (max 10 rows visible)
+
+Card titled "Year-wise Corpus Growth" with subtitle "See how your retirement corpus grows over the years".
+Columns: Age, Year, Corpus Value, Total Invested, Growth (growth values in green).
+IMPORTANT: The table body must show only 10 rows max at a time. If there are more years, the table body becomes a scrollable area (fixed max-height with overflow-y: auto, sticky header) so the card never grows taller — the user scrolls inside the table to see remaining years. Add a subtle fade/shadow at the bottom edge to hint more rows exist.
+
+4. AI Insight Pro-Tips Section
+
+A section of "Pro Tip" insight cards generated from the user's inputs, styled like expert advice. Each tip card has:
+Left side: an icon badge + label "TIP #1", "TIP #2" etc.
+A bold headline (e.g., "Start Early, Even with ₹5,000/Month").
+A short paragraph explaining the insight with key numbers bolded.
+A comparison grid of 4 mini-cards (e.g., Start at 25 → ₹15K/mo "Best" in green border; Start at 30 → ₹24K/mo "Good" in blue; Start at 35 → ₹40K/mo "OK" in amber; Start at 45 → ₹95K/mo "Hard" in red) — compute these dynamically from the user's target corpus and expected return.
+An italic caption line summarizing the cost of delay (e.g., "Starting 10 years late requires 2.5x higher monthly investment").
+A green "Action" banner at the bottom with a concrete next step (e.g., "Open mutual fund account → Start ₹5K SIP → Increase 10% yearly with salary growth").
+Tips should feel personalized: reference the user's actual age, expense level, and gap from the calculator state. Generate 2–3 tips (early start, step-up SIP, inflation impact).
+Keep the design consistent with the rest of the page: white cards, orange accents, no emojis (use inline SVG icons instead).
