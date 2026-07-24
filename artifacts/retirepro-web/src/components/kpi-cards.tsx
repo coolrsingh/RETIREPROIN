@@ -25,7 +25,6 @@ const calculateYearsToRetirement = (retirementYear: number) => {
 };
 
 const CARD_BASE: React.CSSProperties = {
-  borderRadius: 16,
   padding: "20px 22px",
   background: "#FFFFFF",
   border: "1px solid rgba(232,148,10,0.18)",
@@ -48,7 +47,7 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       {/* Required Corpus */}
-      <div style={CARD_BASE} data-testid="kpi-required-corpus">
+      <div className="rounded-2xl" style={CARD_BASE} data-testid="kpi-required-corpus">
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
             Required Corpus
@@ -67,7 +66,7 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
       </div>
 
       {/* Projected Corpus */}
-      <div style={CARD_BASE} data-testid="kpi-projected-corpus">
+      <div className="rounded-2xl" style={CARD_BASE} data-testid="kpi-projected-corpus">
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#15803D" }}>
             Projected Corpus
@@ -92,6 +91,7 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
           background: funded ? "rgba(22,163,74,0.05)" : "rgba(241,90,36,0.05)",
           border: funded ? "1px solid rgba(22,163,74,0.25)" : "1px solid rgba(241,90,36,0.25)",
         }}
+        className="rounded-2xl"
         data-testid="kpi-funding-gap"
       >
         <div className="flex items-start justify-between gap-2">
@@ -118,7 +118,7 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
       </div>
 
       {/* Years to Retirement */}
-      <div style={CARD_BASE} data-testid="kpi-years-to-retirement">
+      <div className="rounded-2xl" style={CARD_BASE} data-testid="kpi-years-to-retirement">
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
             Years to Retire
@@ -139,6 +139,7 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
       {/* SIP Required — only show if there's a gap */}
       {summary.gap > 0 && summary.sipRequired && (
         <div
+          className="rounded-2xl"
           style={{
             ...CARD_BASE,
             background: "rgba(232,148,10,0.05)",

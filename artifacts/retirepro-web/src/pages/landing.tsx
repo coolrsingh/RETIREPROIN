@@ -653,11 +653,10 @@ export default function Landing() {
               className="flex items-center justify-center"
             >
               <div
-                className="hero-plan-card"
+                className="hero-plan-card rounded-2xl sm:rounded-3xl"
                 style={{
                   width: "100%", maxWidth: 420,
                   background: "#FFFFFF",
-                  borderRadius: 24,
                   padding: "28px",
                   boxShadow: "0 32px 64px -12px rgba(26,18,8,0.18), 0 0 0 1px rgba(26,18,8,0.06)",
                 }}
@@ -750,11 +749,10 @@ export default function Landing() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.12, duration: 0.5 }}
-                  className="stat-dark-card"
+                  className="stat-dark-card rounded-2xl sm:rounded-[20px]"
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 20,
                     padding: "36px 32px",
                     position: "relative",
                     overflow: "hidden",
@@ -877,11 +875,10 @@ export default function Landing() {
 
                   {/* Typewriter demo terminal */}
                   <div
-                    className="flex-shrink-0 w-full md:w-auto"
+                    className="flex-shrink-0 w-full md:w-auto rounded-2xl"
                     style={{
                       background: "#0A0F1A",
                       border: "1px solid rgba(163,230,53,0.15)",
-                      borderRadius: 16,
                       padding: "20px 24px",
                       minHeight: 100,
                       maxWidth: 480,
@@ -1153,11 +1150,11 @@ export default function Landing() {
                 ].map((persona) => (
                   <div
                     key={persona.age}
+                    className="rounded-2xl"
                     style={{
                       background: "rgba(255,255,255,0.04)",
                       border: `1px solid rgba(255,255,255,0.08)`,
                       borderTop: `3px solid ${persona.accentColor}`,
-                      borderRadius: 16,
                       padding: "28px 24px",
                     }}
                   >
@@ -1192,13 +1189,13 @@ export default function Landing() {
                 </div>
                 <Link href="/free-plan">
                   <button
+                    className="rounded-full"
                     style={{
                       background: "#E8940A",
                       color: "#080C12",
                       fontWeight: 800,
                       fontSize: 15,
                       padding: "14px 32px",
-                      borderRadius: 50,
                       border: "none",
                       cursor: "pointer",
                       whiteSpace: "nowrap",
