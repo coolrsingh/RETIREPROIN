@@ -106,24 +106,53 @@ export default function Blog6() {
       </header>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 text-white py-16 px-4">
+      <div style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #451A03 100%)" }} className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-block bg-white/15 text-amber-200 text-sm font-semibold px-3 py-1 rounded-full mb-6">
+            <span className="inline-block bg-amber-400/20 text-amber-300 text-sm font-semibold px-3 py-1 rounded-full mb-6 border border-amber-400/30">
               Government Pension · {ARTICLE_META.readTime}
             </span>
-            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6 text-white">
               NPS vs UPS vs OPS: Which Pension Scheme Is Actually Better for You?
             </h1>
-            <p className="text-amber-100 text-lg leading-relaxed mb-6">
+            <p className="text-amber-100/90 text-lg leading-relaxed mb-6">
               UPS went live in April 2025 — and lakhs of government employees now face an irreversible choice. This deep dive cuts through the noise with plain facts and situation-specific guidance.
             </p>
-            <div className="flex items-center gap-3 text-sm text-amber-300">
+            <div className="flex items-center gap-3 text-sm text-amber-400/80">
               <span>RetirePro Editorial</span>
               <span>·</span>
               <time dateTime={ARTICLE_META.datePublished}>22 Jul 2026</time>
             </div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* Visual: Govt Contribution Chart */}
+      <div className="bg-slate-50 border-b border-slate-200 py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Government contribution per employee</p>
+          <div className="space-y-3">
+            {[
+              { label: "OPS", sub: "Old Pension Scheme", pct: 0, color: "#94A3B8", text: "Pay-as-you-go — no funded corpus", badge: "Closed" },
+              { label: "NPS", sub: "National Pension System", pct: 56, color: "#3B82F6", text: "14% of Basic + DA", badge: "Open to all" },
+              { label: "UPS", sub: "Unified Pension Scheme", pct: 100, color: "#E8940A", text: "18.5% of Basic + DA (highest)", badge: "Govt employees" },
+            ].map(row => (
+              <div key={row.label} className="flex items-center gap-4">
+                <div className="w-24 flex-shrink-0">
+                  <div className="font-bold text-slate-900 text-sm">{row.label}</div>
+                  <div className="text-xs text-slate-400">{row.sub}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="h-7 rounded-md transition-all" style={{ width: row.pct === 0 ? "4px" : `${row.pct}%`, background: row.color, minWidth: row.pct === 0 ? "4px" : undefined }} />
+                    <span className="text-sm font-semibold text-slate-700">{row.text}</span>
+                  </div>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-full border flex-shrink-0" style={{ color: row.color, borderColor: row.color + "60", background: row.color + "15" }}>{row.badge}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 mt-3">Higher govt contribution = bigger corpus built = better retirement security</p>
         </div>
       </div>
 

@@ -97,16 +97,16 @@ export default function Blog9() {
       </header>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-amber-700 via-orange-800 to-slate-900 text-white py-16 px-4">
+      <div style={{ background: "linear-gradient(135deg, #451A03 0%, #78350F 40%, #0F172A 100%)" }} className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-block bg-white/15 text-amber-200 text-sm font-semibold px-3 py-1 rounded-full mb-6">
+            <span className="inline-block bg-amber-300/20 text-amber-200 text-sm font-semibold px-3 py-1 rounded-full mb-6 border border-amber-300/30">
               NPS Guide · {ARTICLE_META.readTime}
             </span>
-            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6 text-white">
               NPS Withdrawal Rules 2026: The New 80:20 Rule Explained
             </h1>
-            <p className="text-amber-100 text-lg leading-relaxed mb-6">
+            <p className="text-amber-100/90 text-lg leading-relaxed mb-6">
               PFRDA has overhauled NPS exits so substantially that it's almost a different product in 2026. If you last read about NPS a couple of years ago, forget most of what you knew.
             </p>
             <div className="flex items-center gap-3 text-sm text-amber-300">

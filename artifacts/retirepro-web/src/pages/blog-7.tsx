@@ -99,16 +99,16 @@ export default function Blog7() {
       </header>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-orange-600 via-red-700 to-slate-900 text-white py-16 px-4">
+      <div style={{ background: "linear-gradient(135deg, #7C2D12 0%, #9A3412 40%, #0F172A 100%)" }} className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-block bg-white/15 text-orange-200 text-sm font-semibold px-3 py-1 rounded-full mb-6">
+            <span className="inline-block bg-orange-300/20 text-orange-200 text-sm font-semibold px-3 py-1 rounded-full mb-6 border border-orange-300/30">
               Retirement Basics · {ARTICLE_META.readTime}
             </span>
-            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6 text-white">
               How Much Money Do I Need to Retire in India?
             </h1>
-            <p className="text-orange-100 text-lg leading-relaxed mb-6">
+            <p className="text-orange-100/90 text-lg leading-relaxed mb-6">
               ₹1 crore? ₹5 crore? ₹10 crore? The honest answer is: there is no universal number. Your corpus depends on your expenses, city, retirement age, and life expectancy. Here's how to calculate yours.
             </p>
             <div className="flex items-center gap-3 text-sm text-orange-300">

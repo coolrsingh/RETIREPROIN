@@ -1,9 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { X, Mail, CheckCircle2, ArrowRight, BookOpen } from "lucide-react";
+import { X, Mail, CheckCircle2, ArrowRight, TrendingDown } from "lucide-react";
 
 const STORAGE_KEY = "retirepro_blog_subscribed";
 const POPUP_DELAY_MS = 150_000; // 2.5 minutes
+
+const HOOKS = [
+  { stat: "76%", line: "of working Indians have never done a single retirement calculation.", cta: "Don't be that person." },
+  { stat: "93%", line: "of Indians over 50 say they wish they had started planning sooner.", cta: "Start now — it costs nothing." },
+  { stat: "₹2.4 Cr", line: "is the average gap between what Indians save and what they'll actually need.", cta: "Knowing yours is step one." },
+];
+const HOOK = HOOKS[Math.floor(Math.random() * HOOKS.length)];
 
 export default function BlogSubscribePopup() {
   const [location] = useLocation();
@@ -69,67 +76,69 @@ export default function BlogSubscribePopup() {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4"
-      style={{ background: "rgba(10,8,4,0.72)" }}
+      style={{ background: "rgba(10,8,4,0.78)" }}
       onClick={(e) => { if (e.target === e.currentTarget) dismiss(); }}
     >
       <div
         className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
         style={{
-          background: "linear-gradient(160deg, #1A1208 0%, #2D1F06 60%, #3D2508 100%)",
-          border: "1.5px solid rgba(232,148,10,0.35)",
+          background: "linear-gradient(160deg, #0F0A04 0%, #1A1208 50%, #2D1F06 100%)",
+          border: "1.5px solid rgba(232,148,10,0.4)",
           animation: "slideUpFade 0.35s cubic-bezier(0.16,1,0.3,1) both",
         }}
       >
         <button
           onClick={dismiss}
-          className="absolute top-4 right-4 rounded-full p-1 transition-colors"
-          style={{ color: "rgba(232,148,10,0.7)" }}
+          className="absolute top-4 right-4 rounded-full p-1.5 transition-colors"
+          style={{ color: "rgba(232,148,10,0.6)" }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#E8940A"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,148,10,0.7)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(232,148,10,0.6)"; }}
           aria-label="Close"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </button>
 
-        <div className="px-8 pt-8 pb-7">
+        {/* Stat banner */}
+        <div className="px-8 pt-8 pb-0">
+          <div
+            className="flex items-start gap-3 rounded-xl p-4 mb-5"
+            style={{ background: "rgba(232,148,10,0.1)", border: "1px solid rgba(232,148,10,0.2)" }}
+          >
+            <TrendingDown className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: "#E8940A" }} />
+            <div>
+              <span className="text-2xl font-black" style={{ color: "#E8940A" }}>{HOOK.stat}</span>
+              <span className="text-sm leading-relaxed ml-2" style={{ color: "#C4A96A" }}>{HOOK.line}</span>
+              <p className="text-xs font-semibold mt-1" style={{ color: "#FBF8F2" }}>{HOOK.cta}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-8 pb-7">
           {state === "success" ? (
             <div className="text-center py-4">
               <CheckCircle2 className="h-12 w-12 mx-auto mb-4" style={{ color: "#22C55E" }} />
-              <h3
-                className="text-xl font-bold mb-2"
-                style={{ color: "#FBF8F2", fontFamily: "'Fraunces', serif" }}
-              >
+              <h3 className="text-xl font-bold mb-2" style={{ color: "#FBF8F2", fontFamily: "'Fraunces', serif" }}>
                 You're in!
               </h3>
               <p className="text-sm leading-relaxed" style={{ color: "#C4A96A" }}>
-                We'll send you our next deep-dive on Indian retirement planning — no spam, ever.
+                Next deep-dive arriving soon. No spam, ever.
               </p>
             </div>
           ) : (
             <>
-              <div
-                className="flex items-center justify-center w-11 h-11 rounded-xl mb-5"
-                style={{ background: "rgba(232,148,10,0.18)" }}
-              >
-                <BookOpen className="h-5 w-5" style={{ color: "#E8940A" }} />
-              </div>
-
-              <h2
-                className="text-xl font-bold mb-2 leading-snug"
-                style={{ color: "#FBF8F2", fontFamily: "'Fraunces', serif" }}
-              >
-                Enjoying this article?
+              <h2 className="text-lg font-bold mb-1.5 leading-snug" style={{ color: "#FBF8F2", fontFamily: "'Fraunces', serif" }}>
+                Get India's sharpest retirement insights
               </h2>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "#B0956B" }}>
-                Join <strong style={{ color: "#E8940A" }}>2,400+ readers</strong> who get our best India-specific
-                retirement insights delivered to their inbox. One article a week. No spam.
+              <p className="text-sm leading-relaxed mb-5" style={{ color: "#B0956B" }}>
+                One article a week. Real numbers, India-specific context — no generic advice, no spam.
+                Join <strong style={{ color: "#E8940A" }}>2,400+ readers</strong> already planning smarter.
               </p>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <div className="relative">
                   <Mail
                     className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
-                    style={{ color: "rgba(232,148,10,0.55)" }}
+                    style={{ color: "rgba(232,148,10,0.5)" }}
                   />
                   <input
                     type="email"
@@ -139,13 +148,13 @@ export default function BlogSubscribePopup() {
                     required
                     className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none"
                     style={{
-                      background: "rgba(255,255,255,0.07)",
+                      background: "rgba(255,255,255,0.06)",
                       border: "1.5px solid rgba(232,148,10,0.3)",
                       color: "#FBF8F2",
                     }}
                     onFocus={e => {
                       e.currentTarget.style.borderColor = "#E8940A";
-                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,148,10,0.15)";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,148,10,0.12)";
                     }}
                     onBlur={e => {
                       e.currentTarget.style.borderColor = "rgba(232,148,10,0.3)";
@@ -158,7 +167,7 @@ export default function BlogSubscribePopup() {
                   disabled={state === "loading"}
                   className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all"
                   style={{
-                    background: state === "loading" ? "#C97F00" : "#E8940A",
+                    background: state === "loading" ? "#B87A00" : "#E8940A",
                     color: "#1A1208",
                     cursor: state === "loading" ? "wait" : "pointer",
                   }}
@@ -168,7 +177,7 @@ export default function BlogSubscribePopup() {
                   {state === "loading" ? (
                     <span className="animate-spin rounded-full h-4 w-4 border-2 border-slate-900 border-t-transparent" />
                   ) : (
-                    <>Get retirement insights <ArrowRight className="h-4 w-4" /></>
+                    <>Send me the next article <ArrowRight className="h-4 w-4" /></>
                   )}
                 </button>
               </form>
@@ -177,14 +186,14 @@ export default function BlogSubscribePopup() {
                 <p className="text-xs mt-2" style={{ color: "#F87171" }}>{errorMsg}</p>
               )}
 
-              <p className="text-xs mt-3 text-center" style={{ color: "rgba(180,150,100,0.7)" }}>
+              <p className="text-xs mt-3 text-center" style={{ color: "rgba(180,150,100,0.6)" }}>
                 Free forever · No spam · Unsubscribe any time
               </p>
 
               <button
                 onClick={dismiss}
-                className="w-full text-center text-xs mt-3 underline underline-offset-2 transition-colors"
-                style={{ color: "rgba(180,150,100,0.55)" }}
+                className="w-full text-center text-xs mt-2 underline underline-offset-2 transition-colors"
+                style={{ color: "rgba(180,150,100,0.45)" }}
               >
                 No thanks, I'll continue reading
               </button>
@@ -194,8 +203,8 @@ export default function BlogSubscribePopup() {
 
         <style>{`
           @keyframes slideUpFade {
-            from { opacity: 0; transform: translateY(24px) scale(0.97); }
-            to   { opacity: 1; transform: translateY(0)   scale(1); }
+            from { opacity: 0; transform: translateY(28px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
           }
         `}</style>
       </div>
