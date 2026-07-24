@@ -40,9 +40,12 @@ CREATE TABLE IF NOT EXISTS scenarios (
   name varchar NOT NULL,
   mode varchar NOT NULL,
   lead_id varchar,
+  projected_corpus numeric(20,2),
   created_at timestamp DEFAULT now(),
   updated_at timestamp DEFAULT now()
 );
+-- Backfill projected_corpus column if table existed before it was added to schema
+ALTER TABLE scenarios ADD COLUMN IF NOT EXISTS projected_corpus numeric(20,2);
 
 -- assumptions
 CREATE TABLE IF NOT EXISTS assumptions (

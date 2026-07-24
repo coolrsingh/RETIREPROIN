@@ -66,9 +66,10 @@ export interface IStorage {
 
   // Scenario operations
   getScenario(id: string): Promise<Scenario | undefined>;
-  getScenariosByUser(userId: string): Promise<(Scenario & { selfRetirementAge: number | null })[]>;
+  getScenariosByUser(userId: string): Promise<(Omit<Scenario, 'projectedCorpus'> & { selfRetirementAge: number | null; projectedCorpus: number | null })[]>;
   createScenario(scenario: InsertScenario): Promise<Scenario>;
   updateScenario(id: string, scenario: Partial<InsertScenario>): Promise<Scenario>;
+  updateScenarioCorpus(id: string, projectedCorpus: number): Promise<void>;
   deleteScenario(id: string): Promise<void>;
   
   // Scenario data operations
@@ -212,7 +213,7 @@ export class DatabaseStorage implements IStorage {
     return scenario;
   }
 
-  async getScenariosByUser(userId: string): Promise<(Scenario & { selfRetirementAge: number | null })[]> {
+  async getScenariosByUser(userId: string): Promise<(Omit<Scenario, 'projectedCorpus'> & { selfRetirementAge: number | null; projectedCorpus: number | null })[]> {
     const rows = await db
       .select({
         id: scenarios.id,
@@ -220,6 +221,7 @@ export class DatabaseStorage implements IStorage {
         name: scenarios.name,
         mode: scenarios.mode,
         leadId: scenarios.leadId,
+        projectedCorpus: scenarios.projectedCorpus,
         createdAt: scenarios.createdAt,
         updatedAt: scenarios.updatedAt,
         selfRetirementAge: householdMembers.retirementAge,
@@ -236,6 +238,7 @@ export class DatabaseStorage implements IStorage {
     return rows.map((r) => ({
       ...r,
       selfRetirementAge: r.selfRetirementAge != null ? Number(r.selfRetirementAge) : null,
+      projectedCorpus: r.projectedCorpus != null ? Number(r.projectedCorpus) : null,
     }));
   }
 
@@ -251,6 +254,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(scenarios.id, id))
       .returning();
     return updatedScenario;
+  }
+
+  async updateScenarioCorpus(id: string, projectedCorpus: number): Promise<void> {
+    await db
+      .update(scenarios)
+      .set({ projectedCorpus: String(projectedCorpus) })
+      .where(eq(scenarios.id, id));
   }
 
   async deleteScenario(id: string): Promise<void> {

@@ -530,7 +530,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const calculations = await calculateRetirementPlan(scenarioData);
-      
+
+      // Persist the projected corpus on the scenario row so plan cards can
+      // display it without re-running the full calculation engine.
+      // Skip when live rate overrides are active — those results are ephemeral.
+      if (!overrideReturnPre && !overrideReturnPost) {
+        storage.updateScenarioCorpus(
+          req.params.scenarioId,
+          calculations.summary.projectedCorpusAtRetirement,
+        ).catch(() => { /* best-effort, don't fail the response */ });
+      }
+
       res.json(calculations);
     } catch (error) {
       console.error("Error calculating plan:", error);

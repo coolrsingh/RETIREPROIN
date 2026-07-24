@@ -57,6 +57,7 @@ export const scenarios = pgTable("scenarios", {
   name: varchar("name").notNull(),
   mode: varchar("mode", { enum: ['quick', 'detailed'] }).notNull(),
   leadId: varchar("lead_id"),
+  projectedCorpus: decimal("projected_corpus", { precision: 20, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

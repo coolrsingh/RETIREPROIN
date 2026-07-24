@@ -2,13 +2,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { useListScenarios, getListScenariosQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target, Mail } from "lucide-react";
+import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target, Mail, TrendingUp } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import ProfileMenu from "@/components/profile-menu";
 import BrandLogo from "@/components/brand-logo";
+
+function formatCorpus(corpus: number | null | undefined): string | null {
+  if (corpus == null || corpus <= 0) return null;
+  if (corpus >= 10_000_000) {
+    return `₹${(corpus / 10_000_000).toFixed(1)} Cr projected`;
+  }
+  if (corpus >= 100_000) {
+    return `₹${(corpus / 100_000).toFixed(1)} L projected`;
+  }
+  return `₹${corpus.toLocaleString('en-IN', { maximumFractionDigits: 0 })} projected`;
+}
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -226,6 +237,14 @@ export default function Home() {
                         </span>
                       )}
                     </div>
+                    {formatCorpus(scenario.projectedCorpus) && (
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <TrendingUp className="h-4 w-4 shrink-0" style={{ color: "#16a34a" }} />
+                        <span className="text-sm font-semibold" style={{ color: "#16a34a" }}>
+                          {formatCorpus(scenario.projectedCorpus)}
+                        </span>
+                      </div>
+                    )}
                     <p className="text-xs mt-1.5" style={{ color: "var(--slate-mid)" }}>
                       Updated {new Date(scenario.updatedAt).toLocaleDateString('en-IN')}
                     </p>
