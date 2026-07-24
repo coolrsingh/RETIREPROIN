@@ -206,7 +206,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
 
             {/* Monthly Savings — auto-calculated with override option */}
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-y-2 mb-3">
                 <div className="flex items-center gap-2">
                   <Calculator className="h-4 w-4 text-blue-600" />
                   <span className="font-semibold text-sm text-blue-900">Monthly Savings / Investment</span>
@@ -284,7 +284,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 name="incomeGrowthRate"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <FormControl>
                         <Input
                           type="number"
@@ -298,10 +298,8 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                         />
                       </FormControl>
                       <span className="text-sm font-medium text-amber-800">% per year</span>
-                      <span className="text-xs text-amber-600">
-                        (Average Indian salary hike is 8–10% /year)
-                      </span>
                     </div>
+                    <p className="text-xs text-amber-600 mt-1">Average Indian salary hike is 8–10% / year</p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -330,7 +328,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
           </CardHeader>
           <CardContent className="space-y-4">
             {children.map((child, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-lg">
+              <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 p-4 border rounded-lg">
                 <div>
                   <Label>Child Name</Label>
                   <Input
@@ -442,7 +440,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
         {/* Mini Retirement Section */}
         <Card data-testid="card-mini-retirement">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Coffee className="h-5 w-5 text-amber-600" />
@@ -450,7 +448,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </CardTitle>
                 <CardDescription>Planning a career break or sabbatical? During this period, no new savings will be added — your portfolio will only grow through investment returns.</CardDescription>
               </div>
-              <Switch checked={hasMiniRetirement} onCheckedChange={setHasMiniRetirement} data-testid="toggle-mini-retirement" />
+              <Switch checked={hasMiniRetirement} onCheckedChange={setHasMiniRetirement} data-testid="toggle-mini-retirement" className="mt-1 shrink-0" />
             </div>
           </CardHeader>
           {hasMiniRetirement && (
@@ -507,7 +505,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
         {/* Existing EMI Section */}
         <Card data-testid="card-existing-emi">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-rose-600" />
@@ -515,7 +513,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </CardTitle>
                 <CardDescription>Do you have an ongoing loan? This EMI will reduce your monthly savings capacity until the tenure ends.</CardDescription>
               </div>
-              <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" />
+              <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" className="mt-1 shrink-0" />
             </div>
           </CardHeader>
           {hasExistingEMI && (
