@@ -24,11 +24,11 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const SOURCE_COLORS: Record<string, string> = {
-  "blog-why-indians-fail": "bg-blue-100 text-blue-700",
-  "blog-nps-ppf-sip": "bg-emerald-100 text-emerald-700",
+  "blog-why-indians-fail": "bg-amber-100 text-amber-700",
+  "blog-nps-ppf-sip": "bg-green-100 text-green-700",
   "blog-real-estate": "bg-orange-100 text-orange-700",
-  "blog-how-much-retire": "bg-purple-100 text-purple-700",
-  "blog": "bg-slate-100 text-slate-600",
+  "blog-how-much-retire": "bg-rose-100 text-rose-700",
+  "blog": "bg-amber-50 text-amber-600",
 };
 
 export default function SubscribersAdmin() {
@@ -105,13 +105,18 @@ export default function SubscribersAdmin() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-6">
-              <BrandLogo textClassName="text-slate-800" />
+              <BrandLogo textClassName="text-stone-800" />
               <span className="text-sm font-medium hidden md:block" style={{ color: "var(--slate-mid)" }}>
                 Newsletter Subscribers
               </span>
             </div>
             <Link href="/">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hover:bg-amber-50"
+                style={{ borderColor: "rgba(232,148,10,0.35)", color: "var(--saffron)" }}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
               </Button>
@@ -241,7 +246,7 @@ export default function SubscribersAdmin() {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${SOURCE_COLORS[sub.source || "blog"] || "bg-slate-100 text-slate-600"}`}
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${SOURCE_COLORS[sub.source || "blog"] || "bg-amber-50 text-amber-600"}`}
                         >
                           {SOURCE_LABELS[sub.source || "blog"] || sub.source || "blog"}
                         </span>
