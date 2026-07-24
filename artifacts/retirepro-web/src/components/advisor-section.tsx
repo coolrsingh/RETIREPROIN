@@ -142,7 +142,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
           {/* ── Right: form card ────────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.55, delay: 0.1 }}>
             <div
-              className="p-5 sm:p-8 lg:p-9 rounded-2xl sm:rounded-3xl"
+              className="p-4 sm:p-8 lg:p-9 rounded-2xl sm:rounded-3xl"
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(232,148,10,0.22)",
@@ -179,14 +179,14 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                         href={`https://wa.me/919819590598?text=${encodeURIComponent(`Hi! I just requested a free retirement plan review on RetirePro. Looking forward to speaking with you!`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 rounded-xl py-2.5 px-5 text-sm font-semibold text-white"
+                        className="flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-sm font-semibold text-white w-full sm:w-auto"
                         style={{ background: "#25D366" }}
                       >
                         💬 Message on WhatsApp
                       </a>
                       <button
                         onClick={() => setStatus("idle")}
-                        className="rounded-xl py-2.5 px-5 text-sm font-medium"
+                        className="rounded-xl py-2.5 px-4 text-sm font-medium w-full sm:w-auto"
                         style={{ border: "1.5px solid rgba(0,0,0,0.12)", color: "var(--slate-mid)", background: "transparent" }}
                       >
                         Submit another
@@ -216,7 +216,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                           Your name
                         </label>
                         <input
-                          className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                          className="w-full rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm outline-none transition-colors"
                           style={{ border: "1.5px solid rgba(0,0,0,0.11)", background: "var(--ivory)", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
                           onFocus={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "var(--saffron)"; }}
                           onBlur={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.11)"; }}
@@ -232,7 +232,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                           Mobile / WhatsApp <span style={{ color: "#E53E3E" }}>*</span>
                         </label>
                         <input
-                          className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                          className="w-full rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm outline-none transition-colors"
                           style={{
                             border: `1.5px solid ${phoneError ? "#E53E3E" : "rgba(0,0,0,0.11)"}`,
                             background: "var(--ivory)",
@@ -258,7 +258,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                           Email <span style={{ color: "#94A3B8", fontWeight: 400 }}>(optional)</span>
                         </label>
                         <input
-                          className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors"
+                          className="w-full rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm outline-none transition-colors"
                           style={{ border: "1.5px solid rgba(0,0,0,0.11)", background: "var(--ivory)", color: "var(--ink)", fontFamily: "var(--font-sans)" }}
                           onFocus={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "var(--saffron)"; }}
                           onBlur={e => { (e.currentTarget as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.11)"; }}
