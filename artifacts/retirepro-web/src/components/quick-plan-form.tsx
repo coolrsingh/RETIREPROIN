@@ -352,10 +352,16 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                       const updated = [...children];
                       updated[index].dob = e.target.value;
                       setChildren(updated);
-                      form.setValue("children", updated);
+                      form.setValue("children", updated, { shouldValidate: true });
                     }}
                     data-testid={`input-child-dob-${index}`}
                   />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(form.formState.errors.children as any)?.[index]?.dob?.message && (
+                    <p className="text-sm text-red-500 mt-1" data-testid={`error-child-dob-${index}`}>
+                      {(form.formState.errors.children as any)[index].dob.message}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>Education Cost Today (₹)</Label>

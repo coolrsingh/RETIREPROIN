@@ -190,6 +190,87 @@ describe("QuickPlanForm – valid submission", () => {
   });
 });
 
+describe("QuickPlanForm – child row validation", () => {
+  it("blocks submission and shows an error when a child row is added but left completely blank", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+
+    // Add a child row without filling any fields
+    await user.click(screen.getByTestId("button-add-child"));
+
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("error-child-dob-0")).toBeInTheDocument();
+      expect(screen.getByTestId("error-child-dob-0")).toHaveTextContent(
+        "Child must have a name or date of birth"
+      );
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("allows submission when a child row has a name but no DOB", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+
+    await user.click(screen.getByTestId("button-add-child"));
+    await user.type(screen.getByTestId("input-child-name-0"), "Alice");
+
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledOnce();
+    });
+    expect(screen.queryByTestId("error-child-dob-0")).not.toBeInTheDocument();
+  });
+
+  it("allows submission when a child row has a DOB but no name", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+
+    await user.click(screen.getByTestId("button-add-child"));
+    await user.type(screen.getByTestId("input-child-dob-0"), "2015-03-20");
+
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("removes the error when the child row is removed before submitting", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+
+    // Add blank child then submit to trigger error
+    await user.click(screen.getByTestId("button-add-child"));
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("error-child-dob-0")).toBeInTheDocument();
+    });
+
+    // Remove the child row
+    await user.click(screen.getByTestId("button-remove-child-0"));
+
+    // Submit again — should now succeed
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledOnce();
+    });
+    expect(screen.queryByTestId("error-child-dob-0")).not.toBeInTheDocument();
+  });
+});
+
 describe("QuickPlanForm – loading state", () => {
   it("shows the loading label and disables the button when isLoading is true", () => {
     renderForm({ isLoading: true });
