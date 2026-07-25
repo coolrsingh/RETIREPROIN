@@ -288,3 +288,79 @@ describe("QuickPlanForm – loading state", () => {
     expect(btn).toHaveTextContent("Generate My Plan");
   });
 });
+
+// ---------------------------------------------------------------------------
+// 320px layout regression tests
+//
+// jsdom does not compute real CSS layout, so we assert the Tailwind classes
+// that prevent horizontal overflow on very small phones (320px).  These tests
+// act as a regression guard: if a refactor strips a class that keeps a row
+// from overflowing at 320px the test will fail and catch the regression.
+// ---------------------------------------------------------------------------
+describe("QuickPlanForm – 320px layout regression (no horizontal overflow)", () => {
+  beforeEach(() => {
+    // Simulate a 320px wide viewport so any code that branches on window.innerWidth
+    // behaves as it would on the narrowest real phone.
+    Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: 320 });
+    window.dispatchEvent(new Event("resize"));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: 1024 });
+  });
+
+  it("savings header row has flex-wrap so the toggle button wraps instead of overflowing", () => {
+    renderForm();
+    const row = screen.getByTestId("savings-header-row");
+    expect(row.className).toContain("flex-wrap");
+  });
+
+  it("salary-growth input row has flex-wrap so the '% per year' label wraps at 320px", () => {
+    renderForm();
+    const row = screen.getByTestId("salary-growth-row");
+    expect(row.className).toContain("flex-wrap");
+  });
+
+  it("mini-retirement toggle card header has items-start so the switch doesn't force a wide single line", () => {
+    renderForm();
+    // The outer flex container inside the mini-retirement CardHeader
+    const card = screen.getByTestId("card-mini-retirement");
+    const header = card.querySelector('[class*="flex"][class*="items-start"][class*="justify-between"]');
+    expect(header).not.toBeNull();
+  });
+
+  it("mini-retirement switch has shrink-0 so it never squashes the title text", () => {
+    renderForm();
+    const toggle = screen.getByTestId("toggle-mini-retirement");
+    // The Switch root element carries the shrink-0 class passed via className
+    expect(toggle.className).toContain("shrink-0");
+  });
+
+  it("existing-EMI toggle card header has items-start to avoid single-line overflow", () => {
+    renderForm();
+    const card = screen.getByTestId("card-existing-emi");
+    const header = card.querySelector('[class*="flex"][class*="items-start"][class*="justify-between"]');
+    expect(header).not.toBeNull();
+  });
+
+  it("existing-EMI switch has shrink-0 so it never squashes the title text", () => {
+    renderForm();
+    const toggle = screen.getByTestId("toggle-existing-emi");
+    expect(toggle.className).toContain("shrink-0");
+  });
+
+  it("children grid row defaults to grid-cols-1 so columns don't overflow a 320px screen", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(screen.getByTestId("button-add-child"));
+
+    // The child row container is the first element with a grid class inside card-children
+    const card = screen.getByTestId("card-children");
+    const childRow = card.querySelector('[class*="grid-cols-1"]');
+    expect(childRow).not.toBeNull();
+    // Also confirm it carries sm: and md: responsive variants (so wider screens use more cols)
+    expect(childRow!.className).toContain("sm:grid-cols-2");
+    expect(childRow!.className).toContain("md:grid-cols-5");
+  });
+});

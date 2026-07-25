@@ -224,7 +224,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
 
             {/* Monthly Savings — auto-calculated with override option */}
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-y-2 mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-y-2 mb-3" data-testid="savings-header-row">
                 <div className="flex items-center gap-2">
                   <Calculator className="h-4 w-4 text-blue-600" />
                   <span className="font-semibold text-sm text-blue-900">Monthly Savings / Investment</span>
@@ -302,7 +302,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 name="incomeGrowthRate"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-testid="salary-growth-row">
                       <FormControl>
                         <Input
                           type="number"
