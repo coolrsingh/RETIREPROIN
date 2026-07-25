@@ -202,6 +202,8 @@ export default function Landing() {
           .hero-h { font-size: 36px !important; }
           .hero-cta { flex-direction: column !important; }
           .hero-cta button, .hero-cta a { width: 100% !important; justify-content: center !important; }
+          .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; padding-top: 48px !important; padding-bottom: 60px !important; }
+          .hero-card { max-width: 100% !important; }
         }
 
         @media (max-width: 479px) {
@@ -255,7 +257,7 @@ export default function Landing() {
             <span style={{ color: "#FCD34D", marginLeft: 8 }}>⚠</span>
           </div>
 
-          <div className="lp-section" style={{
+          <div className="lp-section hero-grid" style={{
             maxWidth: 1200,
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80,
             alignItems: "center", paddingTop: 96, paddingBottom: 100,
@@ -323,11 +325,10 @@ export default function Landing() {
 
             {/* Right — Plan card */}
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .8, delay: .2 }}
-              style={{ display: "flex", justifyContent: "center" }}>
-              <div style={{
+              style={{ display: "flex", justifyContent: "center", minWidth: 0 }}>
+              <div className="hero-card rounded-2xl sm:rounded-3xl" style={{
                 width: "100%", maxWidth: 420,
                 background: "#fff",
-                borderRadius: 24,
                 padding: 28,
                 boxShadow: "0 4px 6px rgba(15,41,82,.04), 0 24px 60px rgba(15,41,82,.13)",
                 border: "1px solid var(--border)",
