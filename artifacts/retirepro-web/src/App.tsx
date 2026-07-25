@@ -2,7 +2,7 @@ import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { setDefaultCredentials } from "@workspace/api-client-react";
+import { setDefaultCredentials, configureZodValidation } from "@workspace/api-client-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,10 @@ import SubscribersAdmin from "@/pages/subscribers-admin";
 import NotFound from "@/pages/not-found";
 
 setDefaultCredentials("include");
+// Enable runtime Zod validation on API responses so shape mismatches surface
+// as explicit errors rather than silent rendering failures.  Pass `false` here
+// to disable validation in a specific environment if the overhead matters.
+configureZodValidation(true);
 
 function ScrollToTop() {
   const [location] = useLocation();

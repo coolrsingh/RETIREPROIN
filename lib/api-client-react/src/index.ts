@@ -1,4 +1,13 @@
 export * from "./generated/api";
 export * from "./generated/api.schemas";
-export { setBaseUrl, setAuthTokenGetter, setDefaultCredentials } from "./custom-fetch";
-export type { AuthTokenGetter } from "./custom-fetch";
+export {
+  setBaseUrl,
+  setAuthTokenGetter,
+  setDefaultCredentials,
+  setResponseValidator,
+  ApiError,
+  ResponseParseError,
+  ResponseValidationError,
+} from "./custom-fetch";
+export type { AuthTokenGetter, ResponseValidator } from "./custom-fetch";
+export { configureZodValidation } from "./zod-validation";

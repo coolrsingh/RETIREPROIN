@@ -2,6 +2,17 @@ export type CustomFetchOptions = RequestInit & {
   responseType?: "json" | "text" | "blob" | "auto";
 };
 
+/**
+ * A response validator receives the parsed response body for a successful
+ * request.  Throw any error (e.g. a Zod `ZodError`) to surface a shape
+ * mismatch instead of silently returning malformed data.
+ *
+ * @param url    - The request URL (as resolved by `customFetch`)
+ * @param method - The HTTP method, upper-cased
+ * @param data   - The parsed response body (as returned by `parseSuccessBody`)
+ */
+export type ResponseValidator = (url: string, method: string, data: unknown) => void;
+
 export type ErrorType<T = unknown> = ApiError<T>;
 
 export type BodyType<T> = T;
@@ -18,6 +29,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
 let _defaultCredentials: RequestCredentials | null = null;
+let _responseValidator: ResponseValidator | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -57,6 +69,27 @@ export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
  */
 export function setDefaultCredentials(credentials: RequestCredentials | null): void {
   _defaultCredentials = credentials;
+}
+
+/**
+ * Register a response validator that is called after every successful (2xx)
+ * response is parsed.  The validator receives the request URL, the HTTP
+ * method, and the parsed body; throwing from it converts the response into
+ * a `ResponseValidationError` so callers receive an explicit failure instead
+ * of silently receiving malformed data.
+ *
+ * Useful for wiring Zod schema checks at runtime.  Pass `null` to remove the
+ * validator (e.g. in tests or to disable the check in production).
+ *
+ * Example:
+ * ```ts
+ * setResponseValidator((url, method, data) => {
+ *   MySchema.parse(data); // throws ZodError on mismatch
+ * });
+ * ```
+ */
+export function setResponseValidator(validator: ResponseValidator | null): void {
+  _responseValidator = validator;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -211,6 +244,41 @@ export class ApiError<T = unknown> extends Error {
     this.response = response;
     this.method = requestInfo.method;
     this.url = response.url || requestInfo.url;
+  }
+}
+
+export class ResponseValidationError extends Error {
+  readonly name = "ResponseValidationError";
+  readonly status: number;
+  readonly statusText: string;
+  readonly headers: Headers;
+  readonly response: Response;
+  readonly method: string;
+  readonly url: string;
+  readonly data: unknown;
+  readonly cause: unknown;
+
+  constructor(
+    response: Response,
+    data: unknown,
+    cause: unknown,
+    requestInfo: { method: string; url: string },
+  ) {
+    const causeMessage = cause instanceof Error ? cause.message : String(cause);
+    super(
+      `Response from ${requestInfo.method} ${response.url || requestInfo.url} ` +
+        `(${response.status} ${response.statusText}) failed schema validation: ${causeMessage}`,
+    );
+    Object.setPrototypeOf(this, new.target.prototype);
+
+    this.status = response.status;
+    this.statusText = response.statusText;
+    this.headers = response.headers;
+    this.response = response;
+    this.method = requestInfo.method;
+    this.url = response.url || requestInfo.url;
+    this.data = data;
+    this.cause = cause;
   }
 }
 
@@ -385,5 +453,15 @@ export async function customFetch<T = unknown>(
     throw new ApiError(response, errorData, requestInfo);
   }
 
-  return (await parseSuccessBody(response, responseType, requestInfo)) as T;
+  const data = await parseSuccessBody(response, responseType, requestInfo);
+
+  if (_responseValidator !== null) {
+    try {
+      _responseValidator(requestInfo.url, method, data);
+    } catch (cause) {
+      throw new ResponseValidationError(response, data, cause, requestInfo);
+    }
+  }
+
+  return data as T;
 }
