@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown, Filter } from "lucide-react";
+import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown, Filter, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -35,6 +36,7 @@ export default function LeadsAdmin() {
   const [sortBy, setSortBy] = useState<SortKey>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery<any[]>({
     queryKey: ["/api/leads"],
@@ -56,15 +58,25 @@ export default function LeadsAdmin() {
     }
   };
 
+  const searchTerm = searchQuery.trim().toLowerCase();
+
   const filteredLeads = leads.filter((lead) => {
-    if (activeFilter === "re-engaged") return isReEngaged(lead);
+    // Filter button logic
+    if (activeFilter === "re-engaged" && !isReEngaged(lead)) return false;
     if (activeFilter === "7d") {
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      return lead.updatedAt && new Date(lead.updatedAt).getTime() >= cutoff;
+      if (!lead.updatedAt || new Date(lead.updatedAt).getTime() < cutoff) return false;
     }
     if (activeFilter === "30d") {
       const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      return lead.updatedAt && new Date(lead.updatedAt).getTime() >= cutoff;
+      if (!lead.updatedAt || new Date(lead.updatedAt).getTime() < cutoff) return false;
+    }
+    // Search logic (AND with filter)
+    if (searchTerm) {
+      const name = (lead.name || "").toLowerCase();
+      const email = (lead.email || "").toLowerCase();
+      const phone = (lead.phone || "").toLowerCase();
+      if (!name.includes(searchTerm) && !email.includes(searchTerm) && !phone.includes(searchTerm)) return false;
     }
     return true;
   });
@@ -221,52 +233,75 @@ export default function LeadsAdmin() {
         {/* Leads Table */}
         <Card className="border-0 shadow-sm" style={{ background: "white" }}>
           <CardHeader style={{ borderBottom: "1px solid rgba(232,148,10,0.12)" }}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>
-                {activeFilter === "all" ? "All Leads" : (
-                  <span>
-                    Filtered Leads{" "}
-                    <span className="text-sm font-normal" style={{ color: "var(--slate-mid)" }}>
-                      ({sortedLeads.length} of {leads.length})
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <CardTitle className="font-serif text-lg" style={{ color: "var(--ink)" }}>
+                  {activeFilter === "all" && !searchTerm ? "All Leads" : (
+                    <span>
+                      Filtered Leads{" "}
+                      <span className="text-sm font-normal" style={{ color: "var(--slate-mid)" }}>
+                        ({sortedLeads.length} of {leads.length})
+                      </span>
                     </span>
-                  </span>
+                  )}
+                </CardTitle>
+                {/* Filter Bar */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Filter className="h-3.5 w-3.5 mr-0.5 flex-shrink-0" style={{ color: "var(--slate-mid)" }} />
+                  {(
+                    [
+                      { key: "all", label: "All" },
+                      { key: "re-engaged", label: "Re-engaged" },
+                      { key: "7d", label: "Last 7 days" },
+                      { key: "30d", label: "Last 30 days" },
+                    ] as { key: FilterKey; label: string }[]
+                  ).map(({ key, label }) => {
+                    const isActive = activeFilter === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setActiveFilter(key)}
+                        className="text-xs px-3 py-1 rounded-full transition-all font-medium border"
+                        style={
+                          isActive
+                            ? {
+                                background: "var(--saffron)",
+                                color: "white",
+                                borderColor: "var(--saffron)",
+                              }
+                            : {
+                                background: "transparent",
+                                color: "var(--slate-mid)",
+                                borderColor: "rgba(232,148,10,0.30)",
+                              }
+                        }
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Search input */}
+              <div className="relative max-w-sm">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none" style={{ color: "var(--slate-mid)" }} />
+                <Input
+                  type="text"
+                  placeholder="Search by name, email or phone…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-8 h-8 text-sm border rounded-lg focus-visible:ring-1 focus-visible:ring-amber-400"
+                  style={{ borderColor: "rgba(232,148,10,0.30)", background: "rgba(251,248,242,0.70)" }}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 )}
-              </CardTitle>
-              {/* Filter Bar */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Filter className="h-3.5 w-3.5 mr-0.5 flex-shrink-0" style={{ color: "var(--slate-mid)" }} />
-                {(
-                  [
-                    { key: "all", label: "All" },
-                    { key: "re-engaged", label: "Re-engaged" },
-                    { key: "7d", label: "Last 7 days" },
-                    { key: "30d", label: "Last 30 days" },
-                  ] as { key: FilterKey; label: string }[]
-                ).map(({ key, label }) => {
-                  const isActive = activeFilter === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setActiveFilter(key)}
-                      className="text-xs px-3 py-1 rounded-full transition-all font-medium border"
-                      style={
-                        isActive
-                          ? {
-                              background: "var(--saffron)",
-                              color: "white",
-                              borderColor: "var(--saffron)",
-                            }
-                          : {
-                              background: "transparent",
-                              color: "var(--slate-mid)",
-                              borderColor: "rgba(232,148,10,0.30)",
-                            }
-                      }
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
               </div>
             </div>
           </CardHeader>
@@ -284,14 +319,19 @@ export default function LeadsAdmin() {
               </div>
             ) : sortedLeads.length === 0 ? (
               <div className="text-center py-12">
-                <Filter className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-                <p className="font-medium" style={{ color: "var(--slate-mid)" }}>No leads match this filter</p>
+                {searchTerm
+                  ? <Search className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                  : <Filter className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                }
+                <p className="font-medium" style={{ color: "var(--slate-mid)" }}>
+                  {searchTerm ? `No leads match "${searchQuery}"` : "No leads match this filter"}
+                </p>
                 <button
                   className="mt-3 text-sm underline underline-offset-2"
                   style={{ color: "var(--saffron)" }}
-                  onClick={() => setActiveFilter("all")}
+                  onClick={() => { setActiveFilter("all"); setSearchQuery(""); }}
                 >
-                  Clear filter
+                  Clear {searchTerm && activeFilter !== "all" ? "search & filter" : searchTerm ? "search" : "filter"}
                 </button>
               </div>
             ) : (
