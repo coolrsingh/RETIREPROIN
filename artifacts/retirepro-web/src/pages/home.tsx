@@ -2,13 +2,39 @@ import { useAuth } from "@/hooks/useAuth";
 import { useListScenarios, getListScenariosQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target, Mail, TrendingUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ChartLine, Plus, FileText, Zap, Users, BookOpen, HelpCircle, Target, Mail, TrendingUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ProfileMenu from "@/components/profile-menu";
 import BrandLogo from "@/components/brand-logo";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function formatCorpus(corpus: number | null | undefined): string | null {
   if (corpus == null || corpus <= 0) return null;
@@ -25,9 +51,80 @@ export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+
+  const [renameScenario, setRenameScenario] = useState<{ id: string; name: string } | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [deleteScenario, setDeleteScenario] = useState<{ id: string; name: string } | null>(null);
 
   const { data: scenarios, isLoading: scenariosLoading } = useListScenarios({
     query: { queryKey: getListScenariosQueryKey(), enabled: isAuthenticated },
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const res = await fetch(`/api/scenarios/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error("Failed to rename plan");
+      return res.json();
+    },
+    onMutate: async ({ id, name }) => {
+      await queryClient.cancelQueries({ queryKey: getListScenariosQueryKey() });
+      const previous = queryClient.getQueryData(getListScenariosQueryKey());
+      queryClient.setQueryData(getListScenariosQueryKey(), (old: any[]) =>
+        old?.map((s) => (s.id === id ? { ...s, name } : s))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(getListScenariosQueryKey(), ctx.previous);
+      }
+      toast({ title: "Error", description: "Could not rename plan. Please try again.", variant: "destructive" });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
+    },
+    onSuccess: () => {
+      toast({ title: "Plan renamed", description: "Your plan name has been updated." });
+      setRenameScenario(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/scenarios/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete plan");
+      return res.json();
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: getListScenariosQueryKey() });
+      const previous = queryClient.getQueryData(getListScenariosQueryKey());
+      queryClient.setQueryData(getListScenariosQueryKey(), (old: any[]) =>
+        old?.filter((s) => s.id !== id)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(getListScenariosQueryKey(), ctx.previous);
+      }
+      toast({ title: "Error", description: "Could not delete plan. Please try again.", variant: "destructive" });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
+    },
+    onSuccess: () => {
+      toast({ title: "Plan deleted", description: "Your plan has been removed." });
+      setDeleteScenario(null);
+    },
   });
 
   useEffect(() => {
@@ -44,8 +141,6 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // After login: if the user had filled the guest calculator, redirect to the
-  // Quick Plan form so we can pre-fill it with their data.
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       const raw = sessionStorage.getItem("guestCalcForm");
@@ -67,6 +162,21 @@ export default function Home() {
   }
 
   const isAdmin = (user as any)?.role === 'admin';
+
+  const handleRenameOpen = (scenario: { id: string; name: string }) => {
+    setRenameScenario(scenario);
+    setRenameDraft(scenario.name);
+  };
+
+  const handleRenameSubmit = () => {
+    if (!renameScenario) return;
+    const trimmed = renameDraft.trim();
+    if (!trimmed || trimmed === renameScenario.name) {
+      setRenameScenario(null);
+      return;
+    }
+    renameMutation.mutate({ id: renameScenario.id, name: trimmed });
+  };
 
   return (
     <div className="min-h-screen" style={{ background: "var(--ivory)" }}>
@@ -210,17 +320,50 @@ export default function Home() {
                       >
                         {scenario.name}
                       </h3>
-                      <span
-                        className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
-                        style={{
-                          background: scenario.mode === 'quick'
-                            ? "rgba(232,148,10,0.12)"
-                            : "rgba(59,130,246,0.10)",
-                          color: scenario.mode === 'quick' ? "var(--saffron)" : "#2563EB",
-                        }}
-                      >
-                        {scenario.mode === 'quick' ? 'Quick' : 'Detailed'}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className="text-xs font-medium px-2 py-0.5 rounded-full"
+                          style={{
+                            background: scenario.mode === 'quick'
+                              ? "rgba(232,148,10,0.12)"
+                              : "rgba(59,130,246,0.10)",
+                            color: scenario.mode === 'quick' ? "var(--saffron)" : "#2563EB",
+                          }}
+                        >
+                          {scenario.mode === 'quick' ? 'Quick' : 'Detailed'}
+                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="rounded-md p-1 hover:bg-black/5 transition-colors"
+                              style={{ color: "var(--slate-mid)" }}
+                              aria-label="Plan options"
+                              data-testid={`btn-options-${scenario.id}`}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer"
+                              onSelect={() => handleRenameOpen({ id: scenario.id, name: scenario.name })}
+                              data-testid={`btn-rename-${scenario.id}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                              onSelect={() => setDeleteScenario({ id: scenario.id, name: scenario.name })}
+                              data-testid={`btn-delete-${scenario.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 mt-2">
                       <Target
@@ -320,6 +463,65 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* Rename Dialog */}
+      <Dialog open={!!renameScenario} onOpenChange={(open) => { if (!open) setRenameScenario(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename Plan</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Input
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameSubmit();
+                if (e.key === "Escape") setRenameScenario(null);
+              }}
+              autoFocus
+              maxLength={120}
+              placeholder="Plan name"
+              data-testid="input-rename"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameScenario(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenameSubmit}
+              disabled={renameMutation.isPending || !renameDraft.trim()}
+              className="text-white"
+              style={{ background: "var(--saffron)", borderColor: "transparent" }}
+              data-testid="btn-rename-confirm"
+            >
+              {renameMutation.isPending ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteScenario} onOpenChange={(open) => { if (!open) setDeleteScenario(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{deleteScenario?.name}</strong> will be permanently deleted and cannot be recovered.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteScenario && deleteMutation.mutate(deleteScenario.id)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              data-testid="btn-delete-confirm"
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
