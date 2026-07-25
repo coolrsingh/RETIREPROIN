@@ -168,6 +168,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedScenario = await storage.updateScenario(req.params.id, req.body);
+
+      // Recalculate and persist the projected corpus before returning so
+      // the next GET /api/scenarios list fetch always reflects the latest
+      // inputs — eliminating any race between a background write and an
+      // immediate list refetch on the client.
+      try {
+        const scenarioData = await storage.getScenarioWithAllData(req.params.id);
+        if (scenarioData) {
+          const calculations = await calculateRetirementPlan(scenarioData);
+          await storage.updateScenarioCorpus(
+            req.params.id,
+            calculations.summary.projectedCorpusAtRetirement,
+          );
+          // Surface the freshly computed corpus in the response body so the
+          // client can use it without waiting for an additional list refetch.
+          (updatedScenario as any).projectedCorpus =
+            calculations.summary.projectedCorpusAtRetirement;
+        }
+      } catch {
+        // Corpus recalculation is an optimisation; never fail the save.
+        // The client will get the previous corpus value and will refresh it
+        // the next time the plan dashboard is opened (POST /api/calc/:id).
+      }
+
       res.json(updatedScenario);
     } catch (error) {
       console.error("Error updating scenario:", error);

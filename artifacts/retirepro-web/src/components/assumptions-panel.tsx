@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useUpdateScenario } from "@workspace/api-client-react";
+import { useUpdateScenario, getListScenariosQueryKey } from "@workspace/api-client-react";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Save, X } from "lucide-react";
@@ -41,8 +41,12 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
   const updateAssumptionsMutation = useUpdateScenario({
     mutation: {
       onSuccess: () => {
+        // Invalidate the individual scenario (plan dashboard) and the calc cache.
         queryClient.invalidateQueries({ queryKey: ["/api/scenarios", scenario.id] });
         queryClient.invalidateQueries({ queryKey: ["/api/calc", scenario.id] });
+        // Also invalidate the scenarios list so the home-page plan card
+        // picks up the freshly recalculated projectedCorpus from the server.
+        queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
         toast({
           title: "Assumptions Updated",
           description: "Investment assumptions have been updated successfully.",

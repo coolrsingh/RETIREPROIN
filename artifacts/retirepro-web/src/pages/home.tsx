@@ -36,16 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-function formatCorpus(corpus: number | null | undefined): string | null {
-  if (corpus == null || corpus <= 0) return null;
-  if (corpus >= 10_000_000) {
-    return `₹${(corpus / 10_000_000).toFixed(1)} Cr projected`;
-  }
-  if (corpus >= 100_000) {
-    return `₹${(corpus / 100_000).toFixed(1)} L projected`;
-  }
-  return `₹${corpus.toLocaleString('en-IN', { maximumFractionDigits: 0 })} projected`;
-}
+import { formatCorpus } from "@/lib/formatCorpus";
 
 export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
