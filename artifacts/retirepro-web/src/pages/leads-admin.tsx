@@ -10,18 +10,11 @@ import { Input } from "@/components/ui/input";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { isReEngaged, passesFilter } from "@/lib/leadFilters";
+import type { FilterKey } from "@/lib/leadFilters";
 
 type SortKey = "name" | "createdAt" | "updatedAt";
 type SortDir = "asc" | "desc";
-type FilterKey = "all" | "re-engaged" | "7d" | "30d";
-
-function isReEngaged(lead: any): boolean {
-  if (!lead.updatedAt || !lead.createdAt) return false;
-  const diff = Math.abs(
-    new Date(lead.updatedAt).getTime() - new Date(lead.createdAt).getTime()
-  );
-  return diff > 60_000;
-}
 
 function SortIcon({ col, sortBy, sortDir }: { col: SortKey; sortBy: SortKey; sortDir: SortDir }) {
   if (sortBy !== col) return <ArrowUpDown className="inline ml-1 h-3.5 w-3.5 text-slate-400" />;
@@ -62,15 +55,7 @@ export default function LeadsAdmin() {
 
   const filteredLeads = leads.filter((lead) => {
     // Filter button logic
-    if (activeFilter === "re-engaged" && !isReEngaged(lead)) return false;
-    if (activeFilter === "7d") {
-      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      if (!lead.updatedAt || new Date(lead.updatedAt).getTime() < cutoff) return false;
-    }
-    if (activeFilter === "30d") {
-      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      if (!lead.updatedAt || new Date(lead.updatedAt).getTime() < cutoff) return false;
-    }
+    if (!passesFilter(lead, activeFilter)) return false;
     // Search logic (AND with filter)
     if (searchTerm) {
       const name = (lead.name || "").toLowerCase();
