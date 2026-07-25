@@ -204,6 +204,10 @@ export default function Landing() {
           .hero-cta button, .hero-cta a { width: 100% !important; justify-content: center !important; }
         }
 
+        @media (max-width: 479px) {
+          .ai-card-outer { padding: 24px 20px !important; gap: 20px !important; }
+        }
+
         .divider { width: 100%; height: 1px; background: var(--border); }
       `}</style>
 
@@ -475,11 +479,11 @@ export default function Landing() {
 
             {/* AI card */}
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={{
+              <div className="ai-card-outer" style={{
                 background: "var(--navy)", borderRadius: 20, padding: "36px 40px",
                 display: "flex", flexWrap: "wrap", gap: 32, alignItems: "center",
               }}>
-                <div style={{ flex: 1, minWidth: 240 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="lp-label" style={{ background: "rgba(163,230,53,.12)", color: "#A3E635", border: "1px solid rgba(163,230,53,.2)", marginBottom: 16 }}>
                     <Brain size={12} /> AI Advisor — Coming Soon
                   </div>
