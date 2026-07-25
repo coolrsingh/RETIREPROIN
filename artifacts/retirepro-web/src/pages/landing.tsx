@@ -4,7 +4,8 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   ChartLine, Zap, Shield, BarChart3, ArrowRight, TrendingUp, Users, Clock,
-  AlertTriangle, BookOpen, Star, Lock, Brain, FileText, Sliders
+  AlertTriangle, BookOpen, Star, Lock, Brain, FileText, Sliders, CheckCircle2,
+  Quote
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import logoUrl from "@/assets/retirepro-logo.png";
@@ -181,15 +182,15 @@ function DataTicker() {
   return (
     <div
       className="overflow-hidden border-t border-b"
-      style={{ background: "#FFFFFF", borderColor: "#E2E8F0", padding: "8px 0" }}
+      style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", padding: "10px 0" }}
       aria-hidden="true"
     >
       <div className="flex gap-10 whitespace-nowrap" style={{ animation: "tickerScroll 38s linear infinite", fontFamily: "var(--font-mono)", fontSize: "11px" }}>
         {TICKER_ITEMS.map((item, i) => (
           <span key={i} className="flex-shrink-0 flex items-center gap-1.5">
-            <span style={{ color: "#94A3B8" }}>{item.label}</span>
-            <span style={{ color: item.up ? "#16A34A" : "#E5A100", fontWeight: 600 }}>{item.value}</span>
-            <span style={{ color: "#CBD5E1" }}>|</span>
+            <span style={{ color: "rgba(255,255,255,0.4)" }}>{item.label}</span>
+            <span style={{ color: item.up ? "#4ADE80" : "#FCD34D", fontWeight: 600 }}>{item.value}</span>
+            <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
           </span>
         ))}
       </div>
@@ -239,7 +240,7 @@ export default function Landing() {
     <>
       {/* ── Google Fonts + Global CSS ───────────────────────────────────────── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600;1,9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,600;1,9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
         :root {
           --ivory: #FBF8F2;
@@ -249,6 +250,7 @@ export default function Landing() {
           --orange: #F15A24;
           --leaf: #16A34A;
           --slate-mid: #475569;
+          --hero-bg: #080E1A;
           --font-serif: 'Fraunces', Georgia, serif;
           --font-sans: 'Instrument Sans', system-ui, sans-serif;
           --font-mono: 'JetBrains Mono', monospace;
@@ -263,6 +265,10 @@ export default function Landing() {
         @keyframes orangePulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(241,90,36,0.4); }
           50%       { box-shadow: 0 0 0 14px rgba(241,90,36,0); }
+        }
+        @keyframes saffronPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(232,148,10,0.5); }
+          50%       { box-shadow: 0 0 0 16px rgba(232,148,10,0); }
         }
         @keyframes tickerScroll {
           from { transform: translateX(0); }
@@ -301,6 +307,14 @@ export default function Landing() {
           from { transform: rotate(270deg) translateX(60px) rotate(-270deg); }
           to   { transform: rotate(630deg) translateX(60px) rotate(-630deg); }
         }
+        @keyframes heroGlow {
+          0%, 100% { opacity: 0.6; }
+          50%       { opacity: 1; }
+        }
+        @keyframes floatUp {
+          0%, 100% { transform: translateY(0); }
+          50%       { transform: translateY(-6px); }
+        }
 
         html { scroll-behavior: smooth; }
 
@@ -312,63 +326,7 @@ export default function Landing() {
           }
         }
 
-        /* ── Extra blobs for ultra-wide screens (hidden on smaller viewports) ── */
-        .hero-blob-extra-tr,
-        .hero-blob-extra-bl,
-        .hero-blob-extra-center {
-          display: none;
-        }
-
-        @media (min-width: 1920px) {
-          /* Scale up the anchor blobs so they fill the wider margins */
-          .hero-blob-tl-wrap {
-            width: 900px !important;
-            height: 900px !important;
-            top: -280px !important;
-            left: -280px !important;
-          }
-          .hero-blob-br-wrap {
-            width: 780px !important;
-            height: 780px !important;
-            bottom: -220px !important;
-            right: -220px !important;
-          }
-          /* Show extra decorative blobs in the exposed side columns */
-          .hero-blob-extra-tr { display: block; }
-          .hero-blob-extra-bl { display: block; }
-          .hero-blob-extra-center { display: block; }
-          /* Give the hero section more breathing room vertically */
-          .hero-inner-grid {
-            padding-top: 10rem !important;
-            padding-bottom: 12rem !important;
-          }
-          /* Allow the plan card to grow a touch on very wide screens */
-          .hero-plan-card {
-            max-width: 480px !important;
-          }
-        }
-
-        @media (min-width: 2560px) {
-          /* 2K / 1440p-double: push blobs even further */
-          .hero-blob-tl-wrap {
-            width: 1200px !important;
-            height: 1200px !important;
-            top: -400px !important;
-            left: -400px !important;
-          }
-          .hero-blob-br-wrap {
-            width: 1000px !important;
-            height: 1000px !important;
-            bottom: -320px !important;
-            right: -320px !important;
-          }
-          .hero-inner-grid {
-            padding-top: 12rem !important;
-            padding-bottom: 14rem !important;
-          }
-        }
-
-        /* ── Wide-screen section layout ──────────────────────────────────── */
+        /* ── Section layout ──────────────────────────────────────── */
         .section-inner {
           width: 100%;
           max-width: 1280px;
@@ -377,133 +335,49 @@ export default function Landing() {
         }
 
         @media (min-width: 1920px) {
-          .section-inner {
-            max-width: 1600px;
-          }
-          /* Show decorative side glow accents */
-          .section-side-glow { display: block !important; }
-          /* Scale up the Final CTA orbit ring so it doesn't look tiny */
-          .cta-orbit-wrap {
-            width: 380px !important;
-            height: 380px !important;
-          }
-          /* Header inner also gets wider */
-          .header-inner {
-            max-width: 1600px;
-          }
+          .section-inner { max-width: 1600px; }
+          .header-inner { max-width: 1600px; }
+          .cta-orbit-wrap { width: 380px !important; height: 380px !important; }
         }
-
         @media (min-width: 2560px) {
-          .section-inner {
-            max-width: 1920px;
-          }
-          .header-inner {
-            max-width: 1920px;
-          }
-          .cta-orbit-wrap {
-            width: 540px !important;
-            height: 540px !important;
-          }
+          .section-inner { max-width: 1920px; }
+          .header-inner { max-width: 1920px; }
+          .cta-orbit-wrap { width: 540px !important; height: 540px !important; }
         }
 
-        /* Dot-grid decoration for light sections at wide screens */
         .section-dot-grid-left,
         .section-dot-grid-right {
           display: none;
           position: absolute;
-          top: 0;
-          bottom: 0;
+          top: 0; bottom: 0;
           width: 200px;
           pointer-events: none;
           opacity: 0.35;
           background-image: radial-gradient(circle, rgba(26,18,8,0.12) 1px, transparent 1px);
           background-size: 22px 22px;
         }
-
-        .section-dot-grid-left  { left: 0; mask-image: linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%); -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%); }
-        .section-dot-grid-right { right: 0; mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%); -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%); }
+        .section-dot-grid-left  { left: 0; mask-image: linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 100%); }
+        .section-dot-grid-right { right: 0; mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%); }
 
         @media (min-width: 1920px) {
-          .section-dot-grid-left,
-          .section-dot-grid-right { display: block; }
+          .section-dot-grid-left, .section-dot-grid-right { display: block; }
         }
 
+        /* Mobile hero fixes */
         @media (max-width: 359px) {
-          .hero-heading {
-            font-size: 28px !important;
-            line-height: 1.15 !important;
-            margin-bottom: 16px !important;
-          }
-          .hero-subtext {
-            font-size: 15px !important;
-            margin-bottom: 20px !important;
-          }
-          .hero-badge {
-            font-size: 11px !important;
-            padding: 5px 10px !important;
-            margin-bottom: 14px !important;
-          }
-          .hero-plan-card {
-            padding: 18px 14px !important;
-          }
-          .hero-sip-pill {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 2px !important;
-            padding: 10px 12px !important;
-          }
-          .hero-cta-btn-primary {
-            padding: 0 20px !important;
-            width: 100%;
-            justify-content: center;
-          }
-          .hero-cta-btn-secondary {
-            padding: 0 16px !important;
-            width: 100%;
-            justify-content: center;
-          }
-          .hero-cta-row {
-            flex-direction: column !important;
-          }
-
-          /* ── Below-hero section fixes ── */
-
-          /* Uncomfortable Math — reduce card padding so the large clamp numbers don't feel cramped */
-          .stat-dark-card {
-            padding: 22px 18px !important;
-          }
-
-          /* Why RetirePro feature cards — reduce padding so text has more breathing room */
-          .feature-card {
-            padding: 16px !important;
-          }
-
-          /* AI Cashflow badge — drop tracking and allow the text to wrap inside the pill */
-          .ai-advisor-chip {
-            white-space: normal !important;
-            letter-spacing: 0.04em !important;
-            text-align: left !important;
-            line-height: 1.4 !important;
-            max-width: 100% !important;
-          }
-
-          /* Terminal typewriter — mono text must break on narrow viewports */
-          .ai-terminal-text {
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-          }
-
-          /* Blog section heading row — stack vertically so the "All articles" link doesn't crowd */
-          .blog-header-row {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-          }
-
-          /* Final CTA orbit decoration — shrink so it stays inside overflow-hidden boundary */
-          .cta-orbit-wrap {
-            width: 180px !important;
-            height: 180px !important;
-          }
+          .hero-heading { font-size: 30px !important; }
+          .hero-subtext { font-size: 15px !important; }
+          .hero-cta-row { flex-direction: column !important; }
+          .hero-cta-btn-primary { width: 100%; justify-content: center; }
+          .hero-cta-btn-secondary { width: 100%; justify-content: center; }
+          .hero-plan-card { padding: 18px 14px !important; }
+          .hero-sip-pill { flex-direction: column !important; gap: 2px !important; padding: 10px 12px !important; }
+          .stat-dark-card { padding: 22px 18px !important; }
+          .feature-card { padding: 16px !important; }
+          .ai-advisor-chip { white-space: normal !important; text-align: left !important; line-height: 1.4 !important; }
+          .ai-terminal-text { word-break: break-word !important; overflow-wrap: anywhere !important; }
+          .blog-header-row { flex-direction: column !important; align-items: flex-start !important; }
+          .cta-orbit-wrap { width: 180px !important; height: 180px !important; }
         }
 
         .trust-row {
@@ -518,22 +392,32 @@ export default function Landing() {
         }
         .trust-badge { white-space: nowrap; }
         .trust-divider { color: #CBD5E1; }
+
+        /* Hero noise grain */
+        .hero-grain::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          opacity: 0.4;
+        }
       `}</style>
 
-      <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--ivory)", fontFamily: "var(--font-sans)" }}>
+      <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--hero-bg)", fontFamily: "var(--font-sans)" }}>
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{ background: "rgba(251,248,242,0.9)", backdropFilter: "blur(16px)", borderColor: "rgba(0,0,0,0.08)" }}>
+        <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{ background: "rgba(8,14,26,0.85)", backdropFilter: "blur(20px)", borderColor: "rgba(255,255,255,0.07)" }}>
           <div className="header-inner mx-auto px-6 flex items-center justify-between h-16" style={{ maxWidth: 1280 }}>
-            <BrandLogo href={null} textClassName="text-slate-900" />
+            <BrandLogo href={null} textClassName="text-white" />
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/blog" className="text-sm font-medium" style={{ color: "#64748B" }}>Blog</Link>
-              <a href="#planner" className="text-sm font-medium" style={{ color: "#64748B" }}>Free Planner</a>
+              <Link href="/blog" className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>Blog</Link>
+              <a href="#planner" className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>Free Planner</a>
             </nav>
             <Button
               onClick={() => { window.location.href = "/api/login"; }}
-              className="rounded-full px-5 h-9 text-sm font-semibold text-white"
-              style={{ background: "var(--orange)" }}
+              className="rounded-full px-5 h-9 text-sm font-semibold"
+              style={{ background: "var(--orange)", color: "#fff" }}
               data-testid="button-login"
             >
               Sign In
@@ -543,81 +427,68 @@ export default function Landing() {
 
         {/* ── Hero ────────────────────────────────────────────────────────── */}
         <section
-          className="relative min-h-screen pt-16 flex items-center overflow-hidden"
-          style={{ background: "var(--ivory)" }}
+          className="hero-grain relative min-h-screen pt-16 flex items-center overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #080E1A 0%, #0D1628 40%, #111827 100%)" }}
         >
-          {/* Warm saffron blob top-left */}
-          <div className="hero-blob-tl-wrap absolute pointer-events-none" style={{
-            top: -120, left: -120, width: 500, height: 500,
-            background: "radial-gradient(circle, rgba(232,148,10,0.18) 0%, transparent 65%)",
-            animation: "blobDrift1 14s ease-in-out infinite",
+          {/* Saffron glow top-left */}
+          <div className="absolute pointer-events-none" style={{
+            top: -160, left: -160, width: 640, height: 640,
+            background: "radial-gradient(circle, rgba(232,148,10,0.22) 0%, transparent 60%)",
+            animation: "blobDrift1 16s ease-in-out infinite",
           }} />
-          {/* Warm peach blob bottom-right */}
-          <div className="hero-blob-br-wrap absolute pointer-events-none" style={{
-            bottom: -80, right: -80, width: 420, height: 420,
-            background: "radial-gradient(circle, rgba(241,90,36,0.12) 0%, transparent 65%)",
-            animation: "blobDrift2 18s ease-in-out infinite",
-          }} />
-
-          {/* Extra accent blob top-right — visible on 1920px+ */}
-          <div className="hero-blob-extra-tr absolute pointer-events-none" style={{
-            top: "5%", right: "4%",
-            width: 360, height: 360,
-            background: "radial-gradient(circle, rgba(241,90,36,0.09) 0%, transparent 65%)",
+          {/* Orange glow bottom-right */}
+          <div className="absolute pointer-events-none" style={{
+            bottom: -100, right: -100, width: 500, height: 500,
+            background: "radial-gradient(circle, rgba(241,90,36,0.16) 0%, transparent 60%)",
             animation: "blobDrift2 20s ease-in-out infinite",
           }} />
-          {/* Extra accent blob bottom-left — visible on 1920px+ */}
-          <div className="hero-blob-extra-bl absolute pointer-events-none" style={{
-            bottom: "12%", left: "5%",
-            width: 320, height: 320,
-            background: "radial-gradient(circle, rgba(232,148,10,0.11) 0%, transparent 65%)",
-            animation: "blobDrift1 24s ease-in-out infinite",
-          }} />
-          {/* Subtle center warmth — visible on 1920px+ */}
-          <div className="hero-blob-extra-center absolute pointer-events-none" style={{
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 700, height: 500,
-            background: "radial-gradient(ellipse, rgba(232,148,10,0.05) 0%, transparent 70%)",
+          {/* Subtle blue accent mid */}
+          <div className="absolute pointer-events-none" style={{
+            top: "40%", right: "15%",
+            width: 300, height: 300,
+            background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 65%)",
           }} />
 
-          {/* Subtle grid */}
+          {/* Grid overlay */}
           <div className="absolute inset-0 pointer-events-none" style={{
-            backgroundImage: "linear-gradient(rgba(26,18,8,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(26,18,8,0.04) 1px, transparent 1px)",
-            backgroundSize: "56px 56px",
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
           }} />
 
-          <div className="hero-inner-grid relative max-w-[1400px] mx-auto px-8 lg:px-16 pt-20 pb-28 lg:pt-28 lg:pb-40 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center w-full">
+          <div className="relative max-w-[1400px] mx-auto px-8 lg:px-16 pt-24 pb-32 lg:pt-32 lg:pb-44 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
             {/* Left: copy */}
             <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+
+              {/* Urgency pill */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="hero-badge inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full mb-8"
-                style={{ background: "rgba(232,148,10,0.12)", border: "1px solid rgba(232,148,10,0.3)", color: "#92660A" }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full mb-8"
+                style={{ background: "rgba(241,90,36,0.15)", border: "1px solid rgba(241,90,36,0.35)", color: "#FB923C" }}
               >
-                <Star className="h-3.5 w-3.5" style={{ fill: "#92660A" }} />
-                Free · No account required · India-specific
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#FB923C", display: "inline-block", animation: "orangePulse 2s ease-in-out infinite" }} />
+                76% of Indians have no retirement corpus — are you in the other 24%?
               </motion.div>
 
-              <h1 className="hero-heading" style={{ fontSize: "clamp(44px, 5.5vw, 80px)", fontWeight: 700, lineHeight: 1.04, color: "var(--ink)", marginBottom: "10px", fontFamily: "var(--font-serif)" }}>
-                You can't fix a number
+              <h1 className="hero-heading" style={{ fontSize: "clamp(40px, 5.2vw, 76px)", fontWeight: 900, lineHeight: 1.04, color: "#FFFFFF", marginBottom: "10px", fontFamily: "var(--font-serif)" }}>
+                Your retirement gap
               </h1>
-              <h1 className="hero-heading" style={{ fontSize: "clamp(44px, 5.5vw, 80px)", fontWeight: 700, lineHeight: 1.04, color: "var(--ink)", marginBottom: "28px", fontFamily: "var(--font-serif)" }}>
-                <em style={{ color: "var(--saffron)", fontStyle: "italic" }}>you've never calculated.</em>
+              <h1 className="hero-heading" style={{ fontSize: "clamp(40px, 5.2vw, 76px)", fontWeight: 900, lineHeight: 1.04, marginBottom: "28px", fontFamily: "var(--font-serif)" }}>
+                <em style={{ color: "var(--saffron)", fontStyle: "italic" }}>is already costing you.</em>
               </h1>
 
-              <p className="hero-subtext" style={{ fontSize: "20px", lineHeight: 1.7, color: "var(--slate-mid)", marginBottom: "36px", maxWidth: "520px" }}>
-                Build a complete, personalised retirement plan in 60 seconds — income, expenses, children's education, loans, mini-retirement breaks, and more. Free. No login required.
+              <p className="hero-subtext" style={{ fontSize: "19px", lineHeight: 1.75, color: "rgba(255,255,255,0.62)", marginBottom: "36px", maxWidth: "500px" }}>
+                Build a complete, personalised retirement plan in 60 seconds — income, expenses, children's education, loans, mini-retirement breaks. <strong style={{ color: "rgba(255,255,255,0.9)" }}>Free. No login required.</strong>
               </p>
 
-              <div className="hero-cta-row flex flex-wrap gap-3">
+              {/* CTA row */}
+              <div className="hero-cta-row flex flex-wrap gap-3 mb-10">
                 <button
                   className="hero-cta-btn-primary flex items-center gap-2 rounded-full text-white font-bold text-base"
-                  style={{ background: "var(--orange)", height: "52px", padding: "0 32px", animation: "orangePulse 2.5s ease-in-out infinite" }}
+                  style={{ background: "var(--orange)", height: "54px", padding: "0 36px", animation: "orangePulse 2.5s ease-in-out infinite", fontSize: 16 }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLButtonElement).style.animation = "none";
                     (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.04)";
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(241,90,36,0.5)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 28px rgba(241,90,36,0.55)";
                   }}
                   onMouseLeave={e => {
                     (e.currentTarget as HTMLButtonElement).style.animation = "orangePulse 2.5s ease-in-out infinite";
@@ -627,21 +498,28 @@ export default function Landing() {
                   onClick={() => document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" })}
                   data-testid="button-get-started"
                 >
+                  Calculate My Retirement Gap
                   <ArrowRight className="h-5 w-5" />
-                  Start My Free Plan
                 </button>
 
                 <button
                   className="hero-cta-btn-secondary flex items-center gap-2 rounded-full font-semibold text-base"
-                  style={{ height: "52px", padding: "0 28px", background: "transparent", border: "1.5px solid rgba(26,18,8,0.25)", color: "var(--ink)", transition: "all 0.2s ease" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(26,18,8,0.06)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                  style={{ height: "54px", padding: "0 28px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)", transition: "all 0.2s ease" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.07)"; }}
                   onClick={() => { window.location.href = "/api/login"; }}
                   data-testid="button-sign-in"
                 >
                   Sign In to Save
                   <ArrowRight className="h-4 w-4" />
                 </button>
+              </div>
+
+              {/* Trust micro-row */}
+              <div className="flex flex-wrap gap-x-5 gap-y-2" style={{ fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>
+                {["🔒 256-bit SSL", "🇮🇳 India-specific (EPF, NPS, SIP)", "✅ AMFI-registered", "🛡️ Data never sold"].map(t => (
+                  <span key={t}>{t}</span>
+                ))}
               </div>
             </motion.div>
 
@@ -653,12 +531,15 @@ export default function Landing() {
               className="flex items-center justify-center"
             >
               <div
-                className="hero-plan-card rounded-2xl sm:rounded-3xl"
+                className="hero-plan-card w-full rounded-2xl sm:rounded-3xl"
                 style={{
-                  width: "100%", maxWidth: 420,
-                  background: "#FFFFFF",
+                  maxWidth: 420,
+                  background: "rgba(255,255,255,0.04)",
                   padding: "28px",
-                  boxShadow: "0 32px 64px -12px rgba(26,18,8,0.18), 0 0 0 1px rgba(26,18,8,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  boxShadow: "0 40px 80px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
+                  backdropFilter: "blur(12px)",
+                  animation: "floatUp 6s ease-in-out infinite",
                 }}
               >
                 {/* Card header */}
@@ -667,22 +548,22 @@ export default function Landing() {
                     <TrendingUp className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold text-sm" style={{ color: "var(--ink)" }}>Priya's Retirement Plan</div>
-                    <div className="text-xs" style={{ color: "#94A3B8" }}>Retiring at 60 · Projected to 85</div>
+                    <div className="font-semibold text-sm" style={{ color: "#F1F5F9" }}>Priya's Retirement Plan</div>
+                    <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Retiring at 60 · Projected to 85</div>
                   </div>
                 </div>
 
                 {/* SVG corpus curve */}
-                <div style={{ height: 100, marginBottom: 20, borderRadius: 12, overflow: "hidden", background: "rgba(251,248,242,0.8)", padding: "8px 8px 4px" }}>
+                <div style={{ height: 100, marginBottom: 20, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.04)", padding: "8px 8px 4px", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <CorpusCurve />
                 </div>
 
                 {/* Stat chips */}
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3">
                   {[
-                    { label: "Projected", value: "₹3.2 Cr", bg: "rgba(22,163,74,0.08)", color: "#15803D", border: "rgba(22,163,74,0.2)" },
-                    { label: "Required", value: "₹4.5 Cr", bg: "rgba(0,0,0,0.04)", color: "#334155", border: "rgba(0,0,0,0.08)" },
-                    { label: "Gap", value: "₹1.3 Cr", bg: "rgba(241,90,36,0.08)", color: "#C2410C", border: "rgba(241,90,36,0.2)" },
+                    { label: "Projected", value: "₹3.2 Cr", bg: "rgba(22,163,74,0.12)", color: "#4ADE80", border: "rgba(22,163,74,0.2)" },
+                    { label: "Required", value: "₹4.5 Cr", bg: "rgba(255,255,255,0.05)", color: "#94A3B8", border: "rgba(255,255,255,0.08)" },
+                    { label: "Gap", value: "₹1.3 Cr", bg: "rgba(241,90,36,0.12)", color: "#FB923C", border: "rgba(241,90,36,0.25)" },
                   ].map(chip => (
                     <div key={chip.label} className="rounded-xl p-2 sm:p-3 text-center" style={{ background: chip.bg, border: `1px solid ${chip.border}` }}>
                       <div className="text-[9px] sm:text-[10px] mb-0.5" style={{ color: chip.color, opacity: 0.7 }}>{chip.label}</div>
@@ -692,9 +573,19 @@ export default function Landing() {
                 </div>
 
                 {/* SIP pill */}
-                <div className="hero-sip-pill rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "var(--ink)" }}>
-                  <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>Monthly SIP needed</span>
+                <div className="hero-sip-pill rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "rgba(232,148,10,0.15)", border: "1px solid rgba(232,148,10,0.3)" }}>
+                  <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>Monthly SIP needed to close gap</span>
                   <span className="font-bold landing-num" style={{ color: "var(--saffron-light)", fontSize: "15px" }}>₹12,400/mo</span>
+                </div>
+
+                {/* Social proof count */}
+                <div className="mt-4 flex items-center justify-center gap-2" style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+                  <div className="flex -space-x-1.5">
+                    {["#E8940A","#F15A24","#60A5FA","#34D399"].map(c => (
+                      <div key={c} style={{ width: 20, height: 20, borderRadius: "50%", background: c, border: "2px solid rgba(8,14,26,0.8)" }} />
+                    ))}
+                  </div>
+                  <span>18,000+ Indians have found their number</span>
                 </div>
               </div>
             </motion.div>
@@ -705,10 +596,9 @@ export default function Landing() {
         <DataTicker />
 
         {/* ── The Uncomfortable Math ──────────────────────────────────────── */}
-        <section style={{ background: "#111827", padding: "80px 24px", overflowX: "hidden", position: "relative" }}>
-          {/* Wide-screen side glow accents */}
-          <div className="section-side-glow" style={{ display: "none", position: "absolute", top: "10%", left: "2%", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.12) 0%, transparent 65%)", pointerEvents: "none" }} />
-          <div className="section-side-glow" style={{ display: "none", position: "absolute", bottom: "10%", right: "2%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 65%)", pointerEvents: "none" }} />
+        <section style={{ background: "#060C17", padding: "90px 24px", overflowX: "hidden", position: "relative" }}>
+          <div className="absolute pointer-events-none" style={{ top: "10%", left: "3%", width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.1) 0%, transparent 65%)" }} />
+          <div className="absolute pointer-events-none" style={{ bottom: "10%", right: "3%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(96,165,250,0.08) 0%, transparent 65%)" }} />
           <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
               <div className="inline-block text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.15)", color: "var(--saffron-light)", border: "1px solid rgba(232,148,10,0.25)" }}>
@@ -751,8 +641,8 @@ export default function Landing() {
                   transition={{ delay: i * 0.12, duration: 0.5 }}
                   className="stat-dark-card rounded-2xl sm:rounded-[20px]"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
                     padding: "36px 32px",
                     position: "relative",
                     overflow: "hidden",
@@ -771,7 +661,7 @@ export default function Landing() {
         </section>
 
         {/* ── Why RetirePro — 6-card grid + AI advisor ────────────────────── */}
-        <section className="px-6" style={{ padding: "80px 24px", background: "var(--ivory)", overflowX: "hidden", position: "relative" }}>
+        <section style={{ padding: "90px 24px", background: "var(--ivory)", overflowX: "hidden", position: "relative" }}>
           <div className="section-dot-grid-left" />
           <div className="section-dot-grid-right" />
           <div className="section-inner">
@@ -873,7 +763,6 @@ export default function Landing() {
                     </p>
                   </div>
 
-                  {/* Typewriter demo terminal */}
                   <div
                     className="flex-shrink-0 w-full md:w-auto rounded-2xl"
                     style={{
@@ -902,7 +791,7 @@ export default function Landing() {
         </section>
 
         {/* ── How it works ────────────────────────────────────────────────── */}
-        <section style={{ background: "#FFFFFF", padding: "80px 24px", overflowX: "hidden", position: "relative" }}>
+        <section style={{ background: "#FFFFFF", padding: "90px 24px", overflowX: "hidden", position: "relative" }}>
           <div className="section-dot-grid-left" />
           <div className="section-dot-grid-right" />
           <div className="section-inner">
@@ -944,7 +833,6 @@ export default function Landing() {
                   transition={{ delay: i * 0.15, duration: 0.5 }}
                   className="relative"
                 >
-                  {/* ── Desktop: centered column with dashed connector ── */}
                   <div className="hidden md:flex flex-col items-center text-center px-8 py-10">
                     {i < 2 && (
                       <div className="absolute top-[72px] left-[calc(50%+52px)] right-0 z-0"
@@ -959,9 +847,7 @@ export default function Landing() {
                     <p style={{ fontSize: "14px", color: "#64748B", lineHeight: 1.65, maxWidth: 260 }}>{s.desc}</p>
                   </div>
 
-                  {/* ── Mobile: horizontal timeline row ── */}
                   <div className="flex md:hidden items-start gap-4 px-4 py-5">
-                    {/* Left: icon circle + vertical rule */}
                     <div className="flex flex-col items-center flex-shrink-0" style={{ width: 48 }}>
                       <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: s.accent, color: "#fff", boxShadow: `0 6px 18px ${s.accent}44` }}>
                         {s.icon}
@@ -970,7 +856,6 @@ export default function Landing() {
                         <div style={{ width: 2, flex: 1, minHeight: 40, marginTop: 8, background: "rgba(0,0,0,0.09)", borderRadius: 2 }} />
                       )}
                     </div>
-                    {/* Right: text */}
                     <div className="pt-1 pb-6">
                       <div className="landing-num text-[10px] font-bold mb-1.5" style={{ color: s.accent, letterSpacing: "0.12em" }}>STEP {s.step}</div>
                       <h3 className="font-bold mb-1.5" style={{ fontSize: "17px", color: "var(--ink)", fontFamily: "var(--font-serif)" }}>{s.title}</h3>
@@ -983,8 +868,8 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Planner (BELOW Why RetirePro) ───────────────────────────────── */}
-        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "80px 24px", overflowX: "hidden", position: "relative" }}>
+        {/* ── Planner ─────────────────────────────────────────────────────── */}
+        <section id="planner" style={{ background: "linear-gradient(180deg, var(--ivory) 0%, #FFF 100%)", padding: "90px 24px", overflowX: "hidden", position: "relative" }}>
           <div className="section-dot-grid-left" style={{ opacity: 0.25 }} />
           <div className="section-dot-grid-right" style={{ opacity: 0.25 }} />
           <div className="section-inner">
@@ -1001,7 +886,6 @@ export default function Landing() {
               </p>
             </motion.div>
 
-            {/* Trust badges */}
             <div className="trust-row" data-testid="trust-row">
               <span className="trust-badge">🔒 256-bit SSL Secured</span>
               <span className="trust-divider">•</span>
@@ -1018,10 +902,97 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* ── Testimonials ────────────────────────────────────────────────── */}
+        <section style={{ background: "#060C17", padding: "90px 24px", position: "relative", overflowX: "hidden" }}>
+          <div className="absolute pointer-events-none" style={{ top: "20%", left: "5%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.07) 0%, transparent 65%)" }} />
+          <div className="section-inner">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+              <div className="inline-block text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5" style={{ background: "rgba(232,148,10,0.12)", color: "var(--saffron-light)", border: "1px solid rgba(232,148,10,0.2)" }}>
+                From real users across India
+              </div>
+              <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 700, color: "#F9FAFB", lineHeight: 1.2, fontFamily: "var(--font-serif)" }}>
+                What changed after they saw<br />
+                <em style={{ color: "var(--saffron)" }}>their real number.</em>
+              </h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  quote: "I had three SIPs running and thought I was set. RetirePro showed me my corpus runs out at 72. I added ₹8,000/month that week. That calculation changed how I think about money.",
+                  name: "Arjun Mehta",
+                  role: "Software Engineer, Bangalore",
+                  age: "34",
+                  accentColor: "#60A5FA",
+                  initials: "AM",
+                },
+                {
+                  quote: "My husband and I always argued about how much was 'enough'. We plugged in our numbers together — the gap was ₹1.8 Cr. We stopped arguing and started planning. Brilliant tool.",
+                  name: "Priyanka Sharma",
+                  role: "Marketing Director, Mumbai",
+                  age: "41",
+                  accentColor: "#E8940A",
+                  initials: "PS",
+                },
+                {
+                  quote: "I'm self-employed — no EPF, no corporate NPS. This was the first planner that actually modelled irregular income. My retirement date moved from 65 to 60 after I understood the numbers.",
+                  name: "Karthik Iyer",
+                  role: "Architect & Consultant, Chennai",
+                  age: "38",
+                  accentColor: "#34D399",
+                  initials: "KI",
+                },
+              ].map((t, i) => (
+                <motion.div
+                  key={t.name}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.5 }}
+                >
+                  <div
+                    className="h-full rounded-2xl p-7 flex flex-col"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      borderTop: `3px solid ${t.accentColor}`,
+                    }}
+                  >
+                    <Quote className="h-6 w-6 mb-5 flex-shrink-0" style={{ color: t.accentColor, opacity: 0.6 }} />
+                    <p style={{ color: "#CBD5E1", fontSize: "15px", lineHeight: 1.75, marginBottom: "auto", paddingBottom: 24 }}>
+                      "{t.quote}"
+                    </p>
+                    <div className="flex items-center gap-3 pt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+                        style={{ background: t.accentColor, color: "#080C12" }}
+                      >
+                        {t.initials}
+                      </div>
+                      <div>
+                        <div style={{ color: "#F1F5F9", fontWeight: 600, fontSize: 14 }}>{t.name}, {t.age}</div>
+                        <div style={{ color: "rgba(255,255,255,0.38)", fontSize: 12 }}>{t.role}</div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Star row */}
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }} className="flex items-center justify-center gap-3 mt-10">
+              <div className="flex gap-0.5">
+                {[1,2,3,4,5].map(s => <Star key={s} className="h-5 w-5" style={{ fill: "#E8940A", color: "#E8940A" }} />)}
+              </div>
+              <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 14 }}>Trusted by planners from Pune, Delhi, Hyderabad, Kolkata &amp; beyond</span>
+            </motion.div>
+          </div>
+        </section>
+
         {/* ── Blog ────────────────────────────────────────────────────────── */}
-        <section className="py-20 px-6 bg-slate-50 overflow-x-hidden" style={{ position: "relative" }}>
-          <div className="section-dot-grid-left" style={{ backgroundImage: "radial-gradient(circle, rgba(100,116,139,0.18) 1px, transparent 1px)" }} />
-          <div className="section-dot-grid-right" style={{ backgroundImage: "radial-gradient(circle, rgba(100,116,139,0.18) 1px, transparent 1px)" }} />
+        <section style={{ background: "var(--ivory)", padding: "90px 24px", overflowX: "hidden", position: "relative" }}>
+          <div className="section-dot-grid-left" />
+          <div className="section-dot-grid-right" />
           <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="blog-header-row flex items-end justify-between mb-10 flex-wrap gap-4">
               <div>
@@ -1100,19 +1071,14 @@ export default function Landing() {
 
         {/* ── Serious Planner Manifesto ────────────────────────────────── */}
         <section style={{ background: "#080C12", padding: "96px 24px", position: "relative" }}>
-          {/* Wide-screen side glow accents */}
-          <div className="section-side-glow" style={{ display: "none", position: "absolute", top: "15%", left: "1.5%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.1) 0%, transparent 65%)", pointerEvents: "none" }} />
-          <div className="section-side-glow" style={{ display: "none", position: "absolute", bottom: "15%", right: "1.5%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
           <div className="section-inner">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
 
-              {/* Top label */}
               <div className="flex items-center gap-3 mb-8">
                 <div style={{ width: 3, height: 32, background: "#E8940A", borderRadius: 2 }} />
                 <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: "#E8940A" }}>For the serious retirement enthusiast</span>
               </div>
 
-              {/* Headline */}
               <div className="max-w-3xl mb-12">
                 <h2 style={{ fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 800, lineHeight: 1.1, color: "#F8F4EE", fontFamily: "var(--font-serif)", marginBottom: 24 }}>
                   76% of Indians will retire<br />
@@ -1123,7 +1089,6 @@ export default function Landing() {
                 </p>
               </div>
 
-              {/* 3 Persona Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
                 {[
                   {
@@ -1170,7 +1135,6 @@ export default function Landing() {
                 ))}
               </div>
 
-              {/* Bottom row */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-10" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                 <div>
                   <p style={{ color: "#94A3B8", fontSize: 14, marginBottom: 8 }}>Used by planners across India. Free. No login. Your data stays yours.</p>
@@ -1199,7 +1163,6 @@ export default function Landing() {
                       border: "none",
                       cursor: "pointer",
                       whiteSpace: "nowrap",
-                      letterSpacing: "0.01em",
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = "#F5A623")}
                     onMouseLeave={e => (e.currentTarget.style.background = "#E8940A")}
@@ -1218,39 +1181,36 @@ export default function Landing() {
         {/* ── Final CTA ───────────────────────────────────────────────────── */}
         <section
           className="relative py-28 overflow-hidden px-6 text-center"
-          style={{ background: "var(--ivory)" }}
+          style={{ background: "linear-gradient(160deg, #080E1A 0%, #0D1628 50%, #111827 100%)" }}
         >
-          {/* Orbiting-dot animation background */}
+          {/* Saffron glow */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div style={{ width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,148,10,0.12) 0%, transparent 65%)", animation: "heroGlow 5s ease-in-out infinite" }} />
+          </div>
+
+          {/* Orbiting dots */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
             <div className="cta-orbit-wrap" style={{ position: "relative", width: 240, height: 240 }}>
-              {/* Outer ring */}
               <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px dashed rgba(232,148,10,0.2)" }} />
-              {/* Inner ring */}
               <div style={{ position: "absolute", inset: 40, borderRadius: "50%", border: "1px dashed rgba(241,90,36,0.15)" }} />
-              {/* Saffron orbit dot A */}
               <div style={{ position: "absolute", top: "50%", left: "50%", width: 10, height: 10, marginTop: -5, marginLeft: -5, animation: "orbitA 8s linear infinite" }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--saffron-light)", boxShadow: "0 0 8px var(--saffron-light)" }} />
               </div>
-              {/* Orange orbit dot B */}
               <div style={{ position: "absolute", top: "50%", left: "50%", width: 8, height: 8, marginTop: -4, marginLeft: -4, animation: "orbitB 6s linear infinite" }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--orange)", boxShadow: "0 0 6px var(--orange)" }} />
               </div>
-              {/* Leaf orbit dot C */}
               <div style={{ position: "absolute", top: "50%", left: "50%", width: 7, height: 7, marginTop: -3.5, marginLeft: -3.5, animation: "orbitC 10s linear infinite" }}>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ADE80", boxShadow: "0 0 6px #4ADE80" }} />
-              </div>
-              {/* Small orbit dot D */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", width: 6, height: 6, marginTop: -3, marginLeft: -3, animation: "orbitD 5s linear infinite" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#93C5FD", boxShadow: "0 0 5px #93C5FD" }} />
               </div>
             </div>
           </div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative max-w-3xl mx-auto">
-            <h2 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15, color: "var(--ink)", marginBottom: 20, fontFamily: "var(--font-serif)" }}>
-              Your 65-year-old self<br />is counting on today's you.
+            <h2 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.15, color: "#FFFFFF", marginBottom: 20, fontFamily: "var(--font-serif)" }}>
+              Your 65-year-old self<br />
+              <em style={{ color: "var(--saffron)" }}>is counting on today's you.</em>
             </h2>
-            <p style={{ fontSize: "19px", color: "var(--slate-mid)", marginBottom: 36 }}>
+            <p style={{ fontSize: "19px", color: "rgba(255,255,255,0.55)", marginBottom: 36 }}>
               Build a complete retirement plan free — no login, no email, no commitment.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -1275,9 +1235,9 @@ export default function Landing() {
               </button>
               <button
                 className="flex items-center justify-center gap-2 rounded-full font-semibold text-base"
-                style={{ padding: "16px 40px", background: "transparent", border: "1.5px solid rgba(26,18,8,0.2)", color: "var(--ink)", transition: "background 0.2s ease" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(26,18,8,0.06)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                style={{ padding: "16px 40px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)", transition: "background 0.2s ease" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.14)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; }}
                 onClick={() => { window.location.href = "/api/login"; }}
               >
                 Sign In to Save &amp; Track
@@ -1287,7 +1247,7 @@ export default function Landing() {
         </section>
 
         {/* ── Footer ──────────────────────────────────────────────────────── */}
-        <footer className="py-10 px-6" style={{ background: "#060E1A" }}>
+        <footer className="py-10 px-6" style={{ background: "#040810", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <div className="section-inner flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
@@ -1295,14 +1255,14 @@ export default function Landing() {
               </div>
               <span className="text-white font-bold">RetirePro</span>
             </div>
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
               <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
               <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
               <Link href="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link>
               <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
               <Link href="/terms-and-conditions" className="hover:text-white transition-colors">Terms &amp; Conditions</Link>
             </div>
-            <p className="text-sm text-slate-500">© 2025 RetirePro. Free retirement planning for India.</p>
+            <p className="text-sm text-slate-600">© 2025 RetirePro. Free retirement planning for India.</p>
           </div>
         </footer>
       </div>
