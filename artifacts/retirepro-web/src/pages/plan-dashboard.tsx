@@ -23,7 +23,7 @@ import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useGetScenario, getGetScenarioQueryKey } from "@workspace/api-client-react";
+import { useGetScenario, getGetScenarioQueryKey, useGetCrmDefaults, getGetCrmDefaultsQueryKey } from "@workspace/api-client-react";
 
 export default function PlanDashboard() {
   const [match, params] = useRoute("/plan/:id");
@@ -41,6 +41,10 @@ export default function PlanDashboard() {
     params?.id ?? "",
     { query: { queryKey: getGetScenarioQueryKey(params?.id ?? ""), enabled: isAuthenticated && !!params?.id } },
   );
+
+  const { data: crmDefaults } = useGetCrmDefaults({
+    query: { queryKey: getGetCrmDefaultsQueryKey(), enabled: isAuthenticated },
+  });
 
   const { data: calculations, isLoading: calculationsLoading } = useQuery({
     queryKey: ["/api/calc", params?.id, liveRates],
@@ -404,7 +408,7 @@ export default function PlanDashboard() {
             </Card>
           </div>
           <div>
-            <AssumptionsPanel scenario={scenario} />
+            <AssumptionsPanel scenario={scenario} crmDefaults={crmDefaults} />
           </div>
         </div>
 

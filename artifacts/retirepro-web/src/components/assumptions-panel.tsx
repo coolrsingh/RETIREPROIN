@@ -20,9 +20,13 @@ interface AssumptionsPanelProps {
       source?: string | null;
     } | null;
   };
+  /** CRM-level defaults; taxRegime lives here, not in the assumptions table. */
+  crmDefaults?: {
+    taxRegime?: string | null;
+  } | null;
 }
 
-export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
+export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsPanelProps) {
   const assumptions = scenario.assumptions;
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -274,6 +278,19 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
                   </span>
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Tax Regime — read-only; lives in CRM defaults, not in the assumptions table */}
+          <div className="flex justify-between items-center border-t pt-4 mt-2">
+            <span className="text-sm text-slate-600">Tax Regime</span>
+            <div className="text-right">
+              <span className="text-sm font-medium" data-testid="assumption-tax-regime">
+                {crmDefaults?.taxRegime === 'old' ? 'Old Regime' : 'New Regime'}
+              </span>
+              <span className="text-xs text-slate-400 block">
+                (controlled via CRM Settings)
+              </span>
             </div>
           </div>
         </div>
