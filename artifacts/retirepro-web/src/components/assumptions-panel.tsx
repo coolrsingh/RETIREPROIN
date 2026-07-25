@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useUpdateScenario } from "@workspace/api-client-react";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Save, X } from "lucide-react";
 
@@ -34,36 +34,38 @@ export default function AssumptionsPanel({ scenario }: AssumptionsPanelProps) {
     lifeExpectancy: assumptions?.lifeExpectancy || 85,
   });
 
-  const updateAssumptionsMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("PATCH", `/api/scenarios/${scenario.id}`, {
-        assumptions: {
-          ...assumptions,
-          ...data,
-          source: 'user'
-        }
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/scenarios", scenario.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/calc", scenario.id] });
-      toast({
-        title: "Assumptions Updated",
-        description: "Investment assumptions have been updated successfully.",
-      });
-      setIsEditing(false);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update assumptions. Please try again.",
-        variant: "destructive",
-      });
+  const updateAssumptionsMutation = useUpdateScenario({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/scenarios", scenario.id] });
+        queryClient.invalidateQueries({ queryKey: ["/api/calc", scenario.id] });
+        toast({
+          title: "Assumptions Updated",
+          description: "Investment assumptions have been updated successfully.",
+        });
+        setIsEditing(false);
+      },
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to update assumptions. Please try again.",
+          variant: "destructive",
+        });
+      },
     },
   });
 
   const handleSave = () => {
-    updateAssumptionsMutation.mutate(editValues);
+    updateAssumptionsMutation.mutate({
+      id: scenario.id,
+      data: {
+        assumptions: {
+          ...assumptions,
+          ...editValues,
+          source: 'user',
+        },
+      },
+    });
   };
 
   const handleCancel = () => {

@@ -166,3 +166,179 @@ export interface CrmDefaultsData {
   updatedAt?: string | null;
 }
 
+export type CreateScenarioBodyMode = typeof CreateScenarioBodyMode[keyof typeof CreateScenarioBodyMode];
+
+
+export const CreateScenarioBodyMode = {
+  quick: 'quick',
+  detailed: 'detailed',
+} as const;
+
+/**
+ * Fields required to create a new scenario (userId is set server-side)
+ */
+export interface CreateScenarioBody {
+  name: string;
+  mode: CreateScenarioBodyMode;
+  /** @nullable */
+  leadId?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type UpdateScenarioAssumptionsBodySource = typeof UpdateScenarioAssumptionsBodySource[keyof typeof UpdateScenarioAssumptionsBodySource] | null;
+
+
+export const UpdateScenarioAssumptionsBodySource = {
+  crm: 'crm',
+  user: 'user',
+} as const;
+
+/**
+ * Partial assumptions payload for a scenario update
+ */
+export interface UpdateScenarioAssumptionsBody {
+  /** @nullable */
+  inflationHeadline?: string | null;
+  /** @nullable */
+  inflationEdu?: string | null;
+  /** @nullable */
+  inflationHealth?: string | null;
+  /** @nullable */
+  returnPre?: string | null;
+  /** @nullable */
+  returnPost?: string | null;
+  /** @nullable */
+  lifeExpectancy?: number | null;
+  /** @nullable */
+  source?: UpdateScenarioAssumptionsBodySource;
+}
+
+/**
+ * Partial update payload for a scenario
+ */
+export interface UpdateScenarioBody {
+  name?: string;
+  /** @nullable */
+  leadId?: string | null;
+  assumptions?: UpdateScenarioAssumptionsBody;
+}
+
+export type UpdateCrmDefaultsBodyTaxRegime = typeof UpdateCrmDefaultsBodyTaxRegime[keyof typeof UpdateCrmDefaultsBodyTaxRegime];
+
+
+export const UpdateCrmDefaultsBodyTaxRegime = {
+  old: 'old',
+  new: 'new',
+} as const;
+
+/**
+ * Numeric fields to overwrite the global CRM planning defaults
+ */
+export interface UpdateCrmDefaultsBody {
+  /**
+     * @minimum 0
+     * @maximum 20
+     */
+  inflationHeadline: number;
+  /**
+     * @minimum 0
+     * @maximum 20
+     */
+  inflationEdu: number;
+  /**
+     * @minimum 0
+     * @maximum 20
+     */
+  inflationHealth: number;
+  /**
+     * @minimum 0
+     * @maximum 30
+     */
+  returnPre: number;
+  /**
+     * @minimum 0
+     * @maximum 30
+     */
+  returnPost: number;
+  /**
+     * @minimum 60
+     * @maximum 100
+     */
+  lifeExpectancy: number;
+  taxRegime: UpdateCrmDefaultsBodyTaxRegime;
+}
+
+export interface QuickPlanChildBody {
+  name?: string;
+  dob?: string;
+  /** @nullable */
+  eduTodaysCost?: number | null;
+  /** @nullable */
+  marriageTodaysCost?: number | null;
+}
+
+export interface QuickPlanAssumptionsBody {
+  /** @nullable */
+  inflationHeadline?: number | null;
+  /** @nullable */
+  returnPre?: number | null;
+  /** @nullable */
+  returnPost?: number | null;
+}
+
+export interface QuickPlanMiniRetirementBody {
+  /** @nullable */
+  startYear?: number | null;
+  /** @nullable */
+  durationMonths?: number | null;
+}
+
+export interface QuickPlanExistingEMIBody {
+  /** @nullable */
+  emiAmount?: number | null;
+  /** @nullable */
+  tenureRemainingMonths?: number | null;
+}
+
+/**
+ * Quick-plan form submission body
+ */
+export interface QuickPlanBody {
+  fullName: string;
+  dob: string;
+  retirementAge: number;
+  spouseDob?: string;
+  monthlyIncomeTotal: number;
+  monthlyExpenseTotal: number;
+  monthlySavings: number;
+  /** @nullable */
+  incomeGrowthRate?: number | null;
+  /** @nullable */
+  assetsLumpSum?: number | null;
+  /** @nullable */
+  preRetirementReturn?: number | null;
+  /** @nullable */
+  postRetirementReturn?: number | null;
+  children?: QuickPlanChildBody[];
+  assumptions?: QuickPlanAssumptionsBody;
+  miniRetirement?: QuickPlanMiniRetirementBody;
+  existingEMI?: QuickPlanExistingEMIBody;
+}
+
+/**
+ * Generic delete success response
+ */
+export interface DeleteResponse {
+  message: string;
+}
+
+/**
+ * Returned when a user's plan quota is exhausted
+ */
+export interface PlanLimitError {
+  message: string;
+  requiresPayment: boolean;
+}
+

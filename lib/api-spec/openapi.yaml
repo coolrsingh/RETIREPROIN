@@ -16,6 +16,8 @@ tags:
     description: Scenario operations
   - name: crm
     description: CRM operations
+  - name: plans
+    description: Plan operations
 paths:
   /healthz:
     get:
@@ -65,6 +67,35 @@ paths:
         "401":
           description: Unauthenticated
 
+    post:
+      operationId: createScenario
+      tags: [scenarios]
+      summary: Create a new scenario
+      description: Creates a new retirement scenario for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScenarioBody"
+      responses:
+        "200":
+          description: Created scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioSummary"
+        "400":
+          description: Invalid scenario data
+        "401":
+          description: Unauthenticated
+        "402":
+          description: Plan limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanLimitError"
+
   /scenarios/{id}:
     get:
       operationId: getScenario
@@ -89,6 +120,58 @@ paths:
         "404":
           description: Scenario not found
 
+    put:
+      operationId: updateScenario
+      tags: [scenarios]
+      summary: Update a scenario
+      description: Updates fields on an existing scenario (name, assumptions, etc.)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScenarioBody"
+      responses:
+        "200":
+          description: Updated scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioSummary"
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Scenario not found
+
+    delete:
+      operationId: deleteScenario
+      tags: [scenarios]
+      summary: Delete a scenario
+      description: Permanently deletes a scenario and all its associated data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scenario deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Scenario not found
+
   /crm/defaults:
     get:
       operationId: getCrmDefaults
@@ -102,6 +185,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CrmDefaultsData"
+
+    put:
+      operationId: updateCrmDefaults
+      tags: [crm]
+      summary: Update CRM planning defaults
+      description: Updates the global CRM planning assumption defaults (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCrmDefaultsBody"
+      responses:
+        "200":
+          description: Updated CRM defaults
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrmDefaultsData"
+        "400":
+          description: Invalid CRM defaults
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Admin access required
+
+  /plan/quick:
+    post:
+      operationId: createPlanQuick
+      tags: [plans]
+      summary: Create a quick retirement plan
+      description: Validates and persists a quick-form retirement plan with all sub-records in a single transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuickPlanBody"
+      responses:
+        "200":
+          description: Created scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioSummary"
+        "400":
+          description: Validation failed
+        "401":
+          description: Unauthenticated
+        "402":
+          description: Plan limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanLimitError"
 
 components:
   schemas:
@@ -251,3 +389,194 @@ components:
           type: ["string", "null"]
       required:
         - id
+
+    # ── Mutation request bodies ──────────────────────────────────────────────
+
+    CreateScenarioBody:
+      type: object
+      description: Fields required to create a new scenario (userId is set server-side)
+      properties:
+        name:
+          type: string
+        mode:
+          type: string
+          enum: ["quick", "detailed"]
+        leadId:
+          type: ["string", "null"]
+      required:
+        - name
+        - mode
+
+    UpdateScenarioAssumptionsBody:
+      type: object
+      description: Partial assumptions payload for a scenario update
+      properties:
+        inflationHeadline:
+          type: ["string", "null"]
+        inflationEdu:
+          type: ["string", "null"]
+        inflationHealth:
+          type: ["string", "null"]
+        returnPre:
+          type: ["string", "null"]
+        returnPost:
+          type: ["string", "null"]
+        lifeExpectancy:
+          type: ["integer", "null"]
+        source:
+          type: ["string", "null"]
+          enum: ["crm", "user", null]
+
+    UpdateScenarioBody:
+      type: object
+      description: Partial update payload for a scenario
+      properties:
+        name:
+          type: string
+        leadId:
+          type: ["string", "null"]
+        assumptions:
+          $ref: "#/components/schemas/UpdateScenarioAssumptionsBody"
+
+    UpdateCrmDefaultsBody:
+      type: object
+      description: Numeric fields to overwrite the global CRM planning defaults
+      properties:
+        inflationHeadline:
+          type: number
+          minimum: 0
+          maximum: 20
+        inflationEdu:
+          type: number
+          minimum: 0
+          maximum: 20
+        inflationHealth:
+          type: number
+          minimum: 0
+          maximum: 20
+        returnPre:
+          type: number
+          minimum: 0
+          maximum: 30
+        returnPost:
+          type: number
+          minimum: 0
+          maximum: 30
+        lifeExpectancy:
+          type: integer
+          minimum: 60
+          maximum: 100
+        taxRegime:
+          type: string
+          enum: ["old", "new"]
+      required:
+        - inflationHeadline
+        - inflationEdu
+        - inflationHealth
+        - returnPre
+        - returnPost
+        - lifeExpectancy
+        - taxRegime
+
+    QuickPlanChildBody:
+      type: object
+      properties:
+        name:
+          type: string
+        dob:
+          type: string
+        eduTodaysCost:
+          type: ["number", "null"]
+        marriageTodaysCost:
+          type: ["number", "null"]
+
+    QuickPlanAssumptionsBody:
+      type: object
+      properties:
+        inflationHeadline:
+          type: ["number", "null"]
+        returnPre:
+          type: ["number", "null"]
+        returnPost:
+          type: ["number", "null"]
+
+    QuickPlanMiniRetirementBody:
+      type: object
+      properties:
+        startYear:
+          type: ["integer", "null"]
+        durationMonths:
+          type: ["integer", "null"]
+
+    QuickPlanExistingEMIBody:
+      type: object
+      properties:
+        emiAmount:
+          type: ["number", "null"]
+        tenureRemainingMonths:
+          type: ["integer", "null"]
+
+    QuickPlanBody:
+      type: object
+      description: Quick-plan form submission body
+      properties:
+        fullName:
+          type: string
+        dob:
+          type: string
+        retirementAge:
+          type: integer
+        spouseDob:
+          type: string
+        monthlyIncomeTotal:
+          type: number
+        monthlyExpenseTotal:
+          type: number
+        monthlySavings:
+          type: number
+        incomeGrowthRate:
+          type: ["number", "null"]
+        assetsLumpSum:
+          type: ["number", "null"]
+        preRetirementReturn:
+          type: ["number", "null"]
+        postRetirementReturn:
+          type: ["number", "null"]
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuickPlanChildBody"
+        assumptions:
+          $ref: "#/components/schemas/QuickPlanAssumptionsBody"
+        miniRetirement:
+          $ref: "#/components/schemas/QuickPlanMiniRetirementBody"
+        existingEMI:
+          $ref: "#/components/schemas/QuickPlanExistingEMIBody"
+      required:
+        - fullName
+        - dob
+        - retirementAge
+        - monthlyIncomeTotal
+        - monthlyExpenseTotal
+        - monthlySavings
+
+    DeleteResponse:
+      type: object
+      description: Generic delete success response
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    PlanLimitError:
+      type: object
+      description: Returned when a user's plan quota is exhausted
+      properties:
+        message:
+          type: string
+        requiresPayment:
+          type: boolean
+      required:
+        - message
+        - requiresPayment

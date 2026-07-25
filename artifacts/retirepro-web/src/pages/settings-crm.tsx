@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useMutation } from "@tanstack/react-query";
-import { useGetCrmDefaults, getGetCrmDefaultsQueryKey } from "@workspace/api-client-react";
+import { useGetCrmDefaults, getGetCrmDefaultsQueryKey, useUpdateCrmDefaults } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,34 +51,33 @@ export default function SettingsCrm() {
     },
   });
 
-  const updateDefaultsMutation = useMutation({
-    mutationFn: async (data: CrmDefaults) => {
-      return await apiRequest("PUT", "/api/crm/defaults", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/crm/defaults"] });
-      toast({
-        title: "Settings Updated",
-        description: "CRM defaults have been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
+  const updateDefaultsMutation = useUpdateCrmDefaults({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/crm/defaults"] });
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Settings Updated",
+          description: "CRM defaults have been updated successfully.",
+        });
+      },
+      onError: (error) => {
+        if (isUnauthorizedError(error)) {
+          toast({
+            title: "Unauthorized",
+            description: "You are logged out. Logging in again...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          return;
+        }
+        toast({
+          title: "Error",
+          description: "Failed to update settings. Please try again.",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update settings. Please try again.",
-        variant: "destructive",
-      });
+      },
     },
   });
 
@@ -123,7 +121,7 @@ export default function SettingsCrm() {
   }, [user, navigate, toast]);
 
   const onSubmit = (data: CrmDefaults) => {
-    updateDefaultsMutation.mutate(data);
+    updateDefaultsMutation.mutate({ data });
   };
 
   if (isLoading || defaultsLoading) {

@@ -6,25 +6,35 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   AuthUser,
+  CreateScenarioBody,
   CrmDefaultsData,
+  DeleteResponse,
   HealthStatus,
+  PlanLimitError,
+  QuickPlanBody,
   ScenarioData,
-  ScenarioSummary
+  ScenarioSummary,
+  UpdateCrmDefaultsBody,
+  UpdateScenarioBody
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
-import type { ErrorType } from '../custom-fetch';
+import type { ErrorType , BodyType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -269,6 +279,78 @@ export function useListScenarios<TData = Awaited<ReturnType<typeof listScenarios
 
 
 
+export const getCreateScenarioUrl = () => {
+
+
+
+
+  return `/api/scenarios`
+}
+
+/**
+ * Creates a new retirement scenario for the authenticated user
+ * @summary Create a new scenario
+ */
+export const createScenario = async (createScenarioBody: CreateScenarioBody, options?: RequestInit): Promise<ScenarioSummary> => {
+
+  return customFetch<ScenarioSummary>(getCreateScenarioUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createScenarioBody,)
+  }
+);}
+
+
+
+
+export const getCreateScenarioMutationOptions = <TError = ErrorType<void | PlanLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createScenario>>, TError,{data: BodyType<CreateScenarioBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createScenario>>, TError,{data: BodyType<CreateScenarioBody>}, TContext> => {
+
+const mutationKey = ['createScenario'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createScenario>>, {data: BodyType<CreateScenarioBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createScenario(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateScenarioMutationResult = NonNullable<Awaited<ReturnType<typeof createScenario>>>
+    export type CreateScenarioMutationBody = BodyType<CreateScenarioBody>
+    export type CreateScenarioMutationError = ErrorType<void | PlanLimitError>
+
+    /**
+ * @summary Create a new scenario
+ */
+export const useCreateScenario = <TError = ErrorType<void | PlanLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createScenario>>, TError,{data: BodyType<CreateScenarioBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createScenario>>,
+        TError,
+        {data: BodyType<CreateScenarioBody>},
+        TContext
+      > => {
+      return useMutation(getCreateScenarioMutationOptions(options));
+    }
+
 export const getGetScenarioUrl = (id: string,) => {
 
 
@@ -347,6 +429,150 @@ export function useGetScenario<TData = Awaited<ReturnType<typeof getScenario>>, 
 
 
 
+export const getUpdateScenarioUrl = (id: string,) => {
+
+
+
+
+  return `/api/scenarios/${id}`
+}
+
+/**
+ * Updates fields on an existing scenario (name, assumptions, etc.)
+ * @summary Update a scenario
+ */
+export const updateScenario = async (id: string,
+    updateScenarioBody: UpdateScenarioBody, options?: RequestInit): Promise<ScenarioSummary> => {
+
+  return customFetch<ScenarioSummary>(getUpdateScenarioUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateScenarioBody,)
+  }
+);}
+
+
+
+
+export const getUpdateScenarioMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateScenario>>, TError,{id: string;data: BodyType<UpdateScenarioBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateScenario>>, TError,{id: string;data: BodyType<UpdateScenarioBody>}, TContext> => {
+
+const mutationKey = ['updateScenario'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateScenario>>, {id: string;data: BodyType<UpdateScenarioBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateScenario(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateScenarioMutationResult = NonNullable<Awaited<ReturnType<typeof updateScenario>>>
+    export type UpdateScenarioMutationBody = BodyType<UpdateScenarioBody>
+    export type UpdateScenarioMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a scenario
+ */
+export const useUpdateScenario = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateScenario>>, TError,{id: string;data: BodyType<UpdateScenarioBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateScenario>>,
+        TError,
+        {id: string;data: BodyType<UpdateScenarioBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateScenarioMutationOptions(options));
+    }
+
+export const getDeleteScenarioUrl = (id: string,) => {
+
+
+
+
+  return `/api/scenarios/${id}`
+}
+
+/**
+ * Permanently deletes a scenario and all its associated data
+ * @summary Delete a scenario
+ */
+export const deleteScenario = async (id: string, options?: RequestInit): Promise<DeleteResponse> => {
+
+  return customFetch<DeleteResponse>(getDeleteScenarioUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteScenarioMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteScenario>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteScenario>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteScenario'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteScenario>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteScenario(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteScenarioMutationResult = NonNullable<Awaited<ReturnType<typeof deleteScenario>>>
+
+    export type DeleteScenarioMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a scenario
+ */
+export const useDeleteScenario = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteScenario>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteScenario>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteScenarioMutationOptions(options));
+    }
+
 export const getGetCrmDefaultsUrl = () => {
 
 
@@ -424,4 +650,148 @@ export function useGetCrmDefaults<TData = Awaited<ReturnType<typeof getCrmDefaul
 
 
 
+
+export const getUpdateCrmDefaultsUrl = () => {
+
+
+
+
+  return `/api/crm/defaults`
+}
+
+/**
+ * Updates the global CRM planning assumption defaults (admin only)
+ * @summary Update CRM planning defaults
+ */
+export const updateCrmDefaults = async (updateCrmDefaultsBody: UpdateCrmDefaultsBody, options?: RequestInit): Promise<CrmDefaultsData> => {
+
+  return customFetch<CrmDefaultsData>(getUpdateCrmDefaultsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateCrmDefaultsBody,)
+  }
+);}
+
+
+
+
+export const getUpdateCrmDefaultsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCrmDefaults>>, TError,{data: BodyType<UpdateCrmDefaultsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCrmDefaults>>, TError,{data: BodyType<UpdateCrmDefaultsBody>}, TContext> => {
+
+const mutationKey = ['updateCrmDefaults'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCrmDefaults>>, {data: BodyType<UpdateCrmDefaultsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCrmDefaults(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCrmDefaultsMutationResult = NonNullable<Awaited<ReturnType<typeof updateCrmDefaults>>>
+    export type UpdateCrmDefaultsMutationBody = BodyType<UpdateCrmDefaultsBody>
+    export type UpdateCrmDefaultsMutationError = ErrorType<void>
+
+    /**
+ * @summary Update CRM planning defaults
+ */
+export const useUpdateCrmDefaults = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCrmDefaults>>, TError,{data: BodyType<UpdateCrmDefaultsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCrmDefaults>>,
+        TError,
+        {data: BodyType<UpdateCrmDefaultsBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateCrmDefaultsMutationOptions(options));
+    }
+
+export const getCreatePlanQuickUrl = () => {
+
+
+
+
+  return `/api/plan/quick`
+}
+
+/**
+ * Validates and persists a quick-form retirement plan with all sub-records in a single transaction
+ * @summary Create a quick retirement plan
+ */
+export const createPlanQuick = async (quickPlanBody: QuickPlanBody, options?: RequestInit): Promise<ScenarioSummary> => {
+
+  return customFetch<ScenarioSummary>(getCreatePlanQuickUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      quickPlanBody,)
+  }
+);}
+
+
+
+
+export const getCreatePlanQuickMutationOptions = <TError = ErrorType<void | PlanLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlanQuick>>, TError,{data: BodyType<QuickPlanBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPlanQuick>>, TError,{data: BodyType<QuickPlanBody>}, TContext> => {
+
+const mutationKey = ['createPlanQuick'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlanQuick>>, {data: BodyType<QuickPlanBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPlanQuick(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePlanQuickMutationResult = NonNullable<Awaited<ReturnType<typeof createPlanQuick>>>
+    export type CreatePlanQuickMutationBody = BodyType<QuickPlanBody>
+    export type CreatePlanQuickMutationError = ErrorType<void | PlanLimitError>
+
+    /**
+ * @summary Create a quick retirement plan
+ */
+export const useCreatePlanQuick = <TError = ErrorType<void | PlanLimitError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlanQuick>>, TError,{data: BodyType<QuickPlanBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPlanQuick>>,
+        TError,
+        {data: BodyType<QuickPlanBody>},
+        TContext
+      > => {
+      return useMutation(getCreatePlanQuickMutationOptions(options));
+    }
 

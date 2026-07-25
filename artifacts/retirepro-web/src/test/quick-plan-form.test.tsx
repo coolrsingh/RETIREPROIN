@@ -2,9 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import QuickPlanForm from "@/components/quick-plan-form";
+import type { QuickPlan } from "@shared/schema";
 
-function renderForm(overrides: { onSubmit?: ReturnType<typeof vi.fn>; isLoading?: boolean } = {}) {
-  const onSubmit = overrides.onSubmit ?? vi.fn();
+function renderForm(overrides: { onSubmit?: (data: QuickPlan) => void; isLoading?: boolean } = {}) {
+  // Cast vi.fn() so it satisfies the typed prop and retains .mock for assertions
+  const onSubmit = (overrides.onSubmit ?? vi.fn()) as ReturnType<typeof vi.fn> & ((data: QuickPlan) => void);
   const isLoading = overrides.isLoading ?? false;
   render(<QuickPlanForm onSubmit={onSubmit} isLoading={isLoading} />);
   return { onSubmit };

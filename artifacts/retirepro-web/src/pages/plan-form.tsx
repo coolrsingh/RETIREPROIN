@@ -3,8 +3,8 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { type QuickPlan } from "@shared/schema";
 import QuickPlanForm from "@/components/quick-plan-form";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useCreatePlanQuick } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
@@ -39,46 +39,45 @@ export default function PlanForm() {
     enabled: isAuthenticated,
   });
 
-  const createPlanMutation = useMutation({
-    mutationFn: async (data: QuickPlan) => {
-      return await apiRequest("POST", "/api/plan/quick", data);
-    },
-    onSuccess: (scenario: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
-      toast({
-        title: "Plan Created Successfully",
-        description: "Your retirement plan has been created and calculated.",
-      });
-      if (scenario?.id) {
-        navigate(`/plan/${scenario.id}`);
-      } else {
-        navigate("/");
-      }
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
+  const createPlanMutation = useCreatePlanQuick({
+    mutation: {
+      onSuccess: (scenario) => {
+        queryClient.invalidateQueries({ queryKey: ["/api/scenarios"] });
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Plan Created Successfully",
+          description: "Your retirement plan has been created and calculated.",
+        });
+        if (scenario?.id) {
+          navigate(`/plan/${scenario.id}`);
+        } else {
+          navigate("/");
+        }
+      },
+      onError: (error) => {
+        if (isUnauthorizedError(error)) {
+          toast({
+            title: "Unauthorized",
+            description: "You are logged out. Logging in again...",
+            variant: "destructive",
+          });
+          setTimeout(() => { window.location.href = "/api/login"; }, 500);
+          return;
+        }
+        if ((error as any).status === 402 || (error as any).message?.toLowerCase().includes("plan limit")) {
+          setShowPlanLimitModal(true);
+          return;
+        }
+        toast({
+          title: "Error Creating Plan",
+          description: (error as any).message || "An unexpected error occurred. Please try again.",
           variant: "destructive",
         });
-        setTimeout(() => { window.location.href = "/api/login"; }, 500);
-        return;
-      }
-      if ((error as any).status === 402 || error.message.toLowerCase().includes("plan limit")) {
-        setShowPlanLimitModal(true);
-        return;
-      }
-      toast({
-        title: "Error Creating Plan",
-        description: error.message || "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      },
     },
   });
 
   const onSubmit = (data: QuickPlan) => {
-    createPlanMutation.mutate(data);
+    createPlanMutation.mutate({ data: data as any });
   };
 
   useEffect(() => {

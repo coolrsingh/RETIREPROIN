@@ -51,6 +51,28 @@ export const ListScenariosResponse = zod.array(ListScenariosResponseItem)
 
 
 /**
+ * Creates a new retirement scenario for the authenticated user
+ * @summary Create a new scenario
+ */
+export const CreateScenarioBody = zod.object({
+  "name": zod.string(),
+  "mode": zod.enum(['quick', 'detailed']),
+  "leadId": zod.string().nullish()
+}).describe('Fields required to create a new scenario (userId is set server-side)')
+
+export const CreateScenarioResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "name": zod.string(),
+  "mode": zod.enum(['quick', 'detailed']),
+  "leadId": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "updatedAt": zod.string().nullish(),
+  "selfRetirementAge": zod.number().nullish()
+}).describe('Brief scenario info for list views')
+
+
+/**
  * Returns a retirement scenario with all associated data (assumptions, members, income, etc.)
  * @summary Get a single scenario with all data
  */
@@ -85,6 +107,53 @@ export const GetScenarioResponse = zod.object({
 
 
 /**
+ * Updates fields on an existing scenario (name, assumptions, etc.)
+ * @summary Update a scenario
+ */
+export const UpdateScenarioParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateScenarioBody = zod.object({
+  "name": zod.string().optional(),
+  "leadId": zod.string().nullish(),
+  "assumptions": zod.object({
+  "inflationHeadline": zod.string().nullish(),
+  "inflationEdu": zod.string().nullish(),
+  "inflationHealth": zod.string().nullish(),
+  "returnPre": zod.string().nullish(),
+  "returnPost": zod.string().nullish(),
+  "lifeExpectancy": zod.number().nullish(),
+  "source": zod.union([zod.literal('crm'),zod.literal('user'),zod.literal(null)]).nullish()
+}).optional().describe('Partial assumptions payload for a scenario update')
+}).describe('Partial update payload for a scenario')
+
+export const UpdateScenarioResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "name": zod.string(),
+  "mode": zod.enum(['quick', 'detailed']),
+  "leadId": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "updatedAt": zod.string().nullish(),
+  "selfRetirementAge": zod.number().nullish()
+}).describe('Brief scenario info for list views')
+
+
+/**
+ * Permanently deletes a scenario and all its associated data
+ * @summary Delete a scenario
+ */
+export const DeleteScenarioParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteScenarioResponse = zod.object({
+  "message": zod.string()
+}).describe('Generic delete success response')
+
+
+/**
  * Returns the global CRM planning assumption defaults
  * @summary Get CRM planning defaults
  */
@@ -99,5 +168,101 @@ export const GetCrmDefaultsResponse = zod.object({
   "taxRegime": zod.union([zod.literal('old'),zod.literal('new'),zod.literal(null)]).nullish(),
   "updatedAt": zod.string().nullish()
 }).describe('Global CRM planning assumption defaults')
+
+
+/**
+ * Updates the global CRM planning assumption defaults (admin only)
+ * @summary Update CRM planning defaults
+ */
+export const updateCrmDefaultsBodyInflationHeadlineMin = 0;
+export const updateCrmDefaultsBodyInflationHeadlineMax = 20;
+
+export const updateCrmDefaultsBodyInflationEduMin = 0;
+export const updateCrmDefaultsBodyInflationEduMax = 20;
+
+export const updateCrmDefaultsBodyInflationHealthMin = 0;
+export const updateCrmDefaultsBodyInflationHealthMax = 20;
+
+export const updateCrmDefaultsBodyReturnPreMin = 0;
+export const updateCrmDefaultsBodyReturnPreMax = 30;
+
+export const updateCrmDefaultsBodyReturnPostMin = 0;
+export const updateCrmDefaultsBodyReturnPostMax = 30;
+
+export const updateCrmDefaultsBodyLifeExpectancyMin = 60;
+export const updateCrmDefaultsBodyLifeExpectancyMax = 100;
+
+
+
+export const UpdateCrmDefaultsBody = zod.object({
+  "inflationHeadline": zod.number().min(updateCrmDefaultsBodyInflationHeadlineMin).max(updateCrmDefaultsBodyInflationHeadlineMax),
+  "inflationEdu": zod.number().min(updateCrmDefaultsBodyInflationEduMin).max(updateCrmDefaultsBodyInflationEduMax),
+  "inflationHealth": zod.number().min(updateCrmDefaultsBodyInflationHealthMin).max(updateCrmDefaultsBodyInflationHealthMax),
+  "returnPre": zod.number().min(updateCrmDefaultsBodyReturnPreMin).max(updateCrmDefaultsBodyReturnPreMax),
+  "returnPost": zod.number().min(updateCrmDefaultsBodyReturnPostMin).max(updateCrmDefaultsBodyReturnPostMax),
+  "lifeExpectancy": zod.number().min(updateCrmDefaultsBodyLifeExpectancyMin).max(updateCrmDefaultsBodyLifeExpectancyMax),
+  "taxRegime": zod.enum(['old', 'new'])
+}).describe('Numeric fields to overwrite the global CRM planning defaults')
+
+export const UpdateCrmDefaultsResponse = zod.object({
+  "id": zod.string(),
+  "inflationHeadline": zod.string().nullish(),
+  "inflationEdu": zod.string().nullish(),
+  "inflationHealth": zod.string().nullish(),
+  "returnPre": zod.string().nullish(),
+  "returnPost": zod.string().nullish(),
+  "lifeExpectancy": zod.number().nullish(),
+  "taxRegime": zod.union([zod.literal('old'),zod.literal('new'),zod.literal(null)]).nullish(),
+  "updatedAt": zod.string().nullish()
+}).describe('Global CRM planning assumption defaults')
+
+
+/**
+ * Validates and persists a quick-form retirement plan with all sub-records in a single transaction
+ * @summary Create a quick retirement plan
+ */
+export const CreatePlanQuickBody = zod.object({
+  "fullName": zod.string(),
+  "dob": zod.string(),
+  "retirementAge": zod.number(),
+  "spouseDob": zod.string().optional(),
+  "monthlyIncomeTotal": zod.number(),
+  "monthlyExpenseTotal": zod.number(),
+  "monthlySavings": zod.number(),
+  "incomeGrowthRate": zod.number().nullish(),
+  "assetsLumpSum": zod.number().nullish(),
+  "preRetirementReturn": zod.number().nullish(),
+  "postRetirementReturn": zod.number().nullish(),
+  "children": zod.array(zod.object({
+  "name": zod.string().optional(),
+  "dob": zod.string().optional(),
+  "eduTodaysCost": zod.number().nullish(),
+  "marriageTodaysCost": zod.number().nullish()
+})).optional(),
+  "assumptions": zod.object({
+  "inflationHeadline": zod.number().nullish(),
+  "returnPre": zod.number().nullish(),
+  "returnPost": zod.number().nullish()
+}).optional(),
+  "miniRetirement": zod.object({
+  "startYear": zod.number().nullish(),
+  "durationMonths": zod.number().nullish()
+}).optional(),
+  "existingEMI": zod.object({
+  "emiAmount": zod.number().nullish(),
+  "tenureRemainingMonths": zod.number().nullish()
+}).optional()
+}).describe('Quick-plan form submission body')
+
+export const CreatePlanQuickResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "name": zod.string(),
+  "mode": zod.enum(['quick', 'detailed']),
+  "leadId": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "updatedAt": zod.string().nullish(),
+  "selfRetirementAge": zod.number().nullish()
+}).describe('Brief scenario info for list views')
 
 
