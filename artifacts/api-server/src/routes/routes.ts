@@ -231,6 +231,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dob: planData.spouseDob,
             dependent: false,
           }] : []),
+          ...(planData.children ?? []).map((child: any, i: number) => ({
+            id: `child-${i}`,
+            relation: 'child',
+            name: child.name || `Child ${i + 1}`,
+            dob: child.dob && child.dob.trim() !== '' ? child.dob : null,
+            dependent: true,
+          })),
         ],
         incomeItems: [
           {
