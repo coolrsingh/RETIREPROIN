@@ -73,6 +73,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
     <>
     <style>{advisorStyles}</style>
     <section
+      id="advisor-section"
       className="advisor-section-outer px-5 sm:px-6 py-14 sm:py-20 lg:py-[88px]"
       style={{
         background: "linear-gradient(160deg, #FBF8F2 0%, #FEF3E2 60%, #FBF8F2 100%)",
