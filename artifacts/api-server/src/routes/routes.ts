@@ -250,17 +250,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             amountMonthly: String(planData.monthlyExpenseTotal),
           },
         ],
-        goals: (planData.children ?? []).flatMap((child, i) => {
-          const childBirth = child.dob ? new Date(child.dob).getFullYear() : currentYear + 5;
-          const goals: any[] = [];
-          if (child.eduTodaysCost && child.eduTodaysCost > 0) {
-            goals.push({ id: `edu-${i}`, kind: 'child_edu', todaysCost: String(child.eduTodaysCost), targetYear: childBirth + 20, inflationCategory: 'education' });
-          }
-          if (child.marriageTodaysCost && child.marriageTodaysCost > 0) {
-            goals.push({ id: `mar-${i}`, kind: 'child_marriage', todaysCost: String(child.marriageTodaysCost), targetYear: childBirth + 30, inflationCategory: 'headline' });
-          }
-          return goals;
-        }),
+        goals: [
+          ...(planData.children ?? []).flatMap((child, i) => {
+            const childBirth = child.dob ? new Date(child.dob).getFullYear() : currentYear + 5;
+            const goals: any[] = [];
+            if (child.eduTodaysCost && child.eduTodaysCost > 0) {
+              goals.push({ id: `edu-${i}`, kind: 'child_edu', todaysCost: String(child.eduTodaysCost), targetYear: childBirth + 20, inflationCategory: 'education' });
+            }
+            if (child.marriageTodaysCost && child.marriageTodaysCost > 0) {
+              goals.push({ id: `mar-${i}`, kind: 'child_marriage', todaysCost: String(child.marriageTodaysCost), targetYear: childBirth + 30, inflationCategory: 'headline' });
+            }
+            return goals;
+          }),
+          ...(planData.customGoals ?? []).map((g, i) => ({
+            id: `custom-${i}`,
+            kind: 'other',
+            name: g.name,
+            todaysCost: String(g.todaysCost),
+            targetYear: currentYear + g.yearsFromNow,
+            inflationCategory: 'headline',
+          })),
+        ],
         assets: planData.assetsLumpSum && planData.assetsLumpSum > 0 ? [{
           id: '1',
           kind: 'equity',
@@ -450,7 +460,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
 
-          // 8. Mini retirement
+          // 8. Custom goals
+          if (planData.customGoals && planData.customGoals.length > 0) {
+            for (const g of planData.customGoals) {
+              await tx.insert(goals).values({
+                scenarioId,
+                kind: 'other',
+                name: g.name,
+                todaysCost: g.todaysCost.toString(),
+                targetYear: new Date().getFullYear() + g.yearsFromNow,
+                inflationCategory: 'headline',
+              });
+            }
+          }
+
+          // 9. Mini retirement
           if (planData.miniRetirement?.startYear && planData.miniRetirement?.durationMonths) {
             await tx.insert(miniRetirements).values({
               scenarioId,

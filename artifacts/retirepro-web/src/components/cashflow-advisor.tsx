@@ -18,6 +18,11 @@ interface CashflowAdvisorProps {
     cashflowSeries: { year: number; income: number; expenses: number; surplus: number }[];
     netWorthSeries?: { year: number; value: number }[];
     markers?: { year: number; type: string; label: string }[];
+    yearlyDetail?: {
+      year: number;
+      goalExpenses: number;
+      notes: string[];
+    }[];
   };
 }
 
@@ -84,6 +89,25 @@ export default function CashflowAdvisor({ calculations }: CashflowAdvisorProps) 
     return recent.reduce((s, r) => s + r.surplus, 0) / recent.length / 12;
   }, [cashflowSeries]);
 
+  // Child / custom goal SIP recommendations
+  const goalSipRows = useMemo(() => {
+    const markers = calculations.markers || [];
+    const yearlyDetail = calculations.yearlyDetail || [];
+    const currentYear = new Date().getFullYear();
+    return markers
+      .filter(m => ["education", "marriage", "other"].includes(m.type) && m.year > currentYear)
+      .map(m => {
+        const detail = yearlyDetail.find(d => d.year === m.year);
+        const inflatedCost = detail?.goalExpenses ?? 0;
+        const yearsAway = m.year - currentYear;
+        const sip = inflatedCost > 0 && yearsAway > 0
+          ? sipToCloseGap(inflatedCost, yearsAway, 0.12)
+          : 0;
+        return { marker: m, inflatedCost, sip, yearsAway };
+      })
+      .filter(r => r.inflatedCost > 0 && r.sip > 0);
+  }, [calculations.markers, calculations.yearlyDetail]);
+
   const savingsBoostNeeded = hasFundingGap && currentAvgSurplus > 0
     ? Math.min(100, Math.round((sipFlat / currentAvgSurplus) * 100))
     : null;
@@ -122,6 +146,56 @@ export default function CashflowAdvisor({ calculations }: CashflowAdvisorProps) 
         <Lightbulb className="h-5 w-5 text-amber-500" />
         <h2 className="text-lg font-bold text-slate-900">Your Retirement Advisor — Personal Insights</h2>
       </div>
+
+      {/* Child / Custom Goal SIP Planner — always shown when goals exist */}
+      {goalSipRows.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-orange-900">
+                <PiggyBank className="h-5 w-5 text-orange-600" />
+                Goal SIP Planner — Start saving for each milestone today
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-orange-700 mb-4 leading-relaxed">
+                Each of your upcoming goals has been inflation-adjusted. Here's exactly how much SIP you need to start <strong>today</strong> at 12% CAGR to fully fund each one:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {goalSipRows.map((row, i) => {
+                  const emoji = row.marker.type === "education" ? "🎓"
+                    : row.marker.type === "marriage" ? "💍"
+                    : "📍";
+                  return (
+                    <div key={i} className="bg-white rounded-xl border border-orange-100 p-4 shadow-sm">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">{emoji}</span>
+                        <div>
+                          <div className="font-bold text-slate-800 text-sm">{row.marker.label}</div>
+                          <div className="text-xs text-slate-500">in {row.yearsAway} year{row.yearsAway !== 1 ? "s" : ""} ({row.marker.year})</div>
+                        </div>
+                      </div>
+                      <div className="flex items-end justify-between mt-3">
+                        <div>
+                          <div className="text-xs text-slate-500 mb-0.5">Inflation-adjusted cost</div>
+                          <div className="font-bold text-slate-700">{fmt(row.inflatedCost)}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-orange-600 font-semibold mb-0.5">Monthly SIP needed</div>
+                          <div className="text-2xl font-black text-orange-700">{fmtM(row.sip)}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 bg-orange-50 rounded-lg px-2.5 py-1.5 text-xs text-orange-600">
+                        Total invested: {fmt(row.sip * 12 * row.yearsAway)} over {row.yearsAway}y at 12% → {fmt(row.inflatedCost)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Gap / Surplus Hero Card */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>

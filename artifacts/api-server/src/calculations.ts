@@ -111,6 +111,15 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
       }
     });
 
+  // Add custom goal markers
+  scenarioData.goals
+    .filter((g: any) => g.kind === 'other' && g.name && g.targetYear)
+    .forEach((g: any) => {
+      if (g.targetYear >= currentYear) {
+        markers.push({ year: g.targetYear, type: 'other', label: g.name });
+      }
+    });
+
   // Add retirement marker
   markers.push({ year: retirementYear, type: 'retirement', label: 'Retirement' });
 
@@ -187,7 +196,11 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         const childName = member.name || 'Child';
         
         if (childAge === 20) {
-          const eduGoal = scenarioData.goals.find((g: any) => g.kind === 'child_edu');
+          // Find this specific child's edu goal by matching targetYear
+          const childEduYear = childBirthYear + 20;
+          const eduGoal = scenarioData.goals.find(
+            (g: any) => g.kind === 'child_edu' && g.targetYear === childEduYear
+          ) || scenarioData.goals.find((g: any) => g.kind === 'child_edu');
           const eduCostToday = eduGoal ? parseFloat(eduGoal.todaysCost) : 1500000;
           const inflatedEduCost = eduCostToday * Math.pow(1 + inflationEdu, yearsFromNow);
           goalExpenses += inflatedEduCost;
@@ -195,7 +208,10 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         }
         
         if (childAge === 30) {
-          const marriageGoal = scenarioData.goals.find((g: any) => g.kind === 'child_marriage');
+          const childMarriageYear = childBirthYear + 30;
+          const marriageGoal = scenarioData.goals.find(
+            (g: any) => g.kind === 'child_marriage' && g.targetYear === childMarriageYear
+          ) || scenarioData.goals.find((g: any) => g.kind === 'child_marriage');
           const marriageCostToday = marriageGoal ? parseFloat(marriageGoal.todaysCost) : 2500000;
           const inflatedMarriageCost = marriageCostToday * Math.pow(1 + inflationHeadline, yearsFromNow);
           goalExpenses += inflatedMarriageCost;
@@ -203,6 +219,16 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         }
       }
     });
+
+    // Custom goal expenses (kind = 'other', has a specific targetYear)
+    scenarioData.goals
+      .filter((g: any) => g.kind === 'other' && g.targetYear === year)
+      .forEach((g: any) => {
+        const costToday = parseFloat(g.todaysCost || '0');
+        const inflatedCost = costToday * Math.pow(1 + inflationHeadline, yearsFromNow);
+        goalExpenses += inflatedCost;
+        notes.push(`Goal: ${g.name || 'Custom Goal'} — ₹${(inflatedCost / 100000).toFixed(1)}L (inflation-adjusted from ₹${(costToday / 100000).toFixed(1)}L today)`);
+      });
 
     // Apply investment returns and savings
     const returnRate = isPreRetirement ? returnPre : returnPost;

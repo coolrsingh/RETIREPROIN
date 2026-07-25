@@ -75,6 +75,11 @@ export const quickPlanSchema = z.object({
     emiAmount: z.number().min(0),
     tenureRemainingMonths: z.number().min(0),
   }).optional(),
+  customGoals: z.array(z.object({
+    name: z.string().min(1, "Goal name is required"),
+    todaysCost: z.number().min(1, "Goal amount is required"),
+    yearsFromNow: z.number().min(1).max(50),
+  })).optional(),
 });
 
 export type QuickPlan = z.infer<typeof quickPlanSchema>;

@@ -16,6 +16,7 @@ import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
 import CashflowAdvisor from "@/components/cashflow-advisor";
+import PeriodReport from "@/components/period-report";
 import KpiCards from "@/components/kpi-cards";
 import AssumptionsPanel from "@/components/assumptions-panel";
 import SavingsInsightsChart from "@/components/savings-insights-chart";
@@ -86,6 +87,12 @@ export default function PlanDashboard() {
     }
     return undefined;
   }, [calculations, calculationsLoading]);
+
+  // Scroll to top whenever the plan dashboard mounts (route doesn't change when
+  // navigating plan → dashboard, so ScrollToTop in App.tsx doesn't fire)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -340,15 +347,6 @@ export default function PlanDashboard() {
           </div>
         )}
 
-        {/* Cashflow Advisor — What You Should Do (sits directly above the Net Worth projection) */}
-        {calculations && !calculationsLoading && (
-          <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
-            <CardContent className="pt-4 pb-4">
-              <CashflowAdvisor calculations={calculations} />
-            </CardContent>
-          </Card>
-        )}
-
         {/* Net Worth Projection — full width */}
         <Card className="mb-8">
           <CardHeader>
@@ -412,6 +410,15 @@ export default function PlanDashboard() {
           </div>
         </div>
 
+        {/* AI Insight — sits directly above the Cashflow Analysis */}
+        {calculations && !calculationsLoading && (
+          <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+            <CardContent className="pt-4 pb-4">
+              <CashflowAdvisor calculations={calculations} />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Cashflow Analysis — full width */}
         <Card className="mb-8">
           <CardHeader>
@@ -431,6 +438,11 @@ export default function PlanDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Period Report — 5Y / 10Y window analysis */}
+        {calculations && !calculationsLoading && (
+          <PeriodReport calculations={calculations} />
+        )}
       </main>
 
       {/* Expert Connect — fixed vertical right-side sidebar poster */}

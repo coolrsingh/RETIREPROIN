@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Zap, Coffee, CreditCard, TrendingUp, Calculator, Lock } from "lucide-react";
+import { Plus, Trash2, Zap, Coffee, CreditCard, TrendingUp, Calculator, Lock, Target } from "lucide-react";
 
 interface QuickPlanFormProps {
   onSubmit: (data: QuickPlan) => void;
@@ -27,6 +27,7 @@ interface QuickPlanFormProps {
 
 export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: QuickPlanFormProps) {
   const [children, setChildren] = useState<any[]>([]);
+  const [customGoals, setCustomGoals] = useState<{ name: string; todaysCost: number; yearsFromNow: number }[]>([]);
   const [hasMiniRetirement, setHasMiniRetirement] = useState(false);
   const [hasExistingEMI, setHasExistingEMI] = useState(false);
   const [savingsAutoMode, setSavingsAutoMode] = useState(true);
@@ -78,10 +79,27 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
     form.setValue("children", updated);
   };
 
+  const addCustomGoal = () => {
+    setCustomGoals(prev => [...prev, { name: "", todaysCost: 0, yearsFromNow: 5 }]);
+  };
+
+  const removeCustomGoal = (index: number) => {
+    setCustomGoals(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateCustomGoal = (index: number, field: string, value: string | number) => {
+    setCustomGoals(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
   const handleSubmit = (data: QuickPlan) => {
     const cleanedData = {
       ...data,
       children,
+      customGoals: customGoals.filter(g => g.name.trim() && g.todaysCost > 0 && g.yearsFromNow > 0),
       miniRetirement: hasMiniRetirement ? data.miniRetirement : undefined,
       existingEMI: hasExistingEMI ? data.existingEMI : undefined,
     };
@@ -409,6 +427,88 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             {children.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No children added. Education 🎓 and marriage 💍 milestones will appear on the chart when you add a child.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Custom Goals */}
+        <Card data-testid="card-custom-goals">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-indigo-500" />
+                Custom Goals (Optional)
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addCustomGoal}
+                data-testid="button-add-custom-goal"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Goal
+              </Button>
+            </CardTitle>
+            <CardDescription>
+              Add any major financial goal (home renovation, world trip, business launch, etc.) — it will appear as a milestone on your projection chart and be factored into your plan
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {customGoals.map((goal, index) => (
+              <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 border rounded-xl bg-indigo-50/40">
+                <div>
+                  <Label className="text-xs font-semibold text-indigo-700 mb-1 block">Goal Name</Label>
+                  <Input
+                    placeholder="e.g. Home Renovation, World Trip"
+                    value={goal.name}
+                    onChange={e => updateCustomGoal(index, "name", e.target.value)}
+                    data-testid={`input-goal-name-${index}`}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-indigo-700 mb-1 block">Amount Today (₹)</Label>
+                  <Input
+                    type="number"
+                    placeholder="500000"
+                    value={goal.todaysCost || ""}
+                    onChange={e => updateCustomGoal(index, "todaysCost", Number(e.target.value) || 0)}
+                    data-testid={`input-goal-cost-${index}`}
+                    className="bg-white"
+                  />
+                </div>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <Label className="text-xs font-semibold text-indigo-700 mb-1 block">Years from Now</Label>
+                    <Input
+                      type="number"
+                      placeholder="5"
+                      min={1}
+                      max={50}
+                      value={goal.yearsFromNow || ""}
+                      onChange={e => updateCustomGoal(index, "yearsFromNow", Number(e.target.value) || 1)}
+                      data-testid={`input-goal-years-${index}`}
+                      className="bg-white"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeCustomGoal(index)}
+                    data-testid={`button-remove-goal-${index}`}
+                    className="mb-0.5"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {customGoals.length === 0 && (
+              <div className="text-center py-6 text-slate-400 text-sm">
+                No custom goals added. Add a goal and it will appear as a 📍 milestone on your retirement projection chart.
               </div>
             )}
           </CardContent>
