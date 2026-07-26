@@ -6,9 +6,15 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@tanstack/react-query": "catalog:",
     "@workspace/api-zod": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": ">=18"
