@@ -159,6 +159,17 @@ export default function Home() {
     setRenameDraft(scenario.name);
   };
 
+  const renameTrimmed = renameDraft.trim();
+  const isDuplicateName =
+    !!renameScenario &&
+    !!renameTrimmed &&
+    renameTrimmed.toLowerCase() !== renameScenario.name.toLowerCase() &&
+    !!(scenarios as any[])?.some(
+      (s: any) =>
+        s.id !== renameScenario.id &&
+        s.name.toLowerCase() === renameTrimmed.toLowerCase()
+    );
+
   const handleRenameSubmit = () => {
     if (!renameScenario) return;
     const trimmed = renameDraft.trim();
@@ -166,6 +177,7 @@ export default function Home() {
       setRenameScenario(null);
       return;
     }
+    if (isDuplicateName) return;
     renameMutation.mutate({ id: renameScenario.id, name: trimmed });
   };
 
@@ -461,7 +473,7 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>Rename Plan</DialogTitle>
           </DialogHeader>
-          <div className="py-2">
+          <div className="py-2 space-y-1.5">
             <Input
               value={renameDraft}
               onChange={(e) => setRenameDraft(e.target.value)}
@@ -473,7 +485,13 @@ export default function Home() {
               maxLength={120}
               placeholder="Plan name"
               data-testid="input-rename"
+              className={isDuplicateName ? "border-red-400 focus-visible:ring-red-300" : ""}
             />
+            {isDuplicateName && (
+              <p className="text-xs text-red-600" data-testid="rename-duplicate-error">
+                You already have a plan with this name.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenameScenario(null)}>
@@ -481,7 +499,7 @@ export default function Home() {
             </Button>
             <Button
               onClick={handleRenameSubmit}
-              disabled={renameMutation.isPending || !renameDraft.trim()}
+              disabled={renameMutation.isPending || !renameDraft.trim() || isDuplicateName}
               className="text-white"
               style={{ background: "var(--saffron)", borderColor: "transparent" }}
               data-testid="btn-rename-confirm"
