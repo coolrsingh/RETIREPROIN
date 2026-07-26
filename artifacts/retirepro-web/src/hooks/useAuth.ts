@@ -3,7 +3,7 @@ import { useGetAuthUser, getGetAuthUserQueryKey } from "@workspace/api-client-re
 export type { AuthUser } from "@workspace/api-client-react";
 
 export function useAuth() {
-  const { data: user, isLoading } = useGetAuthUser({
+  const { data: user, isLoading, error } = useGetAuthUser({
     query: { queryKey: getGetAuthUserQueryKey(), retry: false },
   });
 
@@ -11,5 +11,6 @@ export function useAuth() {
     user: user ?? null,
     isLoading,
     isAuthenticated: !!user,
+    error,
   };
 }

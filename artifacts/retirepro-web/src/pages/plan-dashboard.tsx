@@ -24,11 +24,11 @@ import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useGetScenario, getGetScenarioQueryKey, useGetCrmDefaults, getGetCrmDefaultsQueryKey } from "@workspace/api-client-react";
+import { useGetScenario, getGetScenarioQueryKey, useGetCrmDefaults, getGetCrmDefaultsQueryKey, ResponseValidationError } from "@workspace/api-client-react";
 
 export default function PlanDashboard() {
   const [match, params] = useRoute("/plan/:id");
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, error: authError } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showLeadModal, setShowLeadModal] = useState(false);
@@ -38,7 +38,7 @@ export default function PlanDashboard() {
   // Live return rate override (user can tweak without saving a new plan)
   const [liveRates, setLiveRates] = useState<{ pre: string; post: string } | null>(null);
 
-  const { data: scenario, isLoading: scenarioLoading } = useGetScenario(
+  const { data: scenario, isLoading: scenarioLoading, error: scenarioError } = useGetScenario(
     params?.id ?? "",
     { query: { queryKey: getGetScenarioQueryKey(params?.id ?? ""), enabled: isAuthenticated && !!params?.id } },
   );
@@ -93,6 +93,24 @@ export default function PlanDashboard() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
+
+  useEffect(() => {
+    const validationError = [authError, scenarioError].find(
+      (e) => e instanceof ResponseValidationError,
+    ) as ResponseValidationError | undefined;
+    if (validationError) {
+      console.error("[ResponseValidationError]", {
+        url: validationError.url,
+        method: validationError.method,
+        message: validationError.message,
+      });
+      toast({
+        title: "Update available",
+        description: "We deployed an update — please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [authError, scenarioError, toast]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useListScenarios, getListScenariosQueryKey } from "@workspace/api-client-react";
+import { useListScenarios, getListScenariosQueryKey, ResponseValidationError } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ import {
 import { formatCorpus } from "@/lib/formatCorpus";
 
 export default function Home() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, error: authError } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -48,7 +48,7 @@ export default function Home() {
   const [renameDraft, setRenameDraft] = useState("");
   const [deleteScenario, setDeleteScenario] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: scenarios, isLoading: scenariosLoading } = useListScenarios({
+  const { data: scenarios, isLoading: scenariosLoading, error: scenariosError } = useListScenarios({
     query: { queryKey: getListScenariosQueryKey(), enabled: isAuthenticated },
   });
 
@@ -117,6 +117,24 @@ export default function Home() {
       setDeleteScenario(null);
     },
   });
+
+  useEffect(() => {
+    const validationError = [authError, scenariosError].find(
+      (e) => e instanceof ResponseValidationError,
+    ) as ResponseValidationError | undefined;
+    if (validationError) {
+      console.error("[ResponseValidationError]", {
+        url: validationError.url,
+        method: validationError.method,
+        message: validationError.message,
+      });
+      toast({
+        title: "Update available",
+        description: "We deployed an update — please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [authError, scenariosError, toast]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
