@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useGetProfile, useUpdateProfile, getGetProfileQueryKey } from "@workspace/api-client-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,7 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: profile } = useQuery<any>({
-    queryKey: ["/api/profile"],
-  });
+  const { data: profile } = useGetProfile();
 
   const [form, setForm] = useState<any>({});
 
@@ -57,16 +56,17 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
     setEditOpen(true);
   };
 
-  const saveMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("PUT", "/api/profile", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setEditOpen(false);
-      toast({ title: "Profile saved", description: "Your details have been updated." });
-    },
-    onError: () => {
-      toast({ title: "Save failed", description: "Please try again.", variant: "destructive" });
+  const saveMutation = useUpdateProfile({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        setEditOpen(false);
+        toast({ title: "Profile saved", description: "Your details have been updated." });
+      },
+      onError: () => {
+        toast({ title: "Save failed", description: "Please try again.", variant: "destructive" });
+      },
     },
   });
 
@@ -223,7 +223,7 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}>
+            <Button onClick={() => saveMutation.mutate({ data: form })} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>

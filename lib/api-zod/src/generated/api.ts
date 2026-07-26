@@ -218,6 +218,91 @@ export const UpdateCrmDefaultsResponse = zod.object({
 
 
 /**
+ * Saves advisor lead details (name, phone, optional email). No authentication required.
+ * @summary Capture a lead
+ */
+export const CreateLeadBody = zod.object({
+  "name": zod.string(),
+  "phone": zod.string(),
+  "email": zod.string().nullish(),
+  "scenarioId": zod.string().nullish()
+}).describe('Lead capture form submission body')
+
+export const CreateLeadResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "phone": zod.string(),
+  "email": zod.string().nullish(),
+  "scenarioId": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "updatedAt": zod.string().nullish()
+}).describe('Created lead record')
+
+
+/**
+ * Returns the authenticated user's full profile including financial data
+ * @summary Get user profile
+ */
+export const GetProfileResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string().nullish(),
+  "firstName": zod.string().nullish(),
+  "lastName": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish(),
+  "role": zod.union([zod.literal('client'),zod.literal('admin'),zod.literal(null)]).nullish(),
+  "isPremium": zod.boolean().nullish(),
+  "planCount": zod.number(),
+  "shareCount": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "dob": zod.string().nullish(),
+  "retirementAge": zod.number().nullish(),
+  "monthlyIncome": zod.string().nullish(),
+  "monthlyExpenses": zod.string().nullish(),
+  "monthlySavings": zod.string().nullish(),
+  "incomeGrowthRate": zod.string().nullish(),
+  "currentAssets": zod.string().nullish()
+}).describe('Full user profile including financial data')
+
+
+/**
+ * Updates the authenticated user's profile fields (all fields optional)
+ * @summary Update user profile
+ */
+export const UpdateProfileBody = zod.object({
+  "firstName": zod.string().optional(),
+  "lastName": zod.string().optional(),
+  "phone": zod.string().optional(),
+  "dob": zod.string().optional(),
+  "retirementAge": zod.number().optional(),
+  "monthlyIncome": zod.string().optional(),
+  "monthlyExpenses": zod.string().optional(),
+  "monthlySavings": zod.string().optional(),
+  "incomeGrowthRate": zod.string().optional(),
+  "currentAssets": zod.string().optional()
+}).describe('Fields to update on the user profile (all optional)')
+
+export const UpdateProfileResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string().nullish(),
+  "firstName": zod.string().nullish(),
+  "lastName": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish(),
+  "role": zod.union([zod.literal('client'),zod.literal('admin'),zod.literal(null)]).nullish(),
+  "isPremium": zod.boolean().nullish(),
+  "planCount": zod.number(),
+  "shareCount": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "dob": zod.string().nullish(),
+  "retirementAge": zod.number().nullish(),
+  "monthlyIncome": zod.string().nullish(),
+  "monthlyExpenses": zod.string().nullish(),
+  "monthlySavings": zod.string().nullish(),
+  "incomeGrowthRate": zod.string().nullish(),
+  "currentAssets": zod.string().nullish()
+}).describe('Full user profile including financial data')
+
+
+/**
  * Validates and persists a quick-form retirement plan with all sub-records in a single transaction
  * @summary Create a quick retirement plan
  */

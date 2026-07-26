@@ -328,6 +328,100 @@ export interface QuickPlanBody {
 }
 
 /**
+ * Lead capture form submission body
+ */
+export interface CreateLeadBody {
+  name: string;
+  phone: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  scenarioId?: string | null;
+}
+
+/**
+ * Created lead record
+ */
+export interface LeadResponse {
+  id: string;
+  name: string;
+  phone: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  scenarioId?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type UserProfileRole = typeof UserProfileRole[keyof typeof UserProfileRole] | null;
+
+
+export const UserProfileRole = {
+  client: 'client',
+  admin: 'admin',
+} as const;
+
+/**
+ * Full user profile including financial data
+ */
+export interface UserProfile {
+  id: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
+  /** @nullable */
+  role?: UserProfileRole;
+  /** @nullable */
+  isPremium?: boolean | null;
+  planCount: number;
+  /** @nullable */
+  shareCount?: number | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  dob?: string | null;
+  /** @nullable */
+  retirementAge?: number | null;
+  /** @nullable */
+  monthlyIncome?: string | null;
+  /** @nullable */
+  monthlyExpenses?: string | null;
+  /** @nullable */
+  monthlySavings?: string | null;
+  /** @nullable */
+  incomeGrowthRate?: string | null;
+  /** @nullable */
+  currentAssets?: string | null;
+}
+
+/**
+ * Fields to update on the user profile (all optional)
+ */
+export interface UpdateProfileBody {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  dob?: string;
+  retirementAge?: number;
+  monthlyIncome?: string;
+  monthlyExpenses?: string;
+  monthlySavings?: string;
+  incomeGrowthRate?: string;
+  currentAssets?: string;
+}
+
+/**
  * Generic delete success response
  */
 export interface DeleteResponse {

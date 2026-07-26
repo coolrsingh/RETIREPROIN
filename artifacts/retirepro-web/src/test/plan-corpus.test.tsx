@@ -215,7 +215,7 @@ describe("AssumptionsPanel — save flow keeps plan-card corpus current", () => 
     // and renders the updated projectedCorpus without a hard reload.
     const listKey = getListScenariosQueryKey();
     const invalidatedKeys = invalidateSpy.mock.calls.map(
-      (args) => JSON.stringify(args[0]?.queryKey)
+      (args: unknown[]) => JSON.stringify((args[0] as { queryKey?: unknown })?.queryKey)
     );
     expect(invalidatedKeys).toContain(JSON.stringify(listKey));
   });
@@ -229,7 +229,7 @@ describe("AssumptionsPanel — save flow keeps plan-card corpus current", () => 
     await triggerSuccess();
 
     const invalidatedKeys = invalidateSpy.mock.calls.map(
-      (args) => JSON.stringify(args[0]?.queryKey)
+      (args: unknown[]) => JSON.stringify((args[0] as { queryKey?: unknown })?.queryKey)
     );
 
     // Individual scenario detail (plan dashboard)
@@ -253,7 +253,7 @@ describe("AssumptionsPanel — save flow keeps plan-card corpus current", () => 
 
     const listKey = JSON.stringify(getListScenariosQueryKey());
     const invalidatedKeys = invalidateSpy.mock.calls.map(
-      (args) => JSON.stringify(args[0]?.queryKey)
+      (args: unknown[]) => JSON.stringify((args[0] as { queryKey?: unknown })?.queryKey)
     );
     expect(invalidatedKeys).not.toContain(listKey);
   });

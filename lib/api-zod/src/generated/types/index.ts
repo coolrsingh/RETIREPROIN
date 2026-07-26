@@ -8,12 +8,14 @@
 
 export * from './authUser';
 export * from './authUserRole';
+export * from './createLeadBody';
 export * from './createScenarioBody';
 export * from './createScenarioBodyMode';
 export * from './crmDefaultsData';
 export * from './crmDefaultsDataTaxRegime';
 export * from './deleteResponse';
 export * from './healthStatus';
+export * from './leadResponse';
 export * from './planLimitError';
 export * from './quickPlanAssumptionsBody';
 export * from './quickPlanBody';
@@ -28,6 +30,9 @@ export * from './scenarioSummary';
 export * from './scenarioSummaryMode';
 export * from './updateCrmDefaultsBody';
 export * from './updateCrmDefaultsBodyTaxRegime';
+export * from './updateProfileBody';
 export * from './updateScenarioAssumptionsBody';
 export * from './updateScenarioAssumptionsBodySource';
 export * from './updateScenarioBody';
+export * from './userProfile';
+export * from './userProfileRole';

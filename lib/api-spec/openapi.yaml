@@ -18,6 +18,10 @@ tags:
     description: CRM operations
   - name: plans
     description: Plan operations
+  - name: leads
+    description: Lead capture operations
+  - name: profile
+    description: User profile operations
 paths:
   /healthz:
     get:
@@ -210,6 +214,65 @@ paths:
           description: Unauthenticated
         "403":
           description: Admin access required
+
+  /lead:
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Capture a lead
+      description: Saves advisor lead details (name, phone, optional email). No authentication required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadBody"
+      responses:
+        "200":
+          description: Created lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadResponse"
+        "400":
+          description: Invalid lead data
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      description: Returns the authenticated user's full profile including financial data
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthenticated
+
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update user profile
+      description: Updates the authenticated user's profile fields (all fields optional)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthenticated
 
   /plan/quick:
     post:
@@ -559,6 +622,113 @@ components:
         - monthlyIncomeTotal
         - monthlyExpenseTotal
         - monthlySavings
+
+    CreateLeadBody:
+      type: object
+      description: Lead capture form submission body
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: ["string", "null"]
+        scenarioId:
+          type: ["string", "null"]
+      required:
+        - name
+        - phone
+
+    LeadResponse:
+      type: object
+      description: Created lead record
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: ["string", "null"]
+        scenarioId:
+          type: ["string", "null"]
+        createdAt:
+          type: ["string", "null"]
+        updatedAt:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - phone
+
+    UserProfile:
+      type: object
+      description: Full user profile including financial data
+      properties:
+        id:
+          type: string
+        email:
+          type: ["string", "null"]
+        firstName:
+          type: ["string", "null"]
+        lastName:
+          type: ["string", "null"]
+        profileImageUrl:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+          enum: ["client", "admin", null]
+        isPremium:
+          type: ["boolean", "null"]
+        planCount:
+          type: integer
+        shareCount:
+          type: ["integer", "null"]
+        phone:
+          type: ["string", "null"]
+        dob:
+          type: ["string", "null"]
+        retirementAge:
+          type: ["integer", "null"]
+        monthlyIncome:
+          type: ["string", "null"]
+        monthlyExpenses:
+          type: ["string", "null"]
+        monthlySavings:
+          type: ["string", "null"]
+        incomeGrowthRate:
+          type: ["string", "null"]
+        currentAssets:
+          type: ["string", "null"]
+      required:
+        - id
+        - planCount
+
+    UpdateProfileBody:
+      type: object
+      description: Fields to update on the user profile (all optional)
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        dob:
+          type: string
+        retirementAge:
+          type: integer
+        monthlyIncome:
+          type: string
+        monthlyExpenses:
+          type: string
+        monthlySavings:
+          type: string
+        incomeGrowthRate:
+          type: string
+        currentAssets:
+          type: string
 
     DeleteResponse:
       type: object

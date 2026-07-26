@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useCreateLead } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,34 +42,35 @@ export default function LeadCaptureModal({ isOpen, onClose, scenarioId, onSucces
     },
   });
 
-  const createLeadMutation = useMutation({
-    mutationFn: async (data: LeadFormData) => {
-      return await apiRequest("POST", "/api/lead", {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        scenarioId: scenarioId,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Your details have been saved. Downloading PDF...",
-      });
-      onSuccess();
-      form.reset();
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to save your details. Please try again.",
-        variant: "destructive",
-      });
+  const createLeadMutation = useCreateLead({
+    mutation: {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Your details have been saved. Downloading PDF...",
+        });
+        onSuccess();
+        form.reset();
+      },
+      onError: () => {
+        toast({
+          title: "Error",
+          description: "Failed to save your details. Please try again.",
+          variant: "destructive",
+        });
+      },
     },
   });
 
   const onSubmit = (data: LeadFormData) => {
-    createLeadMutation.mutate(data);
+    createLeadMutation.mutate({
+      data: {
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        scenarioId: scenarioId ?? null,
+      },
+    });
   };
 
   return (
