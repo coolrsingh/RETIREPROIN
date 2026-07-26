@@ -25,6 +25,22 @@ const crmDefaultsUpdateSchema = z.object({
   taxRegime: z.enum(['old', 'new']),
 });
 
+const updateScenarioAssumptionsSchema = z.object({
+  inflationHeadline: z.string().nullable().optional(),
+  inflationEdu: z.string().nullable().optional(),
+  inflationHealth: z.string().nullable().optional(),
+  returnPre: z.string().nullable().optional(),
+  returnPost: z.string().nullable().optional(),
+  lifeExpectancy: z.number().int().nullable().optional(),
+  source: z.enum(['crm', 'user']).nullable().optional(),
+});
+
+const updateScenarioBodySchema = z.object({
+  name: z.string().optional(),
+  leadId: z.string().nullable().optional(),
+  assumptions: updateScenarioAssumptionsSchema.optional(),
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -167,7 +183,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Scenario not found" });
       }
 
-      const updatedScenario = await storage.updateScenario(req.params.id, req.body);
+      const parsed = updateScenarioBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid scenario data", issues: parsed.error.issues });
+      }
+
+      const updatedScenario = await storage.updateScenario(req.params.id, parsed.data);
 
       // Recalculate and persist the projected corpus before returning so
       // the next GET /api/scenarios list fetch always reflects the latest
