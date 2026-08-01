@@ -127,3 +127,37 @@ describe("AdvisorSection — valid submission", () => {
     );
   });
 });
+
+describe("AdvisorSection — optional email field", () => {
+  it("includes email in the POST body when the user fills it in", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    render(<AdvisorSection defaultName="Test User" />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    await user.type(screen.getByTestId("input-advisor-email"), "test@example.com");
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.email).toBe("test@example.com");
+  });
+
+  it("omits email from the POST body when the user leaves it blank", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    render(<AdvisorSection defaultName="Test User" />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    // email field intentionally left empty
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.email).toBeUndefined();
+  });
+});
