@@ -413,4 +413,18 @@ describe("QuickPlanForm – 320px layout regression (no horizontal overflow)", (
     expect(fieldGrid).not.toBeNull();
     expect(fieldGrid!.className).toContain("md:grid-cols-2");
   });
+
+  it("custom goals grid defaults to grid-cols-1 so it doesn't overflow a 320px screen", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(screen.getByTestId("button-add-custom-goal"));
+
+    // The goal row container lives inside card-custom-goals
+    const card = screen.getByTestId("card-custom-goals");
+    const goalRow = card.querySelector('[class*="grid-cols-1"]');
+    expect(goalRow).not.toBeNull();
+    // Also confirm the sm: responsive variant is present so wider screens use more cols
+    expect(goalRow!.className).toContain("sm:grid-cols-3");
+  });
 });
