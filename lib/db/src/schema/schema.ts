@@ -344,7 +344,10 @@ export const quickPlanSchema = z.object({
     dob: z.string().optional(),
     eduTodaysCost: z.number().min(0).optional(),
     marriageTodaysCost: z.number().min(0).optional(),
-  })).optional(),
+  }).refine(
+    (child) => !!(child.name?.trim()) || !!(child.dob?.trim()),
+    { message: "Child must have a name or date of birth", path: ["dob"] }
+  )).optional(),
   assetsLumpSum: z.number().min(0).optional(),
   assetsEquity: z.number().min(0).optional(),
   assetsDebt: z.number().min(0).optional(),
