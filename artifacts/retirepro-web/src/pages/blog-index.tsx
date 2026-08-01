@@ -6,6 +6,17 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 
 const POSTS = [
   {
+    slug: "best-retirement-planning-tool-india",
+    title: "The Single Best Tool to Fix India's Looming Retirement Crisis",
+    excerpt: "Most Indians are planning retirement with dangerously wrong numbers. Here's why generic two-box calculators fail — and how RetirePro gives you the honest, India-specific picture in 60 seconds.",
+    readTime: "9 min read",
+    tag: "Retirement Planning",
+    tagColor: "bg-blue-100 text-blue-800",
+    gradient: "from-slate-900 via-blue-950 to-indigo-900",
+    date: "1 Aug 2026",
+    dateTime: "2026-08-01",
+  },
+  {
     slug: "nps-vs-ups-vs-ops-which-is-better",
     title: "NPS vs UPS vs OPS: Which Pension Scheme Is Actually Better for You? (2026 Deep Dive)",
     excerpt: "UPS went live April 2025 — and lakhs of govt employees face an irreversible choice. Full comparison: pension amount, contributions, family pension, market risk, and who should pick what.",
