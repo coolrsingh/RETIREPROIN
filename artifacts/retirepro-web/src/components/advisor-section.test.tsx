@@ -128,6 +128,37 @@ describe("AdvisorSection — valid submission", () => {
   });
 });
 
+describe("AdvisorSection — Submit another button", () => {
+  it("returns to the form and hides the success message when Submit another is clicked", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    render(<AdvisorSection />);
+    const user = userEvent.setup();
+
+    // Submit successfully
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    // Wait for success screen
+    await waitFor(() =>
+      expect(screen.getByText("You're on the list!")).toBeInTheDocument(),
+    );
+
+    // Click "Submit another"
+    await user.click(screen.getByRole("button", { name: /submit another/i }));
+
+    // Success message should be gone
+    await waitFor(() =>
+      expect(screen.queryByText("You're on the list!")).not.toBeInTheDocument(),
+    );
+
+    // Form inputs should be visible again
+    expect(screen.getByTestId("input-advisor-phone")).toBeInTheDocument();
+    expect(screen.getByTestId("input-advisor-name")).toBeInTheDocument();
+    expect(screen.getByTestId("input-advisor-email")).toBeInTheDocument();
+    expect(screen.getByTestId("button-advisor-submit")).toBeInTheDocument();
+  });
+});
+
 describe("AdvisorSection — optional email field", () => {
   it("includes email in the POST body when the user fills it in", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
