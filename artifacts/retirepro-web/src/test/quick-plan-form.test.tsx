@@ -244,6 +244,28 @@ describe("QuickPlanForm – child row validation", () => {
     });
   });
 
+  it("clears the blank-child error when the user types a name without re-submitting", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await fillRequiredFields(user);
+
+    // Add a blank child row and submit to trigger the error
+    await user.click(screen.getByTestId("button-add-child"));
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("error-child-dob-0")).toBeInTheDocument();
+    });
+
+    // Type a name — the error should clear immediately, no re-submit needed
+    await user.type(screen.getByTestId("input-child-name-0"), "Alice");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("error-child-dob-0")).not.toBeInTheDocument();
+    });
+  });
+
   it("removes the error when the child row is removed before submitting", async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderForm();

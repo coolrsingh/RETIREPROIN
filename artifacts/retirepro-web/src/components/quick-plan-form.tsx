@@ -356,7 +356,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                       const updated = [...children];
                       updated[index].name = e.target.value;
                       setChildren(updated);
-                      form.setValue("children", updated);
+                      form.setValue("children", updated, { shouldValidate: true });
                     }}
                     data-testid={`input-child-name-${index}`}
                   />
