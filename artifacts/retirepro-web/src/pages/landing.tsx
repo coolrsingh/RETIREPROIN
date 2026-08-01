@@ -499,12 +499,18 @@ export default function Landing() {
                   flex: "0 0 auto", width: "100%", maxWidth: 440,
                   background: "#060E1A", borderRadius: 14, padding: "20px 24px",
                   border: "1px solid rgba(163,230,53,.15)",
+                  overflow: "hidden",
+                  minWidth: 0,
                 }}>
                   <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
                     {["#FF5F56","#FFBD2E","#27C93F"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
                     <span style={{ marginLeft: 6, fontSize: 11, color: "#4B5563", fontFamily: "var(--font-mono)" }}>advisor.insight</span>
                   </div>
-                  <div style={{ fontSize: 13, lineHeight: 1.7, minHeight: 60, fontFamily: "var(--font-mono)", color: "#A3E635" }}>
+                  <div style={{
+                    fontSize: 13, lineHeight: 1.7, minHeight: 60,
+                    fontFamily: "var(--font-mono)", color: "#A3E635",
+                    overflowWrap: "break-word", wordBreak: "break-word",
+                  }}>
                     <span style={{ color: "#4B5563" }}>&gt; </span>
                     <TypewriterCycle />
                   </div>
