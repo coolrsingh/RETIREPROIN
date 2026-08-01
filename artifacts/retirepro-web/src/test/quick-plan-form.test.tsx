@@ -385,4 +385,32 @@ describe("QuickPlanForm – 320px layout regression (no horizontal overflow)", (
     expect(childRow!.className).toContain("sm:grid-cols-2");
     expect(childRow!.className).toContain("md:grid-cols-5");
   });
+
+  it("mini-retirement field grid defaults to grid-cols-1 so it doesn't overflow when the toggle is on", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    // Enable the mini-retirement section
+    await user.click(screen.getByTestId("toggle-mini-retirement"));
+
+    // The revealed field grid must start single-column (md: breakpoint widens it)
+    const card = screen.getByTestId("card-mini-retirement");
+    const fieldGrid = card.querySelector('[class*="grid-cols-1"]');
+    expect(fieldGrid).not.toBeNull();
+    expect(fieldGrid!.className).toContain("md:grid-cols-2");
+  });
+
+  it("EMI field grid defaults to grid-cols-1 so it doesn't overflow when the toggle is on", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    // Enable the existing-EMI section
+    await user.click(screen.getByTestId("toggle-existing-emi"));
+
+    // The revealed field grid must start single-column (md: breakpoint widens it)
+    const card = screen.getByTestId("card-existing-emi");
+    const fieldGrid = card.querySelector('[class*="grid-cols-1"]');
+    expect(fieldGrid).not.toBeNull();
+    expect(fieldGrid!.className).toContain("md:grid-cols-2");
+  });
 });
