@@ -24,6 +24,7 @@ import Blog7 from "@/pages/blog-7";
 import Blog8 from "@/pages/blog-8";
 import Blog9 from "@/pages/blog-9";
 import Blog10 from "@/pages/blog-10";
+import Blog11 from "@/pages/blog-11";
 import BlogSubscribePopup from "@/components/blog-subscribe-popup";
 import GuestPlanPreview from "@/pages/guest-plan-preview";
 import FreePlan from "@/pages/free-plan";
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/blog/retirement-planning-self-employed-india" component={Blog8} />
       <Route path="/blog/nps-withdrawal-rules-2026" component={Blog9} />
       <Route path="/blog/best-retirement-planning-tool-india" component={Blog10} />
+      <Route path="/blog/sabbatical-mini-retirement-startup-calculator" component={Blog11} />
       <Route path="/plan/preview" component={GuestPlanPreview} />
       <Route path="/free-plan" component={FreePlan} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />

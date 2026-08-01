@@ -6,6 +6,17 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 
 const POSTS = [
   {
+    slug: "sabbatical-mini-retirement-startup-calculator",
+    title: "The Mini-Retirement Test: How a Techie Can Take 3 Years Off to Build a Startup Without Wrecking Retirement",
+    excerpt: "₹21.6 lakh of paused SIPs becomes ₹2.8 crore of missing corpus at 60. Here's the exact math on sabbaticals, runway, and how to model a career break without flying blind on retirement.",
+    readTime: "11 min read",
+    tag: "Mini Retirement",
+    tagColor: "bg-indigo-100 text-indigo-800",
+    gradient: "from-slate-800 via-indigo-950 to-slate-900",
+    date: "1 Aug 2026",
+    dateTime: "2026-08-01",
+  },
+  {
     slug: "best-retirement-planning-tool-india",
     title: "The Single Best Tool to Fix India's Looming Retirement Crisis",
     excerpt: "Most Indians are planning retirement with dangerously wrong numbers. Here's why generic two-box calculators fail — and how RetirePro gives you the honest, India-specific picture in 60 seconds.",
