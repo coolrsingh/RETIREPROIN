@@ -159,6 +159,45 @@ describe("AdvisorSection — Submit another button", () => {
   });
 });
 
+describe("AdvisorSection — duplicate submission prevention", () => {
+  it("disables the submit button and shows 'Sending…' while a fetch is in flight, and calls fetch only once", async () => {
+    // A fetch that never resolves so we can inspect mid-flight state
+    let resolveFetch!: () => void;
+    const inflight = new Promise<{ ok: boolean }>(resolve => {
+      resolveFetch = () => resolve({ ok: true });
+    });
+    mockFetch.mockReturnValueOnce(inflight);
+
+    render(<AdvisorSection defaultName="Test User" />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+
+    // Click submit — fetch is now pending
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    // Button must be disabled mid-flight
+    const submitButton = screen.getByTestId("button-advisor-submit");
+    expect(submitButton).toBeDisabled();
+
+    // Button must show the spinner label
+    expect(submitButton).toHaveTextContent("Sending…");
+
+    // Fetch called exactly once — no duplicate
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    // Attempting a second click while disabled must not trigger another fetch
+    await user.click(submitButton);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    // Let the fetch settle so the component doesn't leave dangling state
+    resolveFetch();
+    await waitFor(() =>
+      expect(screen.getByText("You're on the list!")).toBeInTheDocument(),
+    );
+  });
+});
+
 describe("AdvisorSection — optional email field", () => {
   it("includes email in the POST body when the user fills it in", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
