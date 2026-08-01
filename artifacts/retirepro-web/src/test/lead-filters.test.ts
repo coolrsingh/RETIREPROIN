@@ -175,6 +175,176 @@ describe('passesFilter — "30d"', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Combined filter + search (mirrors leads-admin.tsx filteredLeads logic)
+// ---------------------------------------------------------------------------
+
+/**
+ * Mirrors the filteredLeads computation in leads-admin.tsx so we can unit-test
+ * the AND combination of filter button and search query without mounting React.
+ */
+function applyFilterAndSearch(
+  leads: Array<{
+    createdAt: string | null;
+    updatedAt: string | null;
+    name?: string;
+    email?: string;
+    phone?: string;
+  }>,
+  filter: FilterKey,
+  searchQuery: string,
+  now = NOW,
+): typeof leads {
+  const searchTerm = searchQuery.trim().toLowerCase();
+  return leads.filter((lead) => {
+    if (!passesFilter(lead, filter, now)) return false;
+    if (searchTerm) {
+      const name = (lead.name ?? "").toLowerCase();
+      const email = (lead.email ?? "").toLowerCase();
+      const phone = (lead.phone ?? "").toLowerCase();
+      if (
+        !name.includes(searchTerm) &&
+        !email.includes(searchTerm) &&
+        !phone.includes(searchTerm)
+      )
+        return false;
+    }
+    return true;
+  });
+}
+
+/** Extend makeLead with contact fields for search tests. */
+function makeFullLead(opts: {
+  createdMsAgo: number;
+  updatedMsAgo: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+}): {
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  email: string;
+  phone: string;
+} {
+  return {
+    createdAt: new Date(NOW - opts.createdMsAgo).toISOString(),
+    updatedAt: new Date(NOW - opts.updatedMsAgo).toISOString(),
+    name: opts.name ?? "Test User",
+    email: opts.email ?? "test@example.com",
+    phone: opts.phone ?? "9999999999",
+  };
+}
+
+describe("filter + search combined (AND logic)", () => {
+  // Two leads: one re-engaged, one not.
+  // The re-engaged one matches the search term; the other does not.
+  const reEngagedMatchingSearch = makeFullLead({
+    createdMsAgo: 10 * 86_400_000,
+    updatedMsAgo: 86_400_000,          // re-engaged: diff > 60 s
+    name: "Priya Sharma",
+    email: "priya@example.com",
+    phone: "9876543210",
+  });
+  const notReEngagedNoSearchMatch = makeFullLead({
+    createdMsAgo: 5 * 86_400_000,
+    updatedMsAgo: 5 * 86_400_000 - 1_000, // NOT re-engaged: diff < 60 s
+    name: "Rohan Mehta",
+    email: "rohan@example.com",
+    phone: "8888888888",
+  });
+  // A lead that matches the search but is outside the 7-day window.
+  const oldMatchingSearch = makeFullLead({
+    createdMsAgo: 60 * 86_400_000,
+    updatedMsAgo: 20 * 86_400_000,     // 20 days old — outside 7d, inside 30d
+    name: "Priya Old",
+    email: "priya.old@example.com",
+    phone: "7777777777",
+  });
+
+  const allLeads = [reEngagedMatchingSearch, notReEngagedNoSearchMatch, oldMatchingSearch];
+
+  it("filter active + search match — returns only leads that pass BOTH", () => {
+    // Filter: re-engaged; search: "priya"
+    const result = applyFilterAndSearch(allLeads, "re-engaged", "priya");
+    // reEngagedMatchingSearch passes both; oldMatchingSearch is re-engaged? Check:
+    // oldMatchingSearch: diff = 60*86400000 - 20*86400000 = 40 days >> 60s → re-engaged AND name includes "priya"
+    // Both should be in the result.
+    expect(result).toContain(reEngagedMatchingSearch);
+    expect(result).toContain(oldMatchingSearch);
+    // notReEngagedNoSearchMatch fails the filter
+    expect(result).not.toContain(notReEngagedNoSearchMatch);
+    expect(result).toHaveLength(2);
+  });
+
+  it("filter active + search no-match — returns empty list when search term has no hits", () => {
+    // Filter: re-engaged; search term that matches nobody
+    const result = applyFilterAndSearch(allLeads, "re-engaged", "zzznomatch");
+    expect(result).toHaveLength(0);
+  });
+
+  it("filter 'all' + search — returns every lead whose contact fields match the term", () => {
+    // filter: all; search: "priya"
+    const result = applyFilterAndSearch(allLeads, "all", "priya");
+    expect(result).toContain(reEngagedMatchingSearch);
+    expect(result).toContain(oldMatchingSearch);
+    expect(result).not.toContain(notReEngagedNoSearchMatch);
+    expect(result).toHaveLength(2);
+  });
+
+  it("filter 'all' + empty search — returns all leads without any omissions or duplicates", () => {
+    const result = applyFilterAndSearch(allLeads, "all", "");
+    expect(result).toHaveLength(allLeads.length);
+    // No duplicates
+    const ids = result.map((l) => l.email);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("clearing search while filter is active — result equals filter-only result", () => {
+    // First apply filter + search, then clear search
+    const withSearch = applyFilterAndSearch(allLeads, "7d", "priya");
+    const searchCleared = applyFilterAndSearch(allLeads, "7d", "");
+    // The cleared-search result must be a superset of the search result
+    for (const lead of withSearch) {
+      expect(searchCleared).toContain(lead);
+    }
+    // And the cleared result should equal the pure filter result
+    const filterOnly = allLeads.filter((l) => passesFilter(l, "7d", NOW));
+    expect(searchCleared).toEqual(filterOnly);
+  });
+
+  it("search by email while a time filter is active — correct intersection", () => {
+    // Filter: 30d (oldMatchingSearch is 20 days old → passes); search: "old"
+    const result = applyFilterAndSearch(allLeads, "30d", "old");
+    expect(result).toContain(oldMatchingSearch);
+    expect(result).not.toContain(reEngagedMatchingSearch); // name is "Priya Sharma", not "old"
+    expect(result).not.toContain(notReEngagedNoSearchMatch);
+  });
+
+  it("search by phone while a filter is active — phone match is honoured", () => {
+    // Filter: all; search: "8888" — matches notReEngagedNoSearchMatch's phone
+    const result = applyFilterAndSearch(allLeads, "all", "8888");
+    expect(result).toContain(notReEngagedNoSearchMatch);
+    expect(result).not.toContain(reEngagedMatchingSearch);
+    expect(result).not.toContain(oldMatchingSearch);
+  });
+
+  it("no lead appears more than once regardless of filter+search combination", () => {
+    const combinations: Array<[FilterKey, string]> = [
+      ["all", ""],
+      ["all", "priya"],
+      ["re-engaged", "priya"],
+      ["7d", ""],
+      ["30d", "old"],
+    ];
+    for (const [filter, search] of combinations) {
+      const result = applyFilterAndSearch(allLeads, filter, search);
+      const emails = result.map((l) => l.email);
+      expect(new Set(emails).size).toBe(emails.length);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Cross-filter consistency
 // ---------------------------------------------------------------------------
 
