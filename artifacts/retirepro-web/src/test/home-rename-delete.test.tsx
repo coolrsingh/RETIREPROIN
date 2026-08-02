@@ -64,7 +64,20 @@ vi.mock("@/lib/formatCorpus", () => ({
 vi.mock("@workspace/api-client-react", async () => {
   const { useQuery, useQueryClient } = await import("@tanstack/react-query");
   const QUERY_KEY = ["scenarios", "list"];
+
+  class ResponseValidationError extends Error {
+    url: string;
+    method: string;
+    constructor(message: string, url = "", method = "GET") {
+      super(message);
+      this.name = "ResponseValidationError";
+      this.url = url;
+      this.method = method;
+    }
+  }
+
   return {
+    ResponseValidationError,
     getListScenariosQueryKey: () => QUERY_KEY,
     useListScenarios: ({ query }: { query?: Record<string, unknown> } = {}) => {
       const qc = useQueryClient();
@@ -285,6 +298,185 @@ describe("Home – rename plan (server failure → rollback)", () => {
       expect(screen.getByText("Retirement Alpha")).toBeInTheDocument();
     });
     expect(screen.queryByText("Will Fail")).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rename — duplicate-name validation
+// ---------------------------------------------------------------------------
+
+describe("Home – rename plan (duplicate-name validation)", () => {
+  it("shows the duplicate-name error when the user types a name that matches another plan", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A, SCENARIO_B]);
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+    // Type the name of the OTHER existing plan (Scenario B)
+    await user.type(input, SCENARIO_B.name);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rename-duplicate-error")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("rename-duplicate-error")).toHaveTextContent(
+      "You already have a plan with this name."
+    );
+  });
+
+  it("disables the Save button when a duplicate name is entered", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A, SCENARIO_B]);
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+    await user.type(input, SCENARIO_B.name);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("btn-rename-confirm")).toBeDisabled();
+    });
+  });
+
+  it("does NOT call fetch when the user somehow submits a duplicate name", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A, SCENARIO_B]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+    await user.type(input, SCENARIO_B.name);
+
+    // Wait for the duplicate error to appear so we know the guard is active
+    await waitFor(() => {
+      expect(screen.getByTestId("rename-duplicate-error")).toBeInTheDocument();
+    });
+
+    // Press Enter — handleRenameSubmit guards against isDuplicateName
+    await user.keyboard("{Enter}");
+
+    // fetch must not have been called
+    expect(fetchMock).not.toHaveBeenCalled();
+    // Dialog remains open
+    expect(screen.getByTestId("input-rename")).toBeInTheDocument();
+  });
+
+  it("clears the duplicate-name error when the user corrects the name", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A, SCENARIO_B]);
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+    await user.type(input, SCENARIO_B.name);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rename-duplicate-error")).toBeInTheDocument();
+    });
+
+    // Correct the name to something unique
+    await user.clear(input);
+    await user.type(input, "Unique New Name");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("rename-duplicate-error")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("btn-rename-confirm")).not.toBeDisabled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rename — blank-name validation
+// ---------------------------------------------------------------------------
+
+describe("Home – rename plan (blank-name validation)", () => {
+  it("disables the Save button when the input is blank", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A]);
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("btn-rename-confirm")).toBeDisabled();
+    });
+  });
+
+  it("disables the Save button when the input contains only whitespace", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A]);
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+    await user.type(input, "   ");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("btn-rename-confirm")).toBeDisabled();
+    });
+  });
+
+  it("does NOT call fetch when the user presses Enter with a blank name", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+
+    // Press Enter — handleRenameSubmit should close dialog without fetching
+    await user.keyboard("{Enter}");
+
+    // Dialog closes (blank name => same as unchanged behaviour: just close)
+    await waitFor(() => {
+      expect(screen.queryByTestId("input-rename")).not.toBeInTheDocument();
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
