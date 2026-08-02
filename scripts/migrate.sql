@@ -174,6 +174,9 @@ CREATE TABLE IF NOT EXISTS subscribers (
 -- Add goal-adjusted post-retirement expense to assumptions (idempotent backfill)
 ALTER TABLE assumptions ADD COLUMN IF NOT EXISTS post_retirement_monthly_expense numeric(15,2);
 
+-- Add recurring monthly contribution to assets (e.g. EPF/NPS payroll deductions), idempotent backfill
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS monthly_contribution numeric(15,2);
+
 -- crm_defaults
 CREATE TABLE IF NOT EXISTS crm_defaults (
   id varchar PRIMARY KEY DEFAULT gen_random_uuid(),

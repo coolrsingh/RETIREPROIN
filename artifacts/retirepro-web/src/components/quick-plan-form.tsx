@@ -110,8 +110,12 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
       incomeGrowthRate: profileDefaults?.incomeGrowthRate ?? 8,
       children: [],
       assetsLumpSum: profileDefaults?.assetsLumpSum ?? 0,
+      assetsLumpSumReturn: 12,
       epfCorpus: 0,
+      epfReturn: 8.25,
+      epfMonthlyContribution: 0,
       npsCorpus: 0,
+      npsReturn: 10,
       npsMonthlyContribution: 0,
       currentCorpus: 0,
       monthlyWithdrawal: 0,
@@ -132,8 +136,16 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
   const returnPre = form.watch("assumptions.returnPre") ?? 12;
   const returnPost = form.watch("assumptions.returnPost") ?? 8;
   const incomeGrowthRate = form.watch("incomeGrowthRate") ?? 8;
+  const epfMonthlyContributionWatch = form.watch("epfMonthlyContribution") ?? 0;
+  const npsMonthlyContributionWatch = form.watch("npsMonthlyContribution") ?? 0;
 
-  const computedSavings = Math.max(0, (Number(income) || 0) - (Number(expenses) || 0));
+  // EPF/NPS contributions are tracked as their own line items, so they're
+  // deducted here — the remaining amount is what actually goes toward
+  // "Other Investments".
+  const computedSavings = Math.max(
+    0,
+    (Number(income) || 0) - (Number(expenses) || 0) - (Number(epfMonthlyContributionWatch) || 0) - (Number(npsMonthlyContributionWatch) || 0)
+  );
 
   // ── Goal multiplier display ────────────────────────────────────────────────
   const selectedGoal = GOALS.find((g) => g.key === retirementGoal)!;
@@ -545,6 +557,63 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   />
                 </div>
 
+                {/* Existing EMI */}
+                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-rose-600" />
+                      <span className="font-semibold text-sm text-rose-900">Existing EMI</span>
+                      <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">Optional</span>
+                    </div>
+                    <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" />
+                  </div>
+                  {hasExistingEMI && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="existingEMI.emiAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Monthly EMI Amount (₹)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="25000"
+                                className="bg-white"
+                                data-testid="input-emi-amount"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="existingEMI.tenureRemainingMonths"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tenure Remaining (months)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="60"
+                                min={0}
+                                className="bg-white"
+                                data-testid="input-emi-tenure"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* Monthly Savings — auto-calculated with override */}
                 <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-y-2 mb-3" data-testid="savings-header-row">
@@ -740,6 +809,64 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                     )}
                   />
                 </div>
+
+                {/* Existing EMI */}
+                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-rose-600" />
+                      <span className="font-semibold text-sm text-rose-900">Existing EMI</span>
+                      <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">Optional</span>
+                    </div>
+                    <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi-retired" />
+                  </div>
+                  {hasExistingEMI && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="existingEMI.emiAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Monthly EMI Amount (₹)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="25000"
+                                className="bg-white"
+                                data-testid="input-emi-amount-retired"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="existingEMI.tenureRemainingMonths"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tenure Remaining (months)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="60"
+                                min={0}
+                                className="bg-white"
+                                data-testid="input-emi-tenure-retired"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <p className="text-xs text-slate-500 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
                   The projection shows how long your corpus lasts given your withdrawal rate and investment return.
                 </p>
@@ -934,104 +1061,210 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="assetsLumpSum"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Other Investments (₹)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="1000000"
-                        data-testid="input-current-assets"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-slate-500 mt-1">Mutual funds, FDs, stocks, etc.</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="epfCorpus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1.5">
-                      EPF Corpus (₹)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="500000"
-                        data-testid="input-epf-corpus"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-slate-500 mt-1">Check your UAN passbook for balance.</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="npsCorpus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1.5">
-                      NPS Corpus (₹)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="300000"
-                        data-testid="input-nps-corpus"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-slate-500 mt-1">From your CRA / NPS account statement.</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* NPS monthly contribution */}
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <PiggyBank className="h-4 w-4 text-emerald-600" />
-                <span className="font-semibold text-sm text-emerald-900">NPS Monthly Contribution</span>
-                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Optional</span>
-              </div>
-              <FormField
-                control={form.control}
-                name="npsMonthlyContribution"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-wrap items-center gap-3">
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="assetsLumpSum"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Other Investments (₹)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="5000"
-                          className="w-36 bg-white"
-                          data-testid="input-nps-contribution"
+                          placeholder="1000000"
+                          data-testid="input-current-assets"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
-                      <span className="text-sm text-emerald-800 font-medium">₹/month</span>
-                    </div>
-                    <p className="text-xs text-emerald-700 mt-1">
-                      Your monthly NPS deduction (80CCD(1B) gives extra ₹50,000 tax benefit).
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <p className="text-xs text-slate-500 mt-1">Mutual funds, FDs, stocks, etc.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="assetsLumpSumReturn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">Expected annual return (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          placeholder="12"
+                          className="h-9"
+                          data-testid="input-assets-lump-sum-return"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-slate-400 mt-1">Typically 12–14% for equity-heavy mutual funds.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="epfCorpus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        EPF Corpus (₹)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="500000"
+                          data-testid="input-epf-corpus"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-slate-500 mt-1">Check your UAN passbook for balance.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="epfReturn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">Expected annual return (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          placeholder="8.25"
+                          className="h-9"
+                          data-testid="input-epf-return"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-slate-400 mt-1">EPFO declares 8–8.5% most years.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="npsCorpus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        NPS Corpus (₹)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="300000"
+                          data-testid="input-nps-corpus"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-slate-500 mt-1">From your CRA / NPS account statement.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="npsReturn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-slate-500">Expected annual return (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          placeholder="10"
+                          className="h-9"
+                          data-testid="input-nps-return"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-slate-400 mt-1">Varies 8–12% based on your equity allocation.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* EPF / NPS monthly contributions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <PiggyBank className="h-4 w-4 text-emerald-600" />
+                  <span className="font-semibold text-sm text-emerald-900">EPF Monthly Contribution</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Optional</span>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="epfMonthlyContribution"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="3000"
+                            className="w-36 bg-white"
+                            data-testid="input-epf-contribution"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <span className="text-sm text-emerald-800 font-medium">₹/month</span>
+                      </div>
+                      <p className="text-xs text-emerald-700 mt-1">
+                        Your + employer's EPF deduction. Deducted from Monthly Savings above.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <PiggyBank className="h-4 w-4 text-emerald-600" />
+                  <span className="font-semibold text-sm text-emerald-900">NPS Monthly Contribution</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Optional</span>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="npsMonthlyContribution"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="5000"
+                            className="w-36 bg-white"
+                            data-testid="input-nps-contribution"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <span className="text-sm text-emerald-800 font-medium">₹/month</span>
+                      </div>
+                      <p className="text-xs text-emerald-700 mt-1">
+                        Your monthly NPS deduction (80CCD(1B) gives extra ₹50,000 tax benefit). Deducted from Monthly Savings above.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1101,69 +1334,6 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             )}
           </Card>
         )}
-
-        {/* ── 10. EXISTING EMI ───────────────────────────────────────────── */}
-        <Card data-testid="card-existing-emi">
-          <CardHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-rose-600" />
-                  Existing EMI (Optional)
-                </CardTitle>
-                <CardDescription>
-                  Do you have an ongoing loan? This EMI will reduce your monthly surplus until the tenure ends.
-                </CardDescription>
-              </div>
-              <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" className="mt-1 shrink-0" />
-            </div>
-          </CardHeader>
-          {hasExistingEMI && (
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="existingEMI.emiAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Monthly EMI Amount (₹)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="25000"
-                          data-testid="input-emi-amount"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="existingEMI.tenureRemainingMonths"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tenure Remaining (months)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="60"
-                          min={0}
-                          data-testid="input-emi-tenure"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          )}
-        </Card>
 
         {/* ── 11. PLANNING ASSUMPTIONS (all sliders) ────────────────────── */}
         <Card data-testid="card-assumptions">

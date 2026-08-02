@@ -14,6 +14,8 @@ export interface PlanAsset {
   value: string;
   expectedReturnPre: string;
   expectedReturnPost: string;
+  /** Recurring monthly contribution into this asset (e.g. EPF/NPS payroll deductions) */
+  monthlyContribution?: string;
 }
 
 /**
@@ -21,7 +23,11 @@ export interface PlanAsset {
  *
  * Rules:
  * - Accumulating mode: assetsLumpSum + EPF corpus + NPS corpus each become
- *   separate equity assets with their own expected return rates.
+ *   separate equity assets with their own expected return rates (each asset
+ *   type has a different real-world return profile, so they are no longer
+ *   forced onto a single blended rate). EPF and NPS also carry their own
+ *   monthly contribution, which calculations.ts grows independently of the
+ *   general savings pool so the amounts are never double-counted.
  * - Retired mode: ONLY currentCorpus is included.  EPF and NPS are excluded
  *   because users enter currentCorpus as their total invested balance
  *   (which already includes any EPF/NPS balance).  Adding them separately
@@ -31,8 +37,13 @@ export function buildGuestAssets(
   planData: {
     personaMode?: string;
     assetsLumpSum?: number;
+    assetsLumpSumReturn?: number;
     epfCorpus?: number;
+    epfReturn?: number;
+    epfMonthlyContribution?: number;
     npsCorpus?: number;
+    npsReturn?: number;
+    npsMonthlyContribution?: number;
     currentCorpus?: number;
   },
   returnPreStr: string,
@@ -53,14 +64,16 @@ export function buildGuestAssets(
       : [];
   }
 
-  // Accumulating mode: individual components are separate assets.
+  // Accumulating mode: individual components are separate assets, each with
+  // its own expected return since Other Investments / EPF / NPS behave very
+  // differently in the real world.
   const assets: PlanAsset[] = [];
   if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {
     assets.push({
       id: "1",
       kind: "equity",
       value: String(planData.assetsLumpSum),
-      expectedReturnPre: returnPreStr,
+      expectedReturnPre: planData.assetsLumpSumReturn != null ? String(planData.assetsLumpSumReturn) : returnPreStr,
       expectedReturnPost: returnPostStr,
     });
   }
@@ -69,8 +82,9 @@ export function buildGuestAssets(
       id: "epf",
       kind: "equity",
       value: String(planData.epfCorpus),
-      expectedReturnPre: "8",
+      expectedReturnPre: planData.epfReturn != null ? String(planData.epfReturn) : "8",
       expectedReturnPost: returnPostStr,
+      monthlyContribution: String(planData.epfMonthlyContribution ?? 0),
     });
   }
   if (planData.npsCorpus && planData.npsCorpus > 0) {
@@ -78,8 +92,9 @@ export function buildGuestAssets(
       id: "nps",
       kind: "equity",
       value: String(planData.npsCorpus),
-      expectedReturnPre: "10",
+      expectedReturnPre: planData.npsReturn != null ? String(planData.npsReturn) : "10",
       expectedReturnPost: returnPostStr,
+      monthlyContribution: String(planData.npsMonthlyContribution ?? 0),
     });
   }
   return assets;

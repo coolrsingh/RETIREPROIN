@@ -129,6 +129,8 @@ export const assets = pgTable("assets", {
   value: decimal("value", { precision: 15, scale: 2 }).notNull(),
   expectedReturnPre: decimal("expected_return_pre", { precision: 5, scale: 2 }),
   expectedReturnPost: decimal("expected_return_post", { precision: 5, scale: 2 }),
+  /** Recurring monthly contribution into this asset (e.g. EPF/NPS payroll deductions) */
+  monthlyContribution: decimal("monthly_contribution", { precision: 15, scale: 2 }),
 });
 
 export const liabilities = pgTable("liabilities", {
@@ -377,8 +379,12 @@ export const quickPlanSchema = z.object({
 
   // ── Assets ────────────────────────────────────────────────────────────────
   assetsLumpSum: z.number().min(0).optional(),
+  assetsLumpSumReturn: z.number().min(0).max(30).optional(),
   epfCorpus: z.number().min(0).optional(),
+  epfReturn: z.number().min(0).max(30).optional(),
+  epfMonthlyContribution: z.number().min(0).optional(),
   npsCorpus: z.number().min(0).optional(),
+  npsReturn: z.number().min(0).max(30).optional(),
   npsMonthlyContribution: z.number().min(0).optional(),
 
   // ── Legacy asset fields ───────────────────────────────────────────────────

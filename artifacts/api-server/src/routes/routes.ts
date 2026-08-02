@@ -631,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               scenarioId,
               kind: 'equity',
               value: planData.assetsLumpSum.toString(),
-              expectedReturnPre: planData.preRetirementReturn?.toString() || crmDefaults.returnPre,
+              expectedReturnPre: planData.assetsLumpSumReturn?.toString() || planData.preRetirementReturn?.toString() || crmDefaults.returnPre,
               expectedReturnPost: planData.postRetirementReturn?.toString() || crmDefaults.returnPost,
             });
           }
@@ -639,14 +639,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // EPF/NPS are added as separate assets only in accumulating mode.
           // In retired mode the user enters currentCorpus which already includes
           // their EPF/NPS balance, so adding them again would double-count.
+          // Each carries its own expected return and monthly contribution, which
+          // calculations.ts grows independently of the general savings pool.
           if (!authIsRetired) {
             if (planData.epfCorpus && planData.epfCorpus > 0) {
               await tx.insert(assets).values({
                 scenarioId,
                 kind: 'equity',
                 value: planData.epfCorpus.toString(),
-                expectedReturnPre: '8',
+                expectedReturnPre: planData.epfReturn?.toString() || '8',
                 expectedReturnPost: crmDefaults.returnPost,
+                monthlyContribution: (planData.epfMonthlyContribution ?? 0).toString(),
               });
             }
             if (planData.npsCorpus && planData.npsCorpus > 0) {
@@ -654,8 +657,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 scenarioId,
                 kind: 'equity',
                 value: planData.npsCorpus.toString(),
-                expectedReturnPre: '10',
+                expectedReturnPre: planData.npsReturn?.toString() || '10',
                 expectedReturnPost: crmDefaults.returnPost,
+                monthlyContribution: (planData.npsMonthlyContribution ?? 0).toString(),
               });
             }
           }

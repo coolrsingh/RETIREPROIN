@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import {
   BarChart3, ArrowRight, TrendingUp, Users, Clock,
-  AlertTriangle, BookOpen, Shield, Brain, FileText, Sliders, Zap, Star, Quote, CheckCircle
+  BookOpen, Shield, Brain, FileText, Sliders, Zap, Star, Quote, CheckCircle, Calculator
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import logoUrl from "@/assets/retirepro-logo.png";
-import QuickPlanForm from "@/components/quick-plan-form";
 import AdvisorSection from "@/components/advisor-section";
 
 // ── Animated counter ─────────────────────────────────────────────────────────
@@ -89,45 +88,6 @@ function CorpusCurve() {
         fill="url(#fg)" style={{ opacity: 0, animation: "fadeIn 0.5s ease forwards 1.8s" }} />
       <circle cx="260" cy="0" r="4" fill="#E8940A" style={{ opacity: 0, animation: "fadeIn 0.3s ease forwards 2s" }} />
     </svg>
-  );
-}
-
-// ── Planner form wrapper ──────────────────────────────────────────────────────
-function LandingPlannerSection() {
-  const [, navigate] = useLocation();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSubmit = async (data: any) => {
-    setLoading(true); setError("");
-    try {
-      const res = await fetch("/api/plan/try", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as any).message || "Calculation failed."); }
-      const result = await res.json();
-      sessionStorage.setItem("guestCalcResult", JSON.stringify(result));
-      sessionStorage.setItem("guestCalcForm", JSON.stringify({
-        fullName: data.fullName, dob: data.dob,
-        retirementAge: String(data.retirementAge),
-        monthlyIncomeTotal: String(data.monthlyIncomeTotal),
-        monthlyExpenseTotal: String(data.monthlyExpenseTotal),
-        monthlySavings: String(data.monthlySavings),
-        assetsLumpSum: String(data.assetsLumpSum ?? 0),
-        returnPre: String(data.assumptions?.returnPre ?? 12),
-        inflationRate: String(data.assumptions?.inflationHeadline ?? 7),
-      }));
-      navigate("/plan/preview");
-    } catch (e: any) { setError(e.message ?? "Something went wrong."); }
-    finally { setLoading(false); }
-  };
-  return (
-    <div className="max-w-4xl mx-auto">
-      {error && (
-        <div className="mb-4 text-sm text-red-600 flex items-center gap-2 bg-red-50 rounded-xl px-4 py-3 border border-red-200">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" /> {error}
-        </div>
-      )}
-      <QuickPlanForm onSubmit={handleSubmit} isLoading={loading} />
-    </div>
   );
 }
 
@@ -227,7 +187,7 @@ export default function Landing() {
             <BrandLogo href={null} textClassName="text-slate-900" />
             <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
               <Link href="/blog" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Blog</Link>
-              <a href="#planner" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Free Planner</a>
+              <Link href="/free-plan" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Free Planner</Link>
             </nav>
             <button
               onClick={() => { window.location.href = "/api/login"; }}
@@ -285,21 +245,21 @@ export default function Landing() {
               </p>
 
               <div className="hero-cta" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 40 }}>
-                <button
-                  onClick={() => document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" })}
+                <Link
+                  href="/free-plan"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
                     background: "var(--orange)", color: "#fff", border: "none",
                     fontWeight: 700, fontSize: 16, padding: "14px 32px", borderRadius: 100,
                     cursor: "pointer", fontFamily: "var(--font-sans)",
-                    animation: "pulse 2.5s ease-in-out infinite",
+                    animation: "pulse 2.5s ease-in-out infinite", textDecoration: "none",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.animation = "none"; e.currentTarget.style.transform = "scale(1.03)"; }}
                   onMouseLeave={e => { e.currentTarget.style.animation = "pulse 2.5s ease-in-out infinite"; e.currentTarget.style.transform = ""; }}
                   data-testid="button-get-started"
                 >
                   Calculate My Retirement Gap <ArrowRight size={18} />
-                </button>
+                </Link>
                 <button
                   onClick={() => { window.location.href = "/api/login"; }}
                   style={{
@@ -556,10 +516,13 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── PLANNER ──────────────────────────────────────────────────────── */}
+        {/* ── PLANNER TEASER ───────────────────────────────────────────────── */}
         <section id="planner" style={{ background: "var(--bg-alt)", padding: "88px 24px", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
-          <div className="lp-section" style={{ maxWidth: 1200 }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 40 }}>
+          <div className="lp-section" style={{ maxWidth: 720 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#FFF7ED", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+                <Calculator size={28} color="var(--orange)" />
+              </div>
               <div className="lp-label" style={{ background: "#FFF7ED", color: "var(--orange)", border: "1px solid #FED7AA", marginBottom: 20 }}>
                 Free · No Account Required
               </div>
@@ -569,12 +532,21 @@ export default function Landing() {
               <p style={{ fontSize: 16, color: "var(--slate)", maxWidth: 500, margin: "0 auto 28px" }}>
                 EPF &amp; NPS balances · Joint spouse · Children's education · Loans — all in one calculation. Takes 60 seconds.
               </p>
+              <Link
+                href="/free-plan"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "var(--orange)", color: "#fff",
+                  fontWeight: 700, fontSize: 16, padding: "14px 32px", borderRadius: 100,
+                  textDecoration: "none", fontFamily: "var(--font-sans)", marginBottom: 24,
+                }}
+                data-testid="button-planner-teaser"
+              >
+                Calculate My Retirement Gap <ArrowRight size={18} />
+              </Link>
               <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 20px", fontSize: 12, color: "#94A3B8" }}>
                 {["🔒 256-bit SSL Secured", "🇮🇳 India-Specific", "✅ AMFI-Registered Partner", "🛡️ Data never sold"].map(t => <span key={t}>{t}</span>)}
               </div>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: .1 }}>
-              <LandingPlannerSection />
             </motion.div>
           </div>
         </section>
@@ -751,21 +723,21 @@ export default function Landing() {
                 Build a complete retirement plan — free, no account, no commitment.
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", marginBottom: 32 }}>
-                <button
-                  onClick={() => document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" })}
+                <Link
+                  href="/free-plan"
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 8,
                     background: "var(--orange)", color: "#fff", border: "none",
                     fontWeight: 700, fontSize: 16, padding: "16px 36px", borderRadius: 100,
                     cursor: "pointer", fontFamily: "var(--font-sans)",
-                    animation: "pulse 2.5s ease-in-out infinite",
+                    animation: "pulse 2.5s ease-in-out infinite", textDecoration: "none",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.animation = "none"; e.currentTarget.style.transform = "scale(1.03)"; }}
                   onMouseLeave={e => { e.currentTarget.style.animation = "pulse 2.5s ease-in-out infinite"; e.currentTarget.style.transform = ""; }}
                   data-testid="button-start-planning"
                 >
                   <ArrowRight size={18} /> Start My Free Plan
-                </button>
+                </Link>
                 <button
                   onClick={() => { window.location.href = "/api/login"; }}
                   style={{

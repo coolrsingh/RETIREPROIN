@@ -104,9 +104,38 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
       return { annualAmount: annual, start: streamStart, end: streamEnd, growthRate: streamGrowthRate };
     });
 
+  // ── Per-asset return rates & contributions ──────────────────────────────────
+  // EPF and NPS each carry their own expected return and their own recurring
+  // monthly contribution (payroll deduction). Everything else — lump-sum
+  // investments, or the single "corpus" asset in retired mode — shares a
+  // "general" bucket that absorbs the remaining net savings each year. This
+  // keeps EPF/NPS growth independent (and stops their contribution from being
+  // double-counted as general savings) while preserving each asset's own
+  // real-world return profile instead of forcing a single blended rate.
+  const parseRateOrDefault = (rateStr: unknown, defaultDecimal: number): number => {
+    if (rateStr === undefined || rateStr === null || rateStr === '') return defaultDecimal;
+    const parsed = parseFloat(String(rateStr));
+    return isNaN(parsed) ? defaultDecimal : parsed / 100;
+  };
+
+  const epfAsset = scenarioData.assets.find((a: any) => a.id === 'epf');
+  const npsAsset = scenarioData.assets.find((a: any) => a.id === 'nps');
+  const generalAssetsList = scenarioData.assets.filter((a: any) => a.id !== 'epf' && a.id !== 'nps');
+
+  let generalBalance = generalAssetsList.reduce((sum: number, a: any) => sum + parseFloat(a.value || '0'), 0);
+  const generalReturnPreRate = parseRateOrDefault(generalAssetsList[0]?.expectedReturnPre, returnPre);
+  const generalReturnPostRate = parseRateOrDefault(generalAssetsList[0]?.expectedReturnPost, returnPost);
+
+  let epfBalance = epfAsset ? parseFloat(epfAsset.value || '0') : 0;
+  const epfReturnPreRate = parseRateOrDefault(epfAsset?.expectedReturnPre, 0.08);
+  const epfMonthlyContribution = epfAsset ? parseFloat(epfAsset.monthlyContribution || '0') : 0;
+
+  let npsBalance = npsAsset ? parseFloat(npsAsset.value || '0') : 0;
+  const npsReturnPreRate = parseRateOrDefault(npsAsset?.expectedReturnPre, 0.10);
+  const npsMonthlyContribution = npsAsset ? parseFloat(npsAsset.monthlyContribution || '0') : 0;
+
   // Calculate current financial position
-  const totalAssets = scenarioData.assets.reduce((sum: number, asset: any) =>
-    sum + parseFloat(asset.value || '0'), 0);
+  const totalAssets = generalBalance + epfBalance + npsBalance;
 
   const monthlyExpenses = scenarioData.expenseItems.reduce((sum: number, expense: any) =>
     sum + parseFloat(expense.amountMonthly || '0'), 0);
@@ -163,6 +192,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   markers.push({ year: retirementYear, type: 'retirement', label: 'Retirement' });
 
   let currentNetWorth = totalAssets;
+  let mergedForDrawdown = false;
 
   for (let year = currentYear; year <= lifeExpectancy + birthYear; year++) {
     const yearsFromNow = year - currentYear;
@@ -272,24 +302,55 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         notes.push(`Goal: ${g.name || 'Custom Goal'} — ₹${(inflatedCost / 100000).toFixed(1)}L (inflation-adjusted from ₹${(costToday / 100000).toFixed(1)}L today)`);
       });
 
-    // Apply investment returns and savings
-    const returnRate = isPreRetirement ? returnPre : returnPost;
-    const portfolioReturn = currentNetWorth * returnRate;
+    // Apply investment returns and savings.
+    // Pre-retirement: EPF and NPS compound at their own rate and receive only
+    // their own contribution; the general bucket (lump-sum investments, or the
+    // retired-mode corpus) absorbs whatever's left of net savings once the
+    // EPF/NPS contributions are set aside, so nothing is double-counted.
     const totalOutflow = inflatedExpenses + goalExpenses + yearlyEMI;
     const totalInflows = yearlyIncome;
 
     let netSavings = totalInflows - totalOutflow;
+    let portfolioReturn: number;
+
     if (isPreRetirement) {
       if (isMiniRetirement) {
-        // During mini retirement: no new savings, only portfolio appreciation
-        currentNetWorth = currentNetWorth * (1 + returnRate) - totalOutflow;
+        // During mini retirement: no income, so no new EPF/NPS contributions
+        // either. Only the general bucket funds the shortfall; EPF/NPS balances
+        // simply continue compounding untouched (they're not liquid anyway).
+        portfolioReturn =
+          generalBalance * generalReturnPreRate + epfBalance * epfReturnPreRate + npsBalance * npsReturnPreRate;
+        generalBalance = Math.max(generalBalance * (1 + generalReturnPreRate) - totalOutflow, 0);
+        epfBalance = Math.max(epfBalance * (1 + epfReturnPreRate), 0);
+        npsBalance = Math.max(npsBalance * (1 + npsReturnPreRate), 0);
         netSavings = -totalOutflow;
       } else {
-        currentNetWorth = currentNetWorth * (1 + returnRate) + netSavings;
+        const epfContributionAnnual = epfMonthlyContribution * 12;
+        const npsContributionAnnual = npsMonthlyContribution * 12;
+        // Whatever's left of net savings after EPF/NPS contributions are set
+        // aside goes into the general bucket (mirrors the "Monthly Savings"
+        // field on the form, which already excludes EPF/NPS contributions).
+        const generalContribution = netSavings - epfContributionAnnual - npsContributionAnnual;
+
+        portfolioReturn =
+          generalBalance * generalReturnPreRate + epfBalance * epfReturnPreRate + npsBalance * npsReturnPreRate;
+
+        generalBalance = Math.max(generalBalance * (1 + generalReturnPreRate) + generalContribution, 0);
+        epfBalance = Math.max(epfBalance * (1 + epfReturnPreRate) + epfContributionAnnual, 0);
+        npsBalance = Math.max(npsBalance * (1 + npsReturnPreRate) + npsContributionAnnual, 0);
       }
+      currentNetWorth = generalBalance + epfBalance + npsBalance;
     } else {
-      // Post-retirement: corpus grows at conservative rate and is reduced by full yearly deficit
-      currentNetWorth = currentNetWorth * (1 + returnRate) + netSavings;
+      // Post-retirement: merge the three buckets into a single pool the first
+      // year of drawdown and apply the blended post-retirement return from
+      // here on — this keeps required-corpus / SIP math (which is based on a
+      // single returnPost) consistent with the projected drawdown.
+      if (!mergedForDrawdown) {
+        currentNetWorth = generalBalance + epfBalance + npsBalance;
+        mergedForDrawdown = true;
+      }
+      portfolioReturn = currentNetWorth * returnPost;
+      currentNetWorth = currentNetWorth * (1 + returnPost) + netSavings;
     }
 
     // Ensure net worth doesn't go negative

@@ -51,11 +51,19 @@ export const quickPlanSchema = z.object({
 
   // ── Assets ────────────────────────────────────────────────────────────────
   assetsLumpSum: z.number().min(0).optional(),
+  /** Expected annual return on "Other Investments" (mutual funds, FDs, stocks, etc.) */
+  assetsLumpSumReturn: z.number().min(0).max(30).optional(),
   /** EPF (Employee Provident Fund) current corpus balance */
   epfCorpus: z.number().min(0).optional(),
+  /** Expected annual return on EPF balance */
+  epfReturn: z.number().min(0).max(30).optional(),
+  /** EPF monthly contribution — deducted from monthly savings, grows the EPF corpus directly */
+  epfMonthlyContribution: z.number().min(0).optional(),
   /** NPS (National Pension System) current corpus balance */
   npsCorpus: z.number().min(0).optional(),
-  /** NPS monthly contribution (informational; already included in savings) */
+  /** Expected annual return on NPS balance */
+  npsReturn: z.number().min(0).max(30).optional(),
+  /** NPS monthly contribution — deducted from monthly savings, grows the NPS corpus directly */
   npsMonthlyContribution: z.number().min(0).optional(),
 
   // ── Legacy asset allocation fields (kept for backwards compat) ────────────
