@@ -56,7 +56,7 @@ export default function SubscribersAdmin() {
     }
   }, [isAuthenticated, isLoading]);
 
-  const isAdmin = (user as any)?.role === "admin";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
