@@ -141,3 +141,53 @@ describe("customFetch — response validator", () => {
     configureZodValidation(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Profile endpoint shape validation (regression guard for Task 110)
+// ---------------------------------------------------------------------------
+
+describe("configureZodValidation — profile endpoints", () => {
+  it("throws ResponseValidationError when GET /profile response is missing required fields", async () => {
+    configureZodValidation(true);
+
+    // Missing required `id` and `planCount` — should fail the GetProfileResponse schema.
+    stubFetch(makeFetchResponse({ email: "user@example.com" }));
+
+    await expect(
+      customFetch("/api/profile", { method: "GET" }),
+    ).rejects.toBeInstanceOf(ResponseValidationError);
+
+    configureZodValidation(false);
+  });
+
+  it("passes through a well-formed GET /profile response without error", async () => {
+    configureZodValidation(true);
+
+    const validProfile = {
+      id: "user-1",
+      planCount: 2,
+      email: "user@example.com",
+      firstName: "Alice",
+    };
+    stubFetch(makeFetchResponse(validProfile));
+
+    await expect(
+      customFetch("/api/profile", { method: "GET" }),
+    ).resolves.toEqual(validProfile);
+
+    configureZodValidation(false);
+  });
+
+  it("throws ResponseValidationError when PUT /profile response is missing required fields", async () => {
+    configureZodValidation(true);
+
+    // Missing required `id` and `planCount`.
+    stubFetch(makeFetchResponse({ firstName: "Bob" }));
+
+    await expect(
+      customFetch("/api/profile", { method: "PUT" }),
+    ).rejects.toBeInstanceOf(ResponseValidationError);
+
+    configureZodValidation(false);
+  });
+});

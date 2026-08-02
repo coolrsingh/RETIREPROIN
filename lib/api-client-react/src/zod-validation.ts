@@ -23,6 +23,9 @@ import {
   GetCrmDefaultsResponse,
   UpdateCrmDefaultsResponse,
   CreatePlanQuickResponse,
+  CreateLeadResponse,
+  GetProfileResponse,
+  UpdateProfileResponse,
 } from "@workspace/api-zod";
 import type { ZodTypeAny } from "zod";
 import { setResponseValidator } from "./custom-fetch";
@@ -59,6 +62,13 @@ const ROUTE_SCHEMAS: RouteSchema[] = [
 
   // Quick plan
   { method: "POST", pattern: /\/plan\/quick($|\?)/, schema: CreatePlanQuickResponse },
+
+  // Lead capture
+  { method: "POST", pattern: /\/lead($|\?)/, schema: CreateLeadResponse },
+
+  // Profile
+  { method: "GET", pattern: /\/profile($|\?)/, schema: GetProfileResponse },
+  { method: "PUT", pattern: /\/profile($|\?)/, schema: UpdateProfileResponse },
 ];
 
 // ---------------------------------------------------------------------------
