@@ -276,6 +276,32 @@ describe("AssumptionsPanel — save flow keeps plan-card corpus current", () => 
     expect(screen.queryByTestId("button-save-assumptions")).not.toBeInTheDocument();
   });
 
+  it("preserves the user's edits and stays in edit mode when the save fails", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    // Enter edit mode and change inflationHeadline to "7.5"
+    await user.click(screen.getByTestId("button-edit-assumptions"));
+    const input = screen.getByTestId("input-inflation-headline");
+    await user.clear(input);
+    await user.type(input, "7.5");
+
+    await user.click(screen.getByTestId("button-save-assumptions"));
+    expect(mockMutate).toHaveBeenCalledOnce();
+
+    // Simulate the PUT /api/scenarios/:id returning an error
+    const capturedOpts = mockUseUpdateScenario.mock.calls[0]?.[0];
+    expect(capturedOpts?.mutation?.onError).toBeDefined();
+    capturedOpts.mutation.onError(new Error("Network failure"), {}, undefined);
+
+    // Panel must still be in edit mode — Save button still visible
+    expect(screen.getByTestId("button-save-assumptions")).toBeInTheDocument();
+    expect(screen.queryByTestId("button-edit-assumptions")).not.toBeInTheDocument();
+
+    // The user's unsaved value "7.5" must still be in the input
+    expect(screen.getByTestId("input-inflation-headline")).toHaveValue(7.5);
+  });
+
 });
 
 // ---------------------------------------------------------------------------
