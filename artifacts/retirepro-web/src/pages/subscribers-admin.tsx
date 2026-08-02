@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, ArrowLeft, Download, Users, Sparkles, BookOpen } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Mail, ArrowLeft, Download, Users, Sparkles, BookOpen,
+  ChevronLeft, ChevronRight, Search, X,
+} from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 
@@ -31,6 +35,8 @@ const SOURCE_COLORS: Record<string, string> = {
   "blog": "bg-amber-50 text-amber-600",
 };
 
+const PAGE_SIZE = 50;
+
 export default function SubscribersAdmin() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -38,6 +44,11 @@ export default function SubscribersAdmin() {
     queryKey: ["/api/subscribers"],
     enabled: isAuthenticated,
   });
+
+  // Filter + pagination state
+  const [emailSearch, setEmailSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -53,6 +64,7 @@ export default function SubscribersAdmin() {
     }
   }, [isAuthenticated, isLoading, isAdmin]);
 
+  // CSV exports ALL subscribers regardless of filter
   const downloadCSV = () => {
     if (!subscribers || subscribers.length === 0) return;
     const headers = ["Email", "Blog Source", "Subscribed On"];
@@ -75,12 +87,39 @@ export default function SubscribersAdmin() {
     URL.revokeObjectURL(url);
   };
 
-  // Group by source for the summary cards
+  // Group by source for summary cards (always over all subscribers)
   const sourceStats = subscribers.reduce<Record<string, number>>((acc, s) => {
     const key = s.source || "blog";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
+
+  // Filtered list
+  const filtered = useMemo(() => {
+    let list = subscribers;
+    if (emailSearch.trim()) {
+      const q = emailSearch.trim().toLowerCase();
+      list = list.filter((s) => s.email.toLowerCase().includes(q));
+    }
+    if (sourceFilter !== "all") {
+      list = list.filter((s) => (s.source || "blog") === sourceFilter);
+    }
+    return list;
+  }, [subscribers, emailSearch, sourceFilter]);
+
+  // Reset to page 1 whenever filter changes
+  useEffect(() => { setPage(1); }, [emailSearch, sourceFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageSlice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const hasFilters = emailSearch.trim() !== "" || sourceFilter !== "all";
+
+  const clearFilters = () => {
+    setEmailSearch("");
+    setSourceFilter("all");
+  };
 
   if (isLoading || subsLoading) {
     return (
@@ -174,18 +213,25 @@ export default function SubscribersAdmin() {
           {/* Per-source cards */}
           {Object.entries(SOURCE_LABELS).map(([key, label]) => {
             const count = sourceStats[key] || 0;
+            const isActive = sourceFilter === key;
             return (
-              <div
+              <button
                 key={key}
-                className="rounded-xl p-4"
-                style={{ background: "#FFFFFF", border: "1px solid rgba(26,18,8,0.08)" }}
+                onClick={() => setSourceFilter(isActive ? "all" : key)}
+                className="rounded-xl p-4 text-left transition-all"
+                style={{
+                  background: isActive ? "rgba(232,148,10,0.10)" : "#FFFFFF",
+                  border: isActive ? "1px solid rgba(232,148,10,0.40)" : "1px solid rgba(26,18,8,0.08)",
+                  cursor: "pointer",
+                  outline: "none",
+                }}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <BookOpen className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--slate-mid)" }} />
-                  <span className="text-xs truncate" style={{ color: "var(--slate-mid)" }}>{label}</span>
+                  <BookOpen className="h-3.5 w-3.5 flex-shrink-0" style={{ color: isActive ? "var(--saffron)" : "var(--slate-mid)" }} />
+                  <span className="text-xs truncate" style={{ color: isActive ? "var(--saffron)" : "var(--slate-mid)" }}>{label}</span>
                 </div>
                 <div className="text-xl font-bold" style={{ color: "var(--ink)" }}>{count}</div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -195,10 +241,74 @@ export default function SubscribersAdmin() {
           className="rounded-2xl overflow-hidden"
           style={{ background: "#FFFFFF", border: "1px solid rgba(26,18,8,0.08)", boxShadow: "0 2px 12px rgba(26,18,8,0.04)" }}
         >
-          <div className="px-6 py-4 border-b" style={{ borderColor: "rgba(26,18,8,0.08)" }}>
-            <h2 className="font-semibold" style={{ color: "var(--ink)", fontFamily: "var(--font-serif)" }}>
+          {/* Table header + search bar */}
+          <div
+            className="px-6 py-4 border-b flex flex-col sm:flex-row sm:items-center gap-3"
+            style={{ borderColor: "rgba(26,18,8,0.08)" }}
+          >
+            <h2 className="font-semibold flex-1" style={{ color: "var(--ink)", fontFamily: "var(--font-serif)" }}>
               All Subscribers
+              {hasFilters && (
+                <span className="ml-2 text-sm font-normal" style={{ color: "var(--slate-mid)" }}>
+                  — {filtered.length} of {subscribers.length} shown
+                </span>
+              )}
             </h2>
+
+            {/* Search + source filter */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Email search */}
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none"
+                  style={{ color: "var(--slate-mid)" }}
+                />
+                <Input
+                  value={emailSearch}
+                  onChange={(e) => setEmailSearch(e.target.value)}
+                  placeholder="Search email…"
+                  className="pl-8 h-8 text-sm w-48"
+                  style={{ borderColor: "rgba(26,18,8,0.15)" }}
+                />
+                {emailSearch && (
+                  <button
+                    onClick={() => setEmailSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                  >
+                    <X className="h-3.5 w-3.5" style={{ color: "var(--slate-mid)" }} />
+                  </button>
+                )}
+              </div>
+
+              {/* Source dropdown */}
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="h-8 rounded-md border text-sm px-2"
+                style={{
+                  borderColor: "rgba(26,18,8,0.15)",
+                  color: "var(--ink)",
+                  background: "#fff",
+                  outline: "none",
+                }}
+              >
+                <option value="all">All sources</option>
+                {Object.entries(SOURCE_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+
+              {/* Clear filters */}
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="h-8 px-3 rounded-md text-sm font-medium transition-colors hover:bg-amber-50"
+                  style={{ color: "var(--saffron)", border: "1px solid rgba(232,148,10,0.35)" }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
 
           {subscribers.length === 0 ? (
@@ -211,56 +321,138 @@ export default function SubscribersAdmin() {
                 The newsletter widget on your blog pages will collect emails here
               </p>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(26,18,8,0.07)" }}>
-                    <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>#</th>
-                    <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>Email Address</th>
-                    <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>Blog Source</th>
-                    <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>Subscribed On</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscribers.map((sub, i) => (
-                    <tr
-                      key={sub.id}
-                      className="transition-colors"
-                      style={{ borderBottom: "1px solid rgba(26,18,8,0.05)" }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(232,148,10,0.04)")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <td className="px-6 py-4" style={{ color: "var(--slate-mid)" }}>{i + 1}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--saffron)" }} />
-                          <a
-                            href={`mailto:${sub.email}`}
-                            className="font-medium hover:underline"
-                            style={{ color: "var(--ink)" }}
-                          >
-                            {sub.email}
-                          </a>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${SOURCE_COLORS[sub.source || "blog"] || "bg-amber-50 text-amber-600"}`}
-                        >
-                          {SOURCE_LABELS[sub.source || "blog"] || sub.source || "blog"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" style={{ color: "var(--slate-mid)" }}>
-                        {new Date(sub.createdAt).toLocaleDateString("en-IN", {
-                          year: "numeric", month: "short", day: "numeric",
-                        })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(232,148,10,0.10)" }}>
+                <Search className="h-5 w-5" style={{ color: "var(--saffron)" }} />
+              </div>
+              <p className="font-medium mb-1" style={{ color: "var(--ink)" }}>No matches</p>
+              <p className="text-sm mb-3" style={{ color: "var(--slate-mid)" }}>
+                Try a different email or source filter.
+              </p>
+              <button
+                onClick={clearFilters}
+                className="text-sm font-medium underline"
+                style={{ color: "var(--saffron)" }}
+              >
+                Clear filters
+              </button>
             </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(26,18,8,0.07)" }}>
+                      <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>#</th>
+                      <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>Email Address</th>
+                      <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>Blog Source</th>
+                      <th className="px-6 py-3 text-left font-medium" style={{ color: "var(--slate-mid)" }}>Subscribed On</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageSlice.map((sub, i) => (
+                      <tr
+                        key={sub.id}
+                        className="transition-colors"
+                        style={{ borderBottom: "1px solid rgba(26,18,8,0.05)" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(232,148,10,0.04)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <td className="px-6 py-4" style={{ color: "var(--slate-mid)" }}>
+                          {(safePage - 1) * PAGE_SIZE + i + 1}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--saffron)" }} />
+                            <a
+                              href={`mailto:${sub.email}`}
+                              className="font-medium hover:underline"
+                              style={{ color: "var(--ink)" }}
+                            >
+                              {sub.email}
+                            </a>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${SOURCE_COLORS[sub.source || "blog"] || "bg-amber-50 text-amber-600"}`}
+                          >
+                            {SOURCE_LABELS[sub.source || "blog"] || sub.source || "blog"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4" style={{ color: "var(--slate-mid)" }}>
+                          {new Date(sub.createdAt).toLocaleDateString("en-IN", {
+                            year: "numeric", month: "short", day: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination footer */}
+              {totalPages > 1 && (
+                <div
+                  className="px-6 py-3 flex items-center justify-between border-t"
+                  style={{ borderColor: "rgba(26,18,8,0.07)" }}
+                >
+                  <span className="text-sm" style={{ color: "var(--slate-mid)" }}>
+                    Page {safePage} of {totalPages} &nbsp;·&nbsp; {filtered.length} subscriber{filtered.length !== 1 ? "s" : ""}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                      className="h-8 w-8 rounded-md flex items-center justify-center transition-colors disabled:opacity-40"
+                      style={{ border: "1px solid rgba(26,18,8,0.12)" }}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-4 w-4" style={{ color: "var(--ink)" }} />
+                    </button>
+
+                    {/* Page number buttons — show at most 5 around current */}
+                    {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2)
+                      .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                        if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, idx) =>
+                        p === "…" ? (
+                          <span key={`ellipsis-${idx}`} className="px-1 text-sm" style={{ color: "var(--slate-mid)" }}>…</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p as number)}
+                            className="h-8 w-8 rounded-md text-sm font-medium transition-colors"
+                            style={{
+                              background: safePage === p ? "var(--saffron)" : "transparent",
+                              color: safePage === p ? "#fff" : "var(--ink)",
+                              border: safePage === p ? "none" : "1px solid rgba(26,18,8,0.12)",
+                            }}
+                            aria-current={safePage === p ? "page" : undefined}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage === totalPages}
+                      className="h-8 w-8 rounded-md flex items-center justify-center transition-colors disabled:opacity-40"
+                      style={{ border: "1px solid rgba(26,18,8,0.12)" }}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-4 w-4" style={{ color: "var(--ink)" }} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
