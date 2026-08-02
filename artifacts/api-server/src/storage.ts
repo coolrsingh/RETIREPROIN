@@ -39,7 +39,7 @@ import {
   type Subscriber,
 } from "@workspace/db";
 import { db } from "./db";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -357,7 +357,11 @@ export class DatabaseStorage implements IStorage {
 
   // Income operations
   async getIncomeItems(scenarioId: string): Promise<IncomeItem[]> {
-    return db.select().from(incomeItems).where(eq(incomeItems.scenarioId, scenarioId));
+    // ORDER BY amount DESC ensures the primary (highest-earning) salary is first,
+    // making retirement-year derivation robust regardless of insertion order.
+    return db.select().from(incomeItems)
+      .where(eq(incomeItems.scenarioId, scenarioId))
+      .orderBy(desc(incomeItems.amount));
   }
 
   async createIncomeItem(income: InsertIncomeItem): Promise<IncomeItem> {

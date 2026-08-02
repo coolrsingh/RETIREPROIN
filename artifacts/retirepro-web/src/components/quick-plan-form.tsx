@@ -8,7 +8,61 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Zap, Coffee, CreditCard, TrendingUp, Calculator, Lock, Target } from "lucide-react";
+import { SliderField } from "@/components/slider-field";
+import {
+  Plus, Trash2, Zap, Coffee, CreditCard, TrendingUp,
+  Calculator, Lock, Target, Users, HandCoins, PiggyBank,
+} from "lucide-react";
+
+// ── Goal definitions ──────────────────────────────────────────────────────────
+
+const GOALS = [
+  {
+    key: "fire" as const,
+    icon: "🔥",
+    label: "Retire Early",
+    sublabel: "FIRE lifestyle",
+    multiplier: 0.6,
+    color: "border-orange-400 bg-orange-50 text-orange-900",
+    selectedColor: "border-orange-500 bg-orange-100 ring-2 ring-orange-400",
+    desc: "0.6× current expenses",
+  },
+  {
+    key: "lean" as const,
+    icon: "🎯",
+    label: "Lean & Simple",
+    sublabel: "Essential comfort",
+    multiplier: 0.75,
+    color: "border-teal-300 bg-teal-50 text-teal-900",
+    selectedColor: "border-teal-500 bg-teal-100 ring-2 ring-teal-400",
+    desc: "0.75× current expenses",
+  },
+  {
+    key: "comfortable" as const,
+    icon: "😌",
+    label: "Comfortable",
+    sublabel: "Same as today",
+    multiplier: 1.0,
+    color: "border-blue-300 bg-blue-50 text-blue-900",
+    selectedColor: "border-blue-500 bg-blue-100 ring-2 ring-blue-400",
+    desc: "1× current expenses",
+  },
+  {
+    key: "lavish" as const,
+    icon: "🥂",
+    label: "Lavish",
+    sublabel: "Premium lifestyle",
+    multiplier: 1.3,
+    color: "border-purple-300 bg-purple-50 text-purple-900",
+    selectedColor: "border-purple-500 bg-purple-100 ring-2 ring-purple-400",
+    desc: "1.3× current expenses",
+  },
+] as const;
+
+type PersonaMode = "accumulating" | "retired";
+type GoalKey = "fire" | "lean" | "comfortable" | "lavish";
+
+// ── Component props ───────────────────────────────────────────────────────────
 
 interface QuickPlanFormProps {
   onSubmit: (data: QuickPlan) => void;
@@ -25,93 +79,243 @@ interface QuickPlanFormProps {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: QuickPlanFormProps) {
+  // ── Local state ────────────────────────────────────────────────────────────
+  const [personaMode, setPersonaMode] = useState<PersonaMode>("accumulating");
+  const [retirementGoal, setRetirementGoal] = useState<GoalKey>("comfortable");
+  const [hasSpouse, setHasSpouse] = useState(false);
   const [children, setChildren] = useState<any[]>([]);
   const [customGoals, setCustomGoals] = useState<{ name: string; todaysCost: number; yearsFromNow: number }[]>([]);
   const [hasMiniRetirement, setHasMiniRetirement] = useState(false);
   const [hasExistingEMI, setHasExistingEMI] = useState(false);
   const [savingsAutoMode, setSavingsAutoMode] = useState(true);
 
+  // ── Form ──────────────────────────────────────────────────────────────────
   const form = useForm<QuickPlan>({
     resolver: zodResolver(quickPlanSchema),
     defaultValues: {
-      fullName: profileDefaults?.fullName || "",
-      dob: profileDefaults?.dob || "",
-      retirementAge: profileDefaults?.retirementAge || 60,
+      fullName: profileDefaults?.fullName ?? "",
+      dob: profileDefaults?.dob ?? "",
+      retirementAge: profileDefaults?.retirementAge ?? 60,
       spouseDob: "",
-      isJointRetirement: false,
+      spouseName: "",
+      spouseMonthlyIncome: 0,
       spouseRetirementAge: 60,
-      monthlyIncomeTotal: profileDefaults?.monthlyIncomeTotal || 0,
-      monthlyExpenseTotal: profileDefaults?.monthlyExpenseTotal || 0,
-      monthlySavings: profileDefaults?.monthlySavings || 0,
-      incomeGrowthRate: profileDefaults?.incomeGrowthRate || 8,
+      isJointRetirement: false,
+      monthlyIncomeTotal: profileDefaults?.monthlyIncomeTotal ?? 0,
+      monthlyExpenseTotal: profileDefaults?.monthlyExpenseTotal ?? 0,
+      monthlySavings: profileDefaults?.monthlySavings ?? 0,
+      incomeGrowthRate: profileDefaults?.incomeGrowthRate ?? 8,
       children: [],
-      assetsLumpSum: profileDefaults?.assetsLumpSum || 0,
+      assetsLumpSum: profileDefaults?.assetsLumpSum ?? 0,
+      epfCorpus: 0,
+      npsCorpus: 0,
+      npsMonthlyContribution: 0,
+      currentCorpus: 0,
+      monthlyWithdrawal: 0,
+      yearsToCover: 25,
       assumptions: {
         returnPre: 12,
         returnPost: 8,
-        inflationHeadline: 7
-      }
-    }
+        inflationHeadline: 7,
+      },
+    },
   });
 
-  // Auto-calculate savings = income - expenses when in auto mode
+  // ── Watchers ──────────────────────────────────────────────────────────────
   const income = form.watch("monthlyIncomeTotal");
   const expenses = form.watch("monthlyExpenseTotal");
+  const retirementAge = form.watch("retirementAge");
+  const inflationPct = form.watch("assumptions.inflationHeadline") ?? 7;
+  const returnPre = form.watch("assumptions.returnPre") ?? 12;
+  const returnPost = form.watch("assumptions.returnPost") ?? 8;
+  const incomeGrowthRate = form.watch("incomeGrowthRate") ?? 8;
 
+  const computedSavings = Math.max(0, (Number(income) || 0) - (Number(expenses) || 0));
+
+  // ── Goal multiplier display ────────────────────────────────────────────────
+  const selectedGoal = GOALS.find((g) => g.key === retirementGoal)!;
+  const postRetirementEstimate = Math.round((Number(expenses) || 0) * selectedGoal.multiplier);
+
+  // ── Effects ───────────────────────────────────────────────────────────────
+  // Auto-calculate savings
   useEffect(() => {
-    if (savingsAutoMode) {
-      const computed = Math.max(0, (Number(income) || 0) - (Number(expenses) || 0));
-      form.setValue("monthlySavings", computed, { shouldValidate: false });
+    if (savingsAutoMode && personaMode === "accumulating") {
+      form.setValue("monthlySavings", computedSavings, { shouldValidate: false });
     }
-  }, [income, expenses, savingsAutoMode]);
+  }, [income, expenses, savingsAutoMode, personaMode]);
 
+  // When switching modes, sync the hidden personaMode RHF field so superRefine sees the right value
+  useEffect(() => {
+    form.setValue("personaMode", personaMode as any, { shouldValidate: false });
+    if (personaMode === "retired") {
+      form.setValue("monthlyIncomeTotal", 0, { shouldValidate: false });
+    }
+  }, [personaMode]);
+
+  // ── Children helpers ──────────────────────────────────────────────────────
   const addChild = () => {
-    const newChild = { name: "", dob: "", eduTodaysCost: 0, marriageTodaysCost: 0 };
-    const updated = [...children, newChild];
+    const updated = [...children, { name: "", dob: "", eduTodaysCost: 0, marriageTodaysCost: 0 }];
     setChildren(updated);
     form.setValue("children", updated);
   };
-
   const removeChild = (index: number) => {
     const updated = children.filter((_, i) => i !== index);
     setChildren(updated);
     form.setValue("children", updated);
   };
 
-  const addCustomGoal = () => {
-    setCustomGoals(prev => [...prev, { name: "", todaysCost: 0, yearsFromNow: 5 }]);
-  };
-
-  const removeCustomGoal = (index: number) => {
-    setCustomGoals(prev => prev.filter((_, i) => i !== index));
-  };
-
+  // ── Custom goal helpers ───────────────────────────────────────────────────
+  const addCustomGoal = () => setCustomGoals((p) => [...p, { name: "", todaysCost: 0, yearsFromNow: 5 }]);
+  const removeCustomGoal = (index: number) => setCustomGoals((p) => p.filter((_, i) => i !== index));
   const updateCustomGoal = (index: number, field: string, value: string | number) => {
-    setCustomGoals(prev => {
-      const updated = [...prev];
+    setCustomGoals((p) => {
+      const updated = [...p];
       updated[index] = { ...updated[index], [field]: value };
       return updated;
     });
   };
 
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = (data: QuickPlan) => {
-    const cleanedData = {
+    const isRetired = personaMode === "retired";
+    const cleanedData: QuickPlan = {
       ...data,
+      personaMode,
+      retirementGoal,
       children,
-      customGoals: customGoals.filter(g => g.name.trim() && g.todaysCost > 0 && g.yearsFromNow > 0),
-      miniRetirement: hasMiniRetirement ? data.miniRetirement : undefined,
+      customGoals: customGoals.filter((g) => g.name.trim() && g.todaysCost > 0 && g.yearsFromNow > 0),
+      miniRetirement: hasMiniRetirement && !isRetired ? data.miniRetirement : undefined,
       existingEMI: hasExistingEMI ? data.existingEMI : undefined,
+      // Spouse — only send if section is open
+      spouseName: hasSpouse ? (data.spouseName || undefined) : undefined,
+      spouseDob: hasSpouse ? (data.spouseDob || undefined) : undefined,
+      spouseMonthlyIncome: hasSpouse ? (data.spouseMonthlyIncome ?? 0) : undefined,
+      spouseRetirementAge: hasSpouse ? (data.spouseRetirementAge ?? 60) : undefined,
+      isJointRetirement: hasSpouse,
+      // Retired mode: zero out accumulation-specific fields
+      monthlyIncomeTotal: isRetired ? 0 : data.monthlyIncomeTotal,
+      incomeGrowthRate: isRetired ? 0 : (data.incomeGrowthRate ?? 8),
+      monthlySavings: isRetired ? 0 : data.monthlySavings,
     };
     onSubmit(cleanedData);
   };
 
-  const computedSavings = Math.max(0, (Number(income) || 0) - (Number(expenses) || 0));
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Basic Info Section */}
+
+        {/* ── 1. PERSONA TOGGLE ──────────────────────────────────────────── */}
+        <Card data-testid="card-persona-toggle">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="h-5 w-5 text-slate-500" />
+              What's your situation?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(
+                [
+                  {
+                    mode: "accumulating" as const,
+                    icon: <TrendingUp className="h-5 w-5" />,
+                    title: "I'm still building my corpus",
+                    desc: "Working, saving & investing toward retirement",
+                    accent: "border-blue-400 bg-blue-50",
+                    selected: "border-blue-500 bg-blue-100 ring-2 ring-blue-400",
+                  },
+                  {
+                    mode: "retired" as const,
+                    icon: <Coffee className="h-5 w-5" />,
+                    title: "I'm already retired",
+                    desc: "Living off my savings & investments",
+                    accent: "border-amber-300 bg-amber-50",
+                    selected: "border-amber-500 bg-amber-100 ring-2 ring-amber-400",
+                  },
+                ] as const
+              ).map(({ mode, icon, title, desc, accent, selected }) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    setPersonaMode(mode);
+                    form.setValue("personaMode", mode as any, { shouldValidate: false });
+                    if (mode === "retired") form.setValue("monthlyIncomeTotal", 0, { shouldValidate: false });
+                  }}
+                  data-testid={`persona-${mode}`}
+                  className={`flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
+                    personaMode === mode ? selected : `${accent} hover:opacity-80`
+                  }`}
+                >
+                  <span className={`mt-0.5 ${personaMode === mode ? "text-blue-700" : "text-slate-500"}`}>
+                    {icon}
+                  </span>
+                  <div>
+                    <p className="font-semibold text-sm text-slate-900">{title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── 2. GOAL SELECTOR (accumulating only) ──────────────────────── */}
+        {personaMode === "accumulating" && (
+          <Card data-testid="card-goal-selector">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Target className="h-5 w-5 text-indigo-500" />
+                Retirement lifestyle goal
+              </CardTitle>
+              <CardDescription>
+                Pick the lifestyle you want in retirement — this sets a target expense level.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {GOALS.map((g) => (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => setRetirementGoal(g.key)}
+                    data-testid={`goal-${g.key}`}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-center transition-all cursor-pointer ${
+                      retirementGoal === g.key ? g.selectedColor : `${g.color} hover:opacity-80`
+                    }`}
+                  >
+                    <span className="text-2xl">{g.icon}</span>
+                    <span className="font-bold text-sm">{g.label}</span>
+                    <span className="text-[11px] opacity-70">{g.sublabel}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Display estimate */}
+              {Number(expenses) > 0 && (
+                <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm text-slate-600">
+                    {selectedGoal.icon} At <strong>{selectedGoal.label}</strong>, your target retirement monthly spend:
+                  </span>
+                  <span className="text-base font-bold text-slate-900">
+                    ₹{postRetirementEstimate.toLocaleString("en-IN")}/mo
+                    <span className="ml-1.5 text-xs font-normal text-slate-400">
+                      ({selectedGoal.desc}, before inflation)
+                    </span>
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── 3. BASIC INFO ─────────────────────────────────────────────── */}
         <Card data-testid="card-basic-info">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -120,7 +324,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             </CardTitle>
             <CardDescription>Get started with the essentials for your retirement planning</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -149,200 +353,413 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Retirement age — slider, accumulating only */}
+            {personaMode === "accumulating" && (
               <FormField
                 control={form.control}
                 name="retirementAge"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Retirement Age</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="60"
-                        data-testid="input-retirement-age"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
+                    <SliderField
+                      label="Target Retirement Age"
+                      value={field.value}
+                      onChange={field.onChange}
+                      min={40}
+                      max={75}
+                      step={1}
+                      unit=" yrs"
+                      lowLabel="Early (40)"
+                      highLabel="Late (75)"
+                      hint="Default is 60 for India-based plans"
+                      testId="input-retirement-age"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Financial Overview - Quick Plan */}
-        <Card data-testid="card-financial-overview">
+        {/* ── 4. SPOUSE SECTION ──────────────────────────────────────────── */}
+        <Card data-testid="card-spouse">
           <CardHeader>
-            <CardTitle>Financial Overview</CardTitle>
-            <CardDescription>Your current income, expenses, and how much you invest each month</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Income + Expenses row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="monthlyIncomeTotal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Monthly Income (₹)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="50000"
-                        data-testid="input-monthly-income"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="monthlyExpenseTotal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Monthly Expenses (₹)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="30000"
-                        data-testid="input-monthly-expense"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-pink-500" />
+                  Spouse / Partner (Optional)
+                </CardTitle>
+                <CardDescription>
+                  Add your spouse's income to include both incomes in the household projection.
+                </CardDescription>
+              </div>
+              <Switch
+                checked={hasSpouse}
+                onCheckedChange={setHasSpouse}
+                data-testid="toggle-spouse"
+                className="mt-1 shrink-0"
               />
             </div>
-
-            {/* Monthly Savings — auto-calculated with override option */}
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-y-2 mb-3" data-testid="savings-header-row">
-                <div className="flex items-center gap-2">
-                  <Calculator className="h-4 w-4 text-blue-600" />
-                  <span className="font-semibold text-sm text-blue-900">Monthly Savings / Investment</span>
-                  {savingsAutoMode && (
-                    <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium">Auto</span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSavingsAutoMode(!savingsAutoMode)}
-                  className="flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 transition-colors"
-                >
-                  {savingsAutoMode ? (
-                    <><Lock className="h-3 w-3" />Enter custom amount</>
-                  ) : (
-                    <><Calculator className="h-3 w-3" />Auto-calculate</>
-                  )}
-                </button>
-              </div>
-
-              {savingsAutoMode ? (
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black text-blue-700">
-                      ₹{computedSavings.toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-sm text-blue-600">/month</span>
-                  </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Calculated as Income − Expenses. Click "Enter custom amount" to override.
-                    {Number(income) > 0 && Number(expenses) > 0 && (
-                      <span className="ml-1 font-medium">
-                        ({Math.round((computedSavings / (Number(income) || 1)) * 100)}% savings rate)
-                      </span>
-                    )}
-                  </p>
-                  {/* hidden field keeps value in sync */}
-                  <input type="hidden" {...form.register("monthlySavings", { valueAsNumber: true })} />
-                </div>
-              ) : (
+          </CardHeader>
+          {hasSpouse && (
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="monthlySavings"
+                  name="spouseName"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Spouse Name (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Priya" data-testid="input-spouse-name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="spouseDob"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Spouse Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input type="date" data-testid="input-spouse-dob" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="spouseMonthlyIncome"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Spouse Monthly Income (₹)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder={String(computedSavings || 20000)}
-                          data-testid="input-monthly-savings"
-                          className="bg-white"
+                          placeholder="40000"
+                          data-testid="input-spouse-income"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
-                      <p className="text-xs text-slate-500 mt-1">
-                        Income − Expenses = ₹{computedSavings.toLocaleString("en-IN")}. You're entering a custom amount.
-                      </p>
                     </FormItem>
                   )}
                 />
-              )}
-            </div>
-
-            {/* Salary growth rate assumption */}
-            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="h-4 w-4 text-amber-600" />
-                <span className="font-semibold text-sm text-amber-900">Salary Growth Assumption</span>
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Optional</span>
-              </div>
-              <FormField
-                control={form.control}
-                name="incomeGrowthRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-testid="salary-growth-row">
+                <FormField
+                  control={form.control}
+                  name="spouseRetirementAge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Spouse Works Until Age</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          step="0.5"
-                          min={0}
-                          max={30}
-                          className="w-28 bg-white"
-                          data-testid="input-income-growth-rate"
+                          placeholder="58"
+                          min={18}
+                          max={80}
+                          data-testid="input-spouse-retirement-age"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
-                      <span className="text-sm font-medium text-amber-800">% per year</span>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Spouse income stops at this age in the projection.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* ── 5. FINANCIAL OVERVIEW ─────────────────────────────────────── */}
+        <Card data-testid="card-financial-overview">
+          <CardHeader>
+            <CardTitle>
+              {personaMode === "retired" ? "Your Financial Position" : "Financial Overview"}
+            </CardTitle>
+            <CardDescription>
+              {personaMode === "retired"
+                ? "Tell us your current corpus and how much you plan to withdraw each month."
+                : "Your current income, expenses, and how much you invest each month"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {personaMode === "accumulating" ? (
+              /* ── ACCUMULATING MODE ─────────────────────────────────────── */
+              <>
+                {/* Income + Expenses */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="monthlyIncomeTotal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Monthly Income (₹)
+                          {hasSpouse && (
+                            <span className="ml-1.5 text-xs font-normal text-slate-400">— your income only</span>
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="50000"
+                            data-testid="input-monthly-income"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="monthlyExpenseTotal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Expenses (₹)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="30000"
+                            data-testid="input-monthly-expense"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Monthly Savings — auto-calculated with override */}
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-y-2 mb-3" data-testid="savings-header-row">
+                    <div className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-blue-600" />
+                      <span className="font-semibold text-sm text-blue-900">Monthly Savings / Investment</span>
+                      {savingsAutoMode && (
+                        <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium">Auto</span>
+                      )}
                     </div>
-                    <p className="text-xs text-amber-600 mt-1">Average Indian salary hike is 8–10% / year</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => setSavingsAutoMode(!savingsAutoMode)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 transition-colors"
+                    >
+                      {savingsAutoMode ? (
+                        <><Lock className="h-3 w-3" /> Enter custom amount</>
+                      ) : (
+                        <><Calculator className="h-3 w-3" /> Auto-calculate</>
+                      )}
+                    </button>
+                  </div>
+
+                  {savingsAutoMode ? (
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-blue-700">
+                          ₹{computedSavings.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-sm text-blue-600">/month</span>
+                      </div>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Calculated as Income − Expenses.{" "}
+                        {Number(income) > 0 && Number(expenses) > 0 && (
+                          <span className="font-medium">
+                            ({Math.round((computedSavings / (Number(income) || 1)) * 100)}% savings rate)
+                          </span>
+                        )}
+                      </p>
+                      <input type="hidden" {...form.register("monthlySavings", { valueAsNumber: true })} />
+                    </div>
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="monthlySavings"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder={String(computedSavings || 20000)}
+                              data-testid="input-monthly-savings"
+                              className="bg-white"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-slate-500 mt-1">
+                            Income − Expenses = ₹{computedSavings.toLocaleString("en-IN")}. You're entering a custom amount.
+                          </p>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+
+                {/* Salary Growth slider */}
+                <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="h-4 w-4 text-amber-600" />
+                    <span className="font-semibold text-sm text-amber-900">Salary Growth Assumption</span>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Optional</span>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="incomeGrowthRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <SliderField
+                          label="Annual salary growth"
+                          value={field.value ?? 8}
+                          onChange={field.onChange}
+                          min={0}
+                          max={20}
+                          step={0.5}
+                          unit="%"
+                          lowLabel="0% (flat)"
+                          highLabel="20%"
+                          hint="Average Indian salary hike is 8–10% / year"
+                          testId="input-income-growth-rate"
+                          rowTestId="salary-growth-row"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
+            ) : (
+              /* ── RETIRED / DRAWDOWN MODE ────────────────────────────────── */
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="currentCorpus"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1.5">
+                          <PiggyBank className="h-4 w-4 text-emerald-600" />
+                          Current Corpus (₹)
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="5000000"
+                            data-testid="input-current-corpus"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-slate-500 mt-1">Total investments + EPF + NPS today.</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="monthlyWithdrawal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1.5">
+                          <HandCoins className="h-4 w-4 text-rose-500" />
+                          Monthly Withdrawal (₹)
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="60000"
+                            data-testid="input-monthly-withdrawal"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-slate-500 mt-1">How much you plan to spend each month.</p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="monthlyExpenseTotal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Expenses (₹)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="60000"
+                            data-testid="input-monthly-expense"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="yearsToCover"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Years Corpus Should Last</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="25"
+                            min={1}
+                            max={60}
+                            data-testid="input-years-to-cover"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-slate-500 mt-1">
+                          e.g. 25 years if you're 60 and plan to 85.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                  The projection shows how long your corpus lasts given your withdrawal rate and investment return.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Children Section - Simplified for Quick Plan */}
+        {/* ── 6. CHILDREN ───────────────────────────────────────────────── */}
         <Card data-testid="card-children">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Children (Optional)</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addChild}
-                data-testid="button-add-child"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Child
+              <Button type="button" variant="outline" size="sm" onClick={addChild} data-testid="button-add-child">
+                <Plus className="h-4 w-4 mr-2" /> Add Child
               </Button>
             </CardTitle>
-            <CardDescription>Add children to automatically mark education and marriage milestones on your projection chart</CardDescription>
+            <CardDescription>
+              Add children to automatically mark education and marriage milestones on your projection chart
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {children.map((child, index) => (
@@ -432,7 +849,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
           </CardContent>
         </Card>
 
-        {/* Custom Goals */}
+        {/* ── 7. CUSTOM GOALS ───────────────────────────────────────────── */}
         <Card data-testid="card-custom-goals">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -440,19 +857,12 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 <Target className="h-5 w-5 text-indigo-500" />
                 Custom Goals (Optional)
               </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCustomGoal}
-                data-testid="button-add-custom-goal"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Goal
+              <Button type="button" variant="outline" size="sm" onClick={addCustomGoal} data-testid="button-add-custom-goal">
+                <Plus className="h-4 w-4 mr-2" /> Add Goal
               </Button>
             </CardTitle>
             <CardDescription>
-              Add any major financial goal (home renovation, world trip, business launch, etc.) — it will appear as a milestone on your projection chart and be factored into your plan
+              Add any major financial goal (home renovation, world trip, business launch, etc.)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -463,7 +873,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <Input
                     placeholder="e.g. Home Renovation, World Trip"
                     value={goal.name}
-                    onChange={e => updateCustomGoal(index, "name", e.target.value)}
+                    onChange={(e) => updateCustomGoal(index, "name", e.target.value)}
                     data-testid={`input-goal-name-${index}`}
                     className="bg-white"
                   />
@@ -474,7 +884,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                     type="number"
                     placeholder="500000"
                     value={goal.todaysCost || ""}
-                    onChange={e => updateCustomGoal(index, "todaysCost", Number(e.target.value) || 0)}
+                    onChange={(e) => updateCustomGoal(index, "todaysCost", Number(e.target.value) || 0)}
                     data-testid={`input-goal-cost-${index}`}
                     className="bg-white"
                   />
@@ -488,7 +898,7 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                       min={1}
                       max={50}
                       value={goal.yearsFromNow || ""}
-                      onChange={e => updateCustomGoal(index, "yearsFromNow", Number(e.target.value) || 1)}
+                      onChange={(e) => updateCustomGoal(index, "yearsFromNow", Number(e.target.value) || 1)}
                       data-testid={`input-goal-years-${index}`}
                       className="bg-white"
                     />
@@ -514,101 +924,185 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
           </CardContent>
         </Card>
 
-        {/* Current Assets */}
+        {/* ── 8. CURRENT ASSETS (with EPF / NPS) ───────────────────────── */}
         <Card data-testid="card-current-assets">
           <CardHeader>
-            <CardTitle>Current Assets</CardTitle>
-            <CardDescription>Your existing savings and investments</CardDescription>
+            <CardTitle>Current Assets & Retirement Accounts</CardTitle>
+            <CardDescription>
+              Your existing savings, investments, and retirement account balances
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="assetsLumpSum"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Total Current Assets (₹)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="1000000"
-                      data-testid="input-current-assets"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="assetsLumpSum"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Other Investments (₹)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="1000000"
+                        data-testid="input-current-assets"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-slate-500 mt-1">Mutual funds, FDs, stocks, etc.</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="epfCorpus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5">
+                      EPF Corpus (₹)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="500000"
+                        data-testid="input-epf-corpus"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-slate-500 mt-1">Check your UAN passbook for balance.</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="npsCorpus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5">
+                      NPS Corpus (₹)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="300000"
+                        data-testid="input-nps-corpus"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-slate-500 mt-1">From your CRA / NPS account statement.</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* NPS monthly contribution */}
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <PiggyBank className="h-4 w-4 text-emerald-600" />
+                <span className="font-semibold text-sm text-emerald-900">NPS Monthly Contribution</span>
+                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Optional</span>
+              </div>
+              <FormField
+                control={form.control}
+                name="npsMonthlyContribution"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="5000"
+                          className="w-36 bg-white"
+                          data-testid="input-nps-contribution"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <span className="text-sm text-emerald-800 font-medium">₹/month</span>
+                    </div>
+                    <p className="text-xs text-emerald-700 mt-1">
+                      Your monthly NPS deduction (80CCD(1B) gives extra ₹50,000 tax benefit).
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Mini Retirement Section */}
-        <Card data-testid="card-mini-retirement">
-          <CardHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Coffee className="h-5 w-5 text-amber-600" />
-                  Mini Retirement (Optional)
-                </CardTitle>
-                <CardDescription>Planning a career break or sabbatical? During this period, no new savings will be added — your portfolio will only grow through investment returns.</CardDescription>
+        {/* ── 9. MINI RETIREMENT (accumulating only) ────────────────────── */}
+        {personaMode === "accumulating" && (
+          <Card data-testid="card-mini-retirement">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Coffee className="h-5 w-5 text-amber-600" />
+                    Mini Retirement (Optional)
+                  </CardTitle>
+                  <CardDescription>
+                    Planning a career break or sabbatical? During this period, no new savings will be added — your portfolio will only grow through investment returns.
+                  </CardDescription>
+                </div>
+                <Switch checked={hasMiniRetirement} onCheckedChange={setHasMiniRetirement} data-testid="toggle-mini-retirement" className="mt-1 shrink-0" />
               </div>
-              <Switch checked={hasMiniRetirement} onCheckedChange={setHasMiniRetirement} data-testid="toggle-mini-retirement" className="mt-1 shrink-0" />
-            </div>
-          </CardHeader>
-          {hasMiniRetirement && (
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="miniRetirement.startYear"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Year</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder={String(new Date().getFullYear() + 5)}
-                          data-testid="input-mini-retirement-start"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="miniRetirement.durationMonths"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration (months)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="12"
-                          min={1}
-                          max={120}
-                          data-testid="input-mini-retirement-duration"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <p className="text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded p-2">
-                During a mini retirement, your investments continue to grow but no monthly savings are added to the corpus.
-              </p>
-            </CardContent>
-          )}
-        </Card>
+            </CardHeader>
+            {hasMiniRetirement && (
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="miniRetirement.startYear"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Year</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder={String(new Date().getFullYear() + 5)}
+                            data-testid="input-mini-retirement-start"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="miniRetirement.durationMonths"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration (months)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="12"
+                            min={1}
+                            max={120}
+                            data-testid="input-mini-retirement-duration"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
-        {/* Existing EMI Section */}
+        {/* ── 10. EXISTING EMI ───────────────────────────────────────────── */}
         <Card data-testid="card-existing-emi">
           <CardHeader>
             <div className="flex items-start justify-between gap-3">
@@ -617,7 +1111,9 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <CreditCard className="h-5 w-5 text-rose-600" />
                   Existing EMI (Optional)
                 </CardTitle>
-                <CardDescription>Do you have an ongoing loan? This EMI will reduce your monthly savings capacity until the tenure ends.</CardDescription>
+                <CardDescription>
+                  Do you have an ongoing loan? This EMI will reduce your monthly surplus until the tenure ends.
+                </CardDescription>
               </div>
               <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" className="mt-1 shrink-0" />
             </div>
@@ -665,85 +1161,89 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   )}
                 />
               </div>
-              <p className="text-xs text-slate-500 bg-rose-50 border border-rose-200 rounded p-2">
-                The EMI will be deducted from your monthly surplus for the specified tenure and then automatically stops.
-              </p>
             </CardContent>
           )}
         </Card>
 
-        {/* Basic Assumptions */}
+        {/* ── 11. PLANNING ASSUMPTIONS (all sliders) ────────────────────── */}
         <Card data-testid="card-assumptions">
           <CardHeader>
             <CardTitle>Planning Assumptions</CardTitle>
-            <CardDescription>Basic financial projections (smart defaults applied)</CardDescription>
+            <CardDescription>Adjust these to match your expectations — smart defaults applied</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="assumptions.inflationHeadline"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Annual Inflation (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="7"
-                        data-testid="input-inflation"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <CardContent className="space-y-6">
+            <FormField
+              control={form.control}
+              name="assumptions.inflationHeadline"
+              render={({ field }) => (
+                <FormItem>
+                  <SliderField
+                    label="Annual Inflation"
+                    value={field.value ?? 7}
+                    onChange={field.onChange}
+                    min={3}
+                    max={12}
+                    step={0.5}
+                    unit="%"
+                    lowLabel="3% (optimistic)"
+                    highLabel="12% (severe)"
+                    hint="Historical India CPI averages 5–7%. Retirement planning typically uses 6–7%."
+                    testId="input-inflation"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {personaMode === "accumulating" && (
               <FormField
                 control={form.control}
                 name="assumptions.returnPre"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pre-retirement Return (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="12"
-                        data-testid="input-pre-return"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
+                    <SliderField
+                      label="Pre-retirement Investment Return"
+                      value={field.value ?? 12}
+                      onChange={field.onChange}
+                      min={4}
+                      max={18}
+                      step={0.5}
+                      unit="%"
+                      lowLabel="4% (FD-only)"
+                      highLabel="18% (aggressive)"
+                      hint="Nifty 50 has returned ~13% CAGR over 20 years. 10–12% is a balanced assumption."
+                      testId="input-pre-return"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="assumptions.returnPost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Post-retirement Return (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="8"
-                        data-testid="input-post-return"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            )}
+            <FormField
+              control={form.control}
+              name="assumptions.returnPost"
+              render={({ field }) => (
+                <FormItem>
+                  <SliderField
+                    label="Post-retirement Investment Return"
+                    value={field.value ?? 8}
+                    onChange={field.onChange}
+                    min={3}
+                    max={12}
+                    step={0.5}
+                    unit="%"
+                    lowLabel="3% (bonds only)"
+                    highLabel="12%"
+                    hint="Conservative 6–8% is recommended for post-retirement (debt-heavy allocation)."
+                    testId="input-post-return"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
+        {/* ── 12. SUBMIT ────────────────────────────────────────────────── */}
         <div className="flex justify-end">
           <Button
             type="submit"
@@ -751,9 +1251,14 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             className="px-8"
             data-testid="button-create-plan"
           >
-            {isLoading ? "Generating your plan…" : "Generate My Plan →"}
+            {isLoading
+              ? "Generating your plan…"
+              : personaMode === "retired"
+              ? "Show My Drawdown Projection →"
+              : "Generate My Plan →"}
           </Button>
         </div>
+
       </form>
     </Form>
   );

@@ -40,36 +40,75 @@ interface CalculationResult {
   };
 }
 
+/** Pre-processed income stream with its own active window and growth rate. */
+interface IncomeStream {
+  annualAmount: number;
+  start: number;  // first active year (inclusive)
+  end: number;    // first inactive year (exclusive) — matches salary.end semantics
+  growthRate: number; // decimal, e.g. 0.08
+}
+
 export async function calculateRetirementPlan(scenarioData: ScenarioData): Promise<CalculationResult> {
   const currentYear = new Date().getFullYear();
   const assumptions = scenarioData.assumptions || {};
-  
+
   // Parse assumptions with defaults
   const inflationHeadline = parseFloat(assumptions.inflationHeadline || '6.0') / 100;
   const inflationEdu = parseFloat(assumptions.inflationEdu || '8.0') / 100;
   const returnPre = parseFloat(assumptions.returnPre || '10.0') / 100;
   const returnPost = parseFloat(assumptions.returnPost || '7.0') / 100;
   const lifeExpectancy = parseInt(assumptions.lifeExpectancy || '85');
+  // If a goal-adjusted post-retirement expense is provided, use it for post-retirement
+  // years instead of the pre-retirement expense base.  Falls back to monthlyExpenses.
+  const postRetirementMonthlyExpenseOverride = parseFloat(assumptions.postRetirementMonthlyExpense || '0') || null;
 
-  // Find self to determine retirement year
-  const self = scenarioData.householdMembers.find(m => m.relation === 'self');
+  // Default income growth rate from assumptions (used when an item has no growthRate field)
+  const defaultGrowthRate = parseFloat(assumptions.incomeGrowthRate || '8') / 100;
+
+  // Find self to determine birth year
+  const self = scenarioData.householdMembers.find((m: any) => m.relation === 'self');
   const birthYear = self?.dob ? new Date(self.dob).getFullYear() : currentYear - 35;
-  
-  // Get retirement age from income items or use default
-  const salaryIncome = scenarioData.incomeItems.find(i => i.type === 'salary');
-  const retirementAge = salaryIncome?.end ? salaryIncome.end - birthYear : 60;
+
+  // ── Derive retirement year from the primary (self) salary ──────────────────
+  // Sort salary items by amount descending so the primary (highest-earning) salary
+  // is evaluated first.  Among those, pick the one whose implied retirement age
+  // (end - selfBirthYear) falls in a plausible range [40, 80].  This is robust
+  // regardless of DB insertion order and works for plans with a spouse salary.
+  const salarySortedByAmount = scenarioData.incomeItems
+    .filter((i: any) => i.type === 'salary')
+    .slice()
+    .sort((a: any, b: any) => parseFloat(b.amount || '0') - parseFloat(a.amount || '0'));
+
+  const primarySalary = salarySortedByAmount.find((i: any) => {
+    if (!i.end) return false;
+    const impliedAge = i.end - birthYear;
+    return impliedAge >= 40 && impliedAge <= 80;
+  }) ?? salarySortedByAmount[0] ?? scenarioData.incomeItems.find((i: any) => i.type === 'salary');
+
+  const retirementAge = primarySalary?.end ? primarySalary.end - birthYear : 60;
   const retirementYear = birthYear + retirementAge;
 
-  // Calculate current financial position
-  const totalAssets = scenarioData.assets.reduce((sum: number, asset: any) => 
-    sum + parseFloat(asset.value || '0'), 0);
-  
-  const monthlyIncome = scenarioData.incomeItems.reduce((sum: number, income: any) => {
-    const amount = parseFloat(income.amount || '0');
-    return sum + (income.frequency === 'annual' ? amount / 12 : amount);
-  }, 0);
+  // ── Pre-process income streams (one entry per income item) ─────────────────
+  // Each stream is active during [start, end) and grows at its own rate.
+  // This honours spouse retirements that differ from the primary retirement.
+  const incomeStreams: IncomeStream[] = scenarioData.incomeItems
+    .filter((i: any) => parseFloat(i.amount || '0') > 0)
+    .map((i: any) => {
+      const monthly = parseFloat(i.amount || '0');
+      const annual = i.frequency === 'annual' ? monthly : monthly * 12;
+      const streamStart = i.start ?? currentYear;
+      // If no end year, use a far-future sentinel (stream never stops on its own)
+      const streamEnd = i.end ?? (currentYear + 999);
+      // Per-item growthRate (in-memory/guest plans may set this); fall back to assumption default
+      const streamGrowthRate = i.growthRate != null ? parseFloat(i.growthRate) / 100 : defaultGrowthRate;
+      return { annualAmount: annual, start: streamStart, end: streamEnd, growthRate: streamGrowthRate };
+    });
 
-  const monthlyExpenses = scenarioData.expenseItems.reduce((sum: number, expense: any) => 
+  // Calculate current financial position
+  const totalAssets = scenarioData.assets.reduce((sum: number, asset: any) =>
+    sum + parseFloat(asset.value || '0'), 0);
+
+  const monthlyExpenses = scenarioData.expenseItems.reduce((sum: number, expense: any) =>
     sum + parseFloat(expense.amountMonthly || '0'), 0);
 
   // Pre-process mini retirements
@@ -98,12 +137,12 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
       if (child.dob) {
         const childBirthYear = new Date(child.dob).getFullYear();
         const childName = child.name || `Child ${index + 1}`;
-        
+
         const educationYear = childBirthYear + 20;
         if (educationYear >= currentYear) {
           markers.push({ year: educationYear, type: 'education', label: `${childName}'s Education` });
         }
-        
+
         const marriageYear = childBirthYear + 30;
         if (marriageYear >= currentYear) {
           markers.push({ year: marriageYear, type: 'marriage', label: `${childName}'s Marriage` });
@@ -123,18 +162,11 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
   // Add retirement marker
   markers.push({ year: retirementYear, type: 'retirement', label: 'Retirement' });
 
-  // Read salary growth rate from the income item (set by user in the form), falling back to assumptions or 8%
-  const salaryGrowthFromItem = salaryIncome?.growthRate ? parseFloat(salaryIncome.growthRate) : null;
-  const incomeGrowthRate = salaryGrowthFromItem != null
-    ? salaryGrowthFromItem / 100
-    : parseFloat(assumptions.incomeGrowthRate || '8') / 100;
-  const baseAnnualIncome = monthlyIncome * 12;
-  
   let currentNetWorth = totalAssets;
-  
+
   for (let year = currentYear; year <= lifeExpectancy + birthYear; year++) {
     const yearsFromNow = year - currentYear;
-    const age = birthYear + (year - currentYear);
+    const age = year - birthYear;
     const isPreRetirement = year < retirementYear;
     const notes: string[] = [];
 
@@ -154,20 +186,30 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     if (miniRetirementPeriods.some((mr) => year === mr.endYear)) {
       notes.push('Mini Retirement ends — resuming normal savings');
     }
-    
-    // Calculate income with growth (stops at retirement or during mini retirement)
+
+    // ── Per-stream income: each stream active during [start, end) with its own growth ──
+    // Mini retirement suppresses all income for that year.
     let yearlyIncome = 0;
-    if (isPreRetirement && !isMiniRetirement) {
-      yearlyIncome = baseAnnualIncome * Math.pow(1 + incomeGrowthRate, yearsFromNow);
+    if (!isMiniRetirement) {
+      for (const stream of incomeStreams) {
+        if (year >= stream.start && year < stream.end) {
+          const yearsActive = year - stream.start;
+          yearlyIncome += stream.annualAmount * Math.pow(1 + stream.growthRate, yearsActive);
+        }
+      }
     }
 
     if (year === retirementYear) {
-      notes.push(`Retirement at age ${retirementAge} — income stops, corpus begins drawdown`);
+      notes.push(`Retirement at age ${retirementAge} — primary income ends, corpus begins drawdown`);
     }
-    
-    // Adjust expenses for inflation
-    const inflatedExpenses = monthlyExpenses * Math.pow(1 + inflationHeadline, yearsFromNow) * 12;
-    
+
+    // Adjust expenses for inflation.
+    // Post-retirement years use the goal-adjusted base if one was provided.
+    const expenseBase = (!isPreRetirement && postRetirementMonthlyExpenseOverride !== null)
+      ? postRetirementMonthlyExpenseOverride
+      : monthlyExpenses;
+    const inflatedExpenses = expenseBase * Math.pow(1 + inflationHeadline, yearsFromNow) * 12;
+
     // EMI payments — only during pre-retirement and only while tenure has not expired
     const activeEMIMonthly = emiItems.reduce((sum, emi) => {
       if (!isPreRetirement) return sum;
@@ -186,7 +228,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         notes.push('Existing EMI closes — monthly surplus increases');
       }
     });
-    
+
     // Calculate child age-based goal expenses for this year
     let goalExpenses = 0;
     scenarioData.householdMembers.forEach((member: any) => {
@@ -194,7 +236,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
         const childBirthYear = new Date(member.dob).getFullYear();
         const childAge = year - childBirthYear;
         const childName = member.name || 'Child';
-        
+
         if (childAge === 20) {
           // Find this specific child's edu goal by matching targetYear
           const childEduYear = childBirthYear + 20;
@@ -206,7 +248,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
           goalExpenses += inflatedEduCost;
           notes.push(`${childName}'s higher education — ₹${(inflatedEduCost / 100000).toFixed(1)}L (inflation-adjusted from ₹${(eduCostToday / 100000).toFixed(1)}L today)`);
         }
-        
+
         if (childAge === 30) {
           const childMarriageYear = childBirthYear + 30;
           const marriageGoal = scenarioData.goals.find(
@@ -235,7 +277,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     const portfolioReturn = currentNetWorth * returnRate;
     const totalOutflow = inflatedExpenses + goalExpenses + yearlyEMI;
     const totalInflows = yearlyIncome;
-    
+
     let netSavings = totalInflows - totalOutflow;
     if (isPreRetirement) {
       if (isMiniRetirement) {
@@ -249,7 +291,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
       // Post-retirement: corpus grows at conservative rate and is reduced by full yearly deficit
       currentNetWorth = currentNetWorth * (1 + returnRate) + netSavings;
     }
-    
+
     // Ensure net worth doesn't go negative
     currentNetWorth = Math.max(currentNetWorth, 0);
 
@@ -280,22 +322,27 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     });
   }
 
-  // Calculate required corpus at retirement using the 4% safe withdrawal rate equivalent
-  const retirementExpenses = monthlyExpenses * Math.pow(1 + inflationHeadline, retirementYear - currentYear) * 12;
+  // Calculate required corpus at retirement using the 4% safe withdrawal rate equivalent.
+  // Use the goal-adjusted post-retirement expense if provided so the required corpus
+  // reflects the chosen retirement lifestyle, not just current spending.
+  const retirementExpenseBase = postRetirementMonthlyExpenseOverride !== null
+    ? postRetirementMonthlyExpenseOverride
+    : monthlyExpenses;
+  const retirementExpenses = retirementExpenseBase * Math.pow(1 + inflationHeadline, retirementYear - currentYear) * 12;
   const requiredCorpusAtRetirement = retirementExpenses / returnPost;
-  
+
   const retirementData = netWorthSeries.find(item => item.year === retirementYear);
   const projectedCorpusAtRetirement = retirementData?.value || 0;
-  
+
   const gap = Math.max(0, requiredCorpusAtRetirement - projectedCorpusAtRetirement);
-  
-  // Fix: returnPre is already a decimal (e.g. 0.10), so monthly rate = returnPre / 12
+
+  // returnPre is already a decimal (e.g. 0.10), so monthly rate = returnPre / 12
   let sipRequired = 0;
   if (gap > 0) {
     const yearsToRetirement = retirementYear - currentYear;
     const monthsToRetirement = yearsToRetirement * 12;
     const monthlyReturn = returnPre / 12;
-    
+
     if (monthsToRetirement > 0 && monthlyReturn > 0) {
       sipRequired = gap * monthlyReturn / (Math.pow(1 + monthlyReturn, monthsToRetirement) - 1);
     }

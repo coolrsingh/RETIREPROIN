@@ -171,6 +171,9 @@ CREATE TABLE IF NOT EXISTS subscribers (
   created_at timestamp DEFAULT now()
 );
 
+-- Add goal-adjusted post-retirement expense to assumptions (idempotent backfill)
+ALTER TABLE assumptions ADD COLUMN IF NOT EXISTS post_retirement_monthly_expense numeric(15,2);
+
 -- crm_defaults
 CREATE TABLE IF NOT EXISTS crm_defaults (
   id varchar PRIMARY KEY DEFAULT gen_random_uuid(),

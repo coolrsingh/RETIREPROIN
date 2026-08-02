@@ -76,6 +76,10 @@ export const assumptions = pgTable("assumptions", {
   equityReturn: decimal("equity_return", { precision: 5, scale: 2 }).default('14'),
   debtReturn: decimal("debt_return", { precision: 5, scale: 2 }).default('8'),
   source: varchar("source", { enum: ['crm', 'user'] }).default('crm'),
+  /** Goal-adjusted post-retirement monthly expense (in today's ₹). Distinct from
+   *  the core expense item (which captures current spending) so the calculation
+   *  engine can apply different amounts pre- and post-retirement. */
+  postRetirementMonthlyExpense: decimal("post_retirement_monthly_expense", { precision: 15, scale: 2 }),
 });
 
 export const householdMembers = pgTable("household_members", {
@@ -331,14 +335,36 @@ export const insertCrmDefaultsSchema = createInsertSchema(crmDefaults).omit({
 
 // Quick Plan schema
 export const quickPlanSchema = z.object({
+  // ── Identity ──────────────────────────────────────────────────────────────
   fullName: z.string().min(1, "Full name is required"),
   dob: z.string().min(1, "Date of birth is required"),
   retirementAge: z.number().min(18).max(100),
+
+  // ── Persona / mode ────────────────────────────────────────────────────────
+  personaMode: z.enum(["accumulating", "retired"]).default("accumulating").optional(),
+
+  // ── Retirement goal style ─────────────────────────────────────────────────
+  retirementGoal: z.enum(["fire", "lean", "comfortable", "lavish"]).default("comfortable").optional(),
+
+  // ── Spouse / partner ──────────────────────────────────────────────────────
+  spouseName: z.string().optional(),
   spouseDob: z.string().optional(),
-  monthlyIncomeTotal: z.number().min(1, "Monthly income is required"),
+  isJointRetirement: z.boolean().default(false),
+  spouseRetirementAge: z.number().min(18).max(100).optional(),
+  spouseMonthlyIncome: z.number().min(0).optional(),
+
+  // ── Core financials ───────────────────────────────────────────────────────
+  monthlyIncomeTotal: z.number().min(0),
   monthlyExpenseTotal: z.number().min(1),
   monthlySavings: z.number().min(0, "Monthly savings is required"),
   incomeGrowthRate: z.number().min(0).max(50).optional(),
+
+  // ── Retired-mode fields ───────────────────────────────────────────────────
+  currentCorpus: z.number().min(0).optional(),
+  monthlyWithdrawal: z.number().min(0).optional(),
+  yearsToCover: z.number().min(1).max(60).optional(),
+
+  // ── Children ──────────────────────────────────────────────────────────────
   children: z.array(z.object({
     name: z.string().optional(),
     dob: z.string().optional(),
@@ -348,13 +374,22 @@ export const quickPlanSchema = z.object({
     (child) => !!(child.name?.trim()) || !!(child.dob?.trim()),
     { message: "Child must have a name or date of birth", path: ["dob"] }
   )).optional(),
+
+  // ── Assets ────────────────────────────────────────────────────────────────
   assetsLumpSum: z.number().min(0).optional(),
+  epfCorpus: z.number().min(0).optional(),
+  npsCorpus: z.number().min(0).optional(),
+  npsMonthlyContribution: z.number().min(0).optional(),
+
+  // ── Legacy asset fields ───────────────────────────────────────────────────
   assetsEquity: z.number().min(0).optional(),
   assetsDebt: z.number().min(0).optional(),
   assetsRealEstate: z.number().min(0).optional(),
   assetsCash: z.number().min(0).optional(),
   preRetirementReturn: z.number().min(0).max(30).optional(),
   postRetirementReturn: z.number().min(0).max(30).optional(),
+
+  // ── Planning assumptions ──────────────────────────────────────────────────
   assumptions: z.object({
     returnPre: z.number().min(0).max(30).optional(),
     returnPost: z.number().min(0).max(30).optional(),
@@ -364,9 +399,8 @@ export const quickPlanSchema = z.object({
     equityReturn: z.number().min(0).max(50).default(14),
     debtReturn: z.number().min(0).max(50).default(8)
   }).optional(),
-  // Enhanced features
-  isJointRetirement: z.boolean().default(false),
-  spouseRetirementAge: z.number().min(18).max(100).optional(),
+
+  // ── Legacy allocation fields ──────────────────────────────────────────────
   assetAllocation: z.object({
     equity: z.number().min(0).max(100).default(50),
     debt: z.number().min(0).max(100).default(30),
@@ -381,6 +415,8 @@ export const quickPlanSchema = z.object({
     gold: z.number().min(0).max(50).default(6),
     cash: z.number().min(0).max(50).default(4)
   }).optional(),
+
+  // ── Goals ─────────────────────────────────────────────────────────────────
   shortTermGoals: z.array(z.object({
     name: z.string().min(1),
     type: z.enum(['car', 'bike', 'tour', 'other']),
@@ -398,6 +434,8 @@ export const quickPlanSchema = z.object({
     startDate: z.string(),
     emi: z.number().min(0)
   })).optional(),
+
+  // ── Toggles ───────────────────────────────────────────────────────────────
   miniRetirement: z.object({
     startYear: z.number().min(2024).max(2100),
     durationMonths: z.number().min(1).max(120),
@@ -411,6 +449,37 @@ export const quickPlanSchema = z.object({
     todaysCost: z.number().min(1, "Goal amount is required"),
     yearsFromNow: z.number().min(1).max(50),
   })).optional(),
+}).superRefine((data, ctx) => {
+  const mode = data.personaMode ?? "accumulating";
+
+  // Accumulating mode: income must be > 0
+  if (mode === "accumulating") {
+    if (!data.monthlyIncomeTotal || data.monthlyIncomeTotal <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Monthly income is required",
+        path: ["monthlyIncomeTotal"],
+      });
+    }
+  }
+
+  // Retired mode: corpus and withdrawal are required
+  if (mode === "retired") {
+    if (!data.currentCorpus || data.currentCorpus <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Current corpus is required in retired mode",
+        path: ["currentCorpus"],
+      });
+    }
+    if (!data.monthlyWithdrawal || data.monthlyWithdrawal <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Monthly withdrawal amount is required in retired mode",
+        path: ["monthlyWithdrawal"],
+      });
+    }
+  }
 });
 
 // Types

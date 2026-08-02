@@ -15,6 +15,7 @@ import { db } from "../db";
 import { eq, and, or, sql } from "drizzle-orm";
 import * as XLSX from "xlsx";
 import { crmDefaultsUpdateSchema } from "../schemas/crm-defaults";
+import { buildGuestAssets } from "../plan-mapper";
 
 const updateScenarioAssumptionsSchema = z.object({
   inflationHeadline: z.string().nullable().optional(),
@@ -250,19 +251,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const planData = validationResult.data;
       const currentYear = new Date().getFullYear();
       const birthYear = planData.dob ? new Date(planData.dob).getFullYear() : currentYear - 35;
-      const retirementYear = birthYear + planData.retirementAge;
+      const currentAge = currentYear - birthYear;
+      // Retired mode: retirement year = now.  Accumulating: derived from dob + retirementAge.
+      const retirementYear = planData.personaMode === 'retired'
+        ? currentYear
+        : birthYear + planData.retirementAge;
+
+      const returnPreStr  = planData.assumptions?.returnPre?.toString()         ?? '12.0';
+      const returnPostStr = planData.assumptions?.returnPost?.toString()         ?? '8.0';
+      const inflationStr  = planData.assumptions?.inflationHeadline?.toString()  ?? '6.0';
+
+      // Goal multiplier: scales the target post-retirement expense
+      const GOAL_MULTIPLIERS = { fire: 0.6, lean: 0.75, comfortable: 1.0, lavish: 1.3 } as const;
+      const goalMultiplier = GOAL_MULTIPLIERS[planData.retirementGoal as keyof typeof GOAL_MULTIPLIERS] ?? 1.0;
+      const postRetirementMonthlyExpense = Math.round(planData.monthlyExpenseTotal * goalMultiplier);
+
+      // Build the asset list via the shared mapper.
+      // Retired mode → only currentCorpus; accumulating → lumpSum + EPF + NPS.
+      // See plan-mapper.ts for the full contract and double-counting rationale.
+      const retiredAssets = buildGuestAssets(planData, returnPreStr, returnPostStr);
+
+      const lifeExpectancyForRetired = Math.min(currentAge + (planData.yearsToCover ?? 25), 100);
 
       const scenarioData = {
         id: 'guest',
         name: `${planData.fullName}'s Retirement Plan`,
         mode: 'quick',
         assumptions: {
-          inflationHeadline: planData.assumptions?.inflationHeadline?.toString() ?? '6.0',
+          inflationHeadline: inflationStr,
           inflationEdu: '8.0',
           inflationHealth: '8.0',
-          returnPre: planData.assumptions?.returnPre?.toString() ?? '12.0',
-          returnPost: planData.assumptions?.returnPost?.toString() ?? '8.0',
-          lifeExpectancy: '85',
+          // In retired mode use conservative return for all years
+          returnPre: planData.personaMode === 'retired' ? returnPostStr : returnPreStr,
+          returnPost: returnPostStr,
+          lifeExpectancy: planData.personaMode === 'retired'
+            ? String(lifeExpectancyForRetired)
+            : '85',
+          // Goal-adjusted post-retirement monthly expense; used by calculations.ts
+          // to size the required corpus and post-retirement drawdown correctly.
+          postRetirementMonthlyExpense: planData.personaMode === 'retired'
+            ? String(planData.monthlyWithdrawal || planData.monthlyExpenseTotal)
+            : String(postRetirementMonthlyExpense),
         },
         householdMembers: [
           {
@@ -275,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...(planData.spouseDob ? [{
             id: '2',
             relation: 'spouse',
-            name: 'Spouse',
+            name: planData.spouseName || 'Spouse',
             dob: planData.spouseDob,
             dependent: false,
           }] : []),
@@ -287,25 +316,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dependent: true,
           })),
         ],
-        incomeItems: [
-          {
-            id: '1',
-            type: 'salary',
-            amount: String(planData.monthlyIncomeTotal * 12),
-            frequency: 'annual',
-            start: currentYear,
-            end: retirementYear,
-            growthRate: planData.incomeGrowthRate?.toString() ?? '8',
-          },
-        ],
+        incomeItems: planData.personaMode === 'retired'
+          // Retired: dummy salary end=currentYear pins retirementYear correctly; no actual income
+          ? [{
+              id: 'retired-marker',
+              type: 'salary',
+              amount: '0',
+              frequency: 'annual',
+              start: currentYear - 1,
+              end: currentYear,
+              growthRate: '0',
+            }]
+          // Accumulating: own salary + optional spouse salary
+          : [
+              {
+                id: '1',
+                type: 'salary',
+                amount: String(planData.monthlyIncomeTotal * 12),
+                frequency: 'annual',
+                start: currentYear,
+                end: retirementYear,
+                growthRate: planData.incomeGrowthRate?.toString() ?? '8',
+              },
+              ...(planData.spouseMonthlyIncome && planData.spouseMonthlyIncome > 0 && planData.spouseDob
+                ? [{
+                    id: '2',
+                    type: 'salary',
+                    amount: String(planData.spouseMonthlyIncome * 12),
+                    frequency: 'annual',
+                    start: currentYear,
+                    end: new Date(planData.spouseDob).getFullYear() + (planData.spouseRetirementAge ?? 60),
+                    growthRate: '5',
+                  }]
+                : []),
+            ],
         expenseItems: [
           {
             id: '1',
             type: 'core',
-            amountMonthly: String(planData.monthlyExpenseTotal),
+            amountMonthly: planData.personaMode === 'retired'
+              ? String(planData.monthlyWithdrawal || planData.monthlyExpenseTotal)
+              : String(planData.monthlyExpenseTotal),
           },
         ],
-        goals: [
+        goals: planData.personaMode === 'retired' ? [] : [
           ...(planData.children ?? []).flatMap((child, i) => {
             const childBirth = child.dob ? new Date(child.dob).getFullYear() : currentYear + 5;
             const goals: any[] = [];
@@ -326,13 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             inflationCategory: 'headline',
           })),
         ],
-        assets: planData.assetsLumpSum && planData.assetsLumpSum > 0 ? [{
-          id: '1',
-          kind: 'equity',
-          value: String(planData.assetsLumpSum),
-          expectedReturnPre: planData.assumptions?.returnPre?.toString() ?? '12',
-          expectedReturnPost: planData.assumptions?.returnPost?.toString() ?? '8',
-        }] : [],
+        assets: retiredAssets,
         liabilities: planData.existingEMI?.emiAmount ? [{
           id: '1',
           name: 'Existing EMI',
@@ -348,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return d.toISOString().split('T')[0];
           })(),
         }] : [],
-        miniRetirements: planData.miniRetirement?.startYear ? [{
+        miniRetirements: planData.miniRetirement?.startYear && planData.personaMode !== 'retired' ? [{
           id: '1',
           start: planData.miniRetirement.startYear,
           months: planData.miniRetirement.durationMonths,
@@ -423,15 +471,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Scenario created:", scenarioId);
 
           // 3. Assumptions
+          const authCurrentYear = new Date().getFullYear();
+          const authCurrentAge = planData.dob
+            ? authCurrentYear - new Date(planData.dob).getFullYear()
+            : 35;
+          const authIsRetired = planData.personaMode === 'retired';
+          const authLifeExpectancyNum = authIsRetired
+            ? Math.min(authCurrentAge + (planData.yearsToCover ?? 25), 100)
+            : parseInt(String(crmDefaults.lifeExpectancy ?? '85')) || 85;
+          // In retired mode all years are post-retirement, so use returnPost throughout
+          const authReturnPre = authIsRetired
+            ? (planData.assumptions?.returnPost?.toString() || String(crmDefaults.returnPost ?? '7.0'))
+            : (planData.assumptions?.returnPre?.toString() || String(crmDefaults.returnPre ?? '10.0'));
+
+          // Goal multiplier for authenticated plans
+          const AUTH_GOAL_MULTIPLIERS = { fire: 0.6, lean: 0.75, comfortable: 1.0, lavish: 1.3 } as const;
+          const authGoalMultiplier = AUTH_GOAL_MULTIPLIERS[planData.retirementGoal as keyof typeof AUTH_GOAL_MULTIPLIERS] ?? 1.0;
+          const authPostRetirementExpense = authIsRetired
+            ? (planData.monthlyWithdrawal || planData.monthlyExpenseTotal)
+            : Math.round(planData.monthlyExpenseTotal * authGoalMultiplier);
+
           await tx.insert(assumptions).values({
             scenarioId,
             inflationHeadline: planData.assumptions?.inflationHeadline?.toString() || crmDefaults.inflationHeadline,
             inflationEdu: crmDefaults.inflationEdu,
             inflationHealth: crmDefaults.inflationHealth,
-            returnPre: planData.assumptions?.returnPre?.toString() || crmDefaults.returnPre,
+            returnPre: authReturnPre,
             returnPost: planData.assumptions?.returnPost?.toString() || crmDefaults.returnPost,
-            lifeExpectancy: crmDefaults.lifeExpectancy,
+            lifeExpectancy: authLifeExpectancyNum,
             source: planData.assumptions ? 'user' : 'crm',
+            // Goal-adjusted post-retirement expense (today's ₹).
+            // Stored separately from the core expense item so calculations.ts can apply
+            // it only to post-retirement years while using actual spending pre-retirement.
+            postRetirementMonthlyExpense: String(authPostRetirementExpense),
           });
 
           // 4. Household members
@@ -446,11 +518,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (planData.spouseDob && planData.spouseDob.trim() !== '') {
             await tx.insert(householdMembers).values({
               scenarioId,
-              name: 'Spouse',
+              name: planData.spouseName || 'Spouse',
               relation: 'spouse',
               dob: planData.spouseDob,
               dependent: false,
             });
+            // Spouse income stream is inserted AFTER the primary salary (step 5)
+            // so the calculation engine's first-salary lookup always finds the
+            // primary user's salary, not the spouse's.  See step 5b below.
           }
 
           if (planData.children && planData.children.length > 0) {
@@ -488,24 +563,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // 5. Income
           console.log("Creating income item...");
-          await tx.insert(incomeItems).values({
-            scenarioId,
-            type: 'salary',
-            amount: (planData.monthlyIncomeTotal * 12).toString(),
-            frequency: 'annual',
-            start: new Date().getFullYear(),
-            end: new Date(planData.dob).getFullYear() + planData.retirementAge,
-          });
+          if (authIsRetired) {
+            // Retired mode: dummy salary with end = currentYear pins retirementYear = now
+            // in the calculation engine so all projection years are post-retirement.
+            await tx.insert(incomeItems).values({
+              scenarioId,
+              type: 'salary',
+              amount: '0',
+              frequency: 'annual',
+              start: authCurrentYear - 1,
+              end: authCurrentYear,
+            });
+          } else {
+            await tx.insert(incomeItems).values({
+              scenarioId,
+              type: 'salary',
+              amount: (planData.monthlyIncomeTotal * 12).toString(),
+              frequency: 'annual',
+              start: authCurrentYear,
+              end: new Date(planData.dob).getFullYear() + planData.retirementAge,
+            });
+          }
 
-          // 6. Expenses
+          // 5b. Spouse income — inserted AFTER primary salary so the calculation engine's
+          // first-salary lookup always finds the primary user's salary.
+          // Omitted in retired mode because retired scenarios use a dummy salary only.
+          if (!authIsRetired && planData.spouseDob && planData.spouseDob.trim() !== ''
+              && planData.spouseMonthlyIncome && planData.spouseMonthlyIncome > 0) {
+            const spouseBirthYear = new Date(planData.spouseDob).getFullYear();
+            const spouseRetirementYear = spouseBirthYear + (planData.spouseRetirementAge ?? 60);
+            await tx.insert(incomeItems).values({
+              scenarioId,
+              type: 'salary',
+              amount: (planData.spouseMonthlyIncome * 12).toString(),
+              frequency: 'annual',
+              start: authCurrentYear,
+              end: spouseRetirementYear,
+            });
+          }
+
+          // 6. Expenses — always persist the user's CURRENT monthly expense as the expense
+          // item so pre-retirement cash-flow projection is accurate.  The goal-adjusted
+          // post-retirement amount is stored separately in assumptions.postRetirementMonthlyExpense
+          // and is applied only to post-retirement years by calculations.ts.
+          const authCurrentExpense = authIsRetired
+            ? (planData.monthlyWithdrawal || planData.monthlyExpenseTotal)
+            : planData.monthlyExpenseTotal;
           await tx.insert(expenseItems).values({
             scenarioId,
             type: 'core',
-            amountMonthly: planData.monthlyExpenseTotal.toString(),
+            amountMonthly: authCurrentExpense.toString(),
           });
 
-          // 7. Assets
-          if (planData.assetsLumpSum && planData.assetsLumpSum > 0) {
+          // 7. Assets — retired mode: persist current corpus as the primary corpus asset
+          if (authIsRetired && planData.currentCorpus && planData.currentCorpus > 0) {
+            await tx.insert(assets).values({
+              scenarioId,
+              kind: 'equity',
+              value: planData.currentCorpus.toString(),
+              expectedReturnPre: planData.assumptions?.returnPost?.toString() || crmDefaults.returnPost,
+              expectedReturnPost: planData.assumptions?.returnPost?.toString() || crmDefaults.returnPost,
+            });
+          }
+
+          if (!authIsRetired && planData.assetsLumpSum && planData.assetsLumpSum > 0) {
             await tx.insert(assets).values({
               scenarioId,
               kind: 'equity',
@@ -513,6 +634,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
               expectedReturnPre: planData.preRetirementReturn?.toString() || crmDefaults.returnPre,
               expectedReturnPost: planData.postRetirementReturn?.toString() || crmDefaults.returnPost,
             });
+          }
+
+          // EPF/NPS are added as separate assets only in accumulating mode.
+          // In retired mode the user enters currentCorpus which already includes
+          // their EPF/NPS balance, so adding them again would double-count.
+          if (!authIsRetired) {
+            if (planData.epfCorpus && planData.epfCorpus > 0) {
+              await tx.insert(assets).values({
+                scenarioId,
+                kind: 'equity',
+                value: planData.epfCorpus.toString(),
+                expectedReturnPre: '8',
+                expectedReturnPost: crmDefaults.returnPost,
+              });
+            }
+            if (planData.npsCorpus && planData.npsCorpus > 0) {
+              await tx.insert(assets).values({
+                scenarioId,
+                kind: 'equity',
+                value: planData.npsCorpus.toString(),
+                expectedReturnPre: '10',
+                expectedReturnPost: crmDefaults.returnPost,
+              });
+            }
           }
 
           // 8. Custom goals

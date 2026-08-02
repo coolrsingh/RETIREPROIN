@@ -281,7 +281,7 @@ export default function Landing() {
               </h1>
 
               <p style={{ fontSize: 18, lineHeight: 1.75, color: "var(--slate)", marginBottom: 36, maxWidth: 480 }}>
-                India's most detailed retirement planner — income, expenses, children's education, loans, EPF, NPS, SIP — all in one calculation. No account needed.
+                India's most detailed retirement planner — income, expenses, children's education, loans, EPF &amp; NPS balances — all in one calculation. No account needed.
               </p>
 
               <div className="hero-cta" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 40 }}>
@@ -320,7 +320,7 @@ export default function Landing() {
 
               {/* Trust badges */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px", fontSize: 12, color: "#94A3B8" }}>
-                {["🔒 256-bit SSL", "🇮🇳 EPF · NPS · SIP built-in", "✅ AMFI-Registered", "🛡️ Data never sold"].map(t => (
+                {["🔒 256-bit SSL", "🇮🇳 EPF & NPS balances included", "✅ AMFI-Registered", "🛡️ Data never sold"].map(t => (
                   <span key={t}>{t}</span>
                 ))}
               </div>
@@ -567,7 +567,7 @@ export default function Landing() {
                 Build Your Complete Retirement Plan
               </h2>
               <p style={{ fontSize: 16, color: "var(--slate)", maxWidth: 500, margin: "0 auto 28px" }}>
-                EPF · NPS · SIP · Joint spouse · Children's education · Loans — all in one calculation. Takes 60 seconds.
+                EPF &amp; NPS balances · Joint spouse · Children's education · Loans — all in one calculation. Takes 60 seconds.
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 20px", fontSize: 12, color: "#94A3B8" }}>
                 {["🔒 256-bit SSL Secured", "🇮🇳 India-Specific", "✅ AMFI-Registered Partner", "🛡️ Data never sold"].map(t => <span key={t}>{t}</span>)}
@@ -708,7 +708,7 @@ export default function Landing() {
                 <div>
                   <p style={{ fontSize: 14, color: "rgba(255,255,255,.4)", marginBottom: 12 }}>Free. No login. Your data stays yours.</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px" }}>
-                    {[["🎛️", "No hidden assumptions"], ["📈", "Year-by-year projections"], ["🇮🇳", "EPF · NPS · SIP built-in"]].map(([ic, t]) => (
+                    {[["🎛️", "No hidden assumptions"], ["📈", "Year-by-year projections"], ["🇮🇳", "EPF & NPS balances included"]].map(([ic, t]) => (
                       <div key={t} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#CBD5E1" }}>
                         <span>{ic}</span><span>{t}</span>
                       </div>
