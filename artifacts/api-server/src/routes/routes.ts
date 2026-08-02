@@ -179,7 +179,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid scenario data", issues: parsed.error.issues });
       }
 
-      const updatedScenario = await storage.updateScenario(req.params.id, parsed.data);
+      // Split the payload: `assumptions` lives in a separate table and must be
+      // routed to upsertAssumptions, not to the scenarios row update.
+      const { assumptions: assumptionsPayload, ...scenarioFields } = parsed.data;
+
+      const updatedScenario = await storage.updateScenario(req.params.id, scenarioFields);
+
+      // Persist assumption changes when the client sends them.
+      if (assumptionsPayload) {
+        await storage.upsertAssumptions({
+          scenarioId: req.params.id,
+          ...assumptionsPayload,
+        });
+      }
 
       // Recalculate and persist the projected corpus before returning so
       // the next GET /api/scenarios list fetch always reflects the latest
