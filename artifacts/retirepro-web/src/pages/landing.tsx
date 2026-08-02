@@ -208,6 +208,8 @@ export default function Landing() {
 
         @media (max-width: 479px) {
           .ai-card-outer { padding: 24px 20px !important; gap: 20px !important; }
+          .header-nav-link { display: none !important; }
+          .header-sign-in { padding: 8px 16px !important; font-size: 13px !important; }
         }
 
         .divider { width: 100%; height: 1px; background: var(--border); }
@@ -224,11 +226,12 @@ export default function Landing() {
           <div className="lp-section" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64, maxWidth: 1200 }}>
             <BrandLogo href={null} textClassName="text-slate-900" />
             <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
-              <Link href="/blog" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Blog</Link>
-              <a href="#planner" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Free Planner</a>
+              <Link href="/blog" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Blog</Link>
+              <a href="#planner" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Free Planner</a>
             </nav>
             <button
               onClick={() => { window.location.href = "/api/login"; }}
+              className="header-sign-in"
               style={{
                 background: "var(--orange)", color: "#fff", border: "none", cursor: "pointer",
                 fontWeight: 700, fontSize: 14, padding: "10px 24px", borderRadius: 100,
