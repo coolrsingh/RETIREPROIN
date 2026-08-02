@@ -1,0 +1,77 @@
+TASK: Replace the current prerender script with real React rendering.
+
+CONTEXT (from your own diagnostic):
+- scripts/prerender.mjs does regex head-replacement and injects 
+  hand-written bodyContent strings. It does NOT render React.
+- / (root) is not prerendered at all — serves an empty SPA shell 
+  with 0 anchor tags.
+- 7 of 11 blog slugs are not prerendered.
+- /blog's static HTML lacks the article link list that the React 
+  component renders.
+- Result: Google sees 0 internal links and cannot discover any URL 
+  by crawling.
+
+GOAL: Every public route must ship static HTML containing the SAME 
+content the React app renders — real body copy and real <a href> 
+tags — produced by actually rendering the components, not by hand.
+
+STEP 1 — DELETE THE HAND-WRITTEN APPROACH
+Remove all bodyContent string literals from scripts/prerender.mjs. 
+Do not extend or add to them. Serving crawlers hand-authored HTML 
+that differs from the rendered app is a cloaking risk and must not 
+be carried forward.
+
+STEP 2 — RENDER FOR REAL
+Rewrite the prerender step to produce genuine rendered output. Use 
+whichever is more stable on Replit with React 19 + wouter:
+  (a) headless Chromium (Puppeteer): load the built app, wait for 
+      network idle AND for a known content selector to be present, 
+      then serialise document.documentElement.outerHTML; or
+  (b) ReactDOM/server renderToString against the route tree.
+If Puppeteer needs system Chromium deps on Replit, install them and 
+document exactly what was added.
+
+Keep the existing per-route <head> handling (title, description, 
+canonical, OG) — that part is correct and working.
+
+STEP 3 — ENUMERATE ROUTES FROM THE SOURCE, NOT A HARDCODED LIST
+The 7 missing slugs are a symptom of a manually maintained array. 
+Derive the blog route list programmatically from the same content 
+source the React blog index reads, so new posts are prerendered 
+automatically with no code change. Fail the build loudly if any 
+route in the sitemap has no corresponding prerendered file.
+
+STEP 4 — ROUTES
+Prerender: / , /blog , every blog slug (all 11, derived per step 3), 
+/faq , /free-plan , /go , /privacy-policy , /disclaimer , 
+/refund-policy , /terms-and-conditions , and the Contact page.
+
+Do NOT prerender /plan/preview or any authenticated route. Add 
+<meta name="robots" content="noindex"> to /plan/preview — it is an 
+app state, not a landing page. Remove it from sitemap.xml.
+
+STEP 5 — LINK GRAPH
+- Verify wouter <Link> renders real <a href="..."> anchors in the 
+  rendered output. If it outputs onClick handlers or <button>, fix 
+  it so hrefs are present.
+- Header and footer must appear in the rendered HTML of every 
+  prerendered route.
+- /blog must render the full list of all 11 article links with 
+  descriptive anchor text.
+- / must link to /blog in the main navigation.
+
+CONSTRAINTS:
+- No changes to mobile CSS, breakpoints, or media queries.
+- No changes to application logic or component behaviour.
+- Client-side hydration must still work; logged-in UX unchanged.
+
+VERIFICATION — report before marking done:
+Serve the production build and, for / , /blog , and all 11 blog 
+slugs, confirm from the raw static HTML file on disk:
+  1. the page's real H1 text is present
+  2. the count of <a href> tags (report the number per route)
+  3. for /blog specifically, that all 11 article URLs appear
+
+Paste the H1 and anchor count for every route as a table. Do not 
+report success on any route where the anchor count is 0 or the H1 
+is missing.
