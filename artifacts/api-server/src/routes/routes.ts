@@ -714,6 +714,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw txErr;
       }
 
+      // Run a corpus calculation immediately after creation so plan cards on
+      // the home page always show a projected corpus figure without requiring
+      // the user to open the plan first (which would trigger POST /api/calc/:id).
+      try {
+        const scenarioData = await storage.getScenarioWithAllData(scenario.id);
+        if (scenarioData) {
+          const calculations = await calculateRetirementPlan(scenarioData);
+          await storage.updateScenarioCorpus(
+            scenario.id,
+            calculations.summary.projectedCorpusAtRetirement,
+          );
+          // Surface the corpus in the response body so the client can
+          // display it immediately without an extra list refetch.
+          (scenario as any).projectedCorpus =
+            calculations.summary.projectedCorpusAtRetirement;
+        }
+      } catch {
+        // Corpus calculation is an optimisation — never fail plan creation.
+      }
+
       res.json(scenario);
     } catch (error: any) {
       console.error("=== PLAN CREATION ERROR ===");
