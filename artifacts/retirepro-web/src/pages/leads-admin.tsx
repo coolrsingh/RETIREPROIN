@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ResponseValidationError } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,7 @@ export default function LeadsAdmin() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: leads = [], isLoading: leadsLoading } = useQuery<any[]>({
+  const { data: leads = [], isLoading: leadsLoading, error: leadsError } = useQuery<any[]>({
     queryKey: ["/api/leads"],
     enabled: isAuthenticated,
   });
@@ -41,6 +42,21 @@ export default function LeadsAdmin() {
       setTimeout(() => { window.location.href = "/api/login"; }, 500);
     }
   }, [isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    if (leadsError instanceof ResponseValidationError) {
+      console.error("[ResponseValidationError]", {
+        url: leadsError.url,
+        method: leadsError.method,
+        message: leadsError.message,
+      });
+      toast({
+        title: "Update available",
+        description: "We deployed an update — please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [leadsError, toast]);
 
   const handleSort = (col: SortKey) => {
     if (sortBy === col) {

@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { customFetch, ApiError } from "@workspace/api-client-react";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -46,22 +47,25 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+export function getQueryFn<T>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+}): QueryFunction<T> {
+  const { on401: unauthorizedBehavior } = options;
+  return async ({ queryKey }) => {
+    try {
+      return await customFetch<T>(queryKey.join("/") as string);
+    } catch (error) {
+      if (
+        unauthorizedBehavior === "returnNull" &&
+        error instanceof ApiError &&
+        error.status === 401
+      ) {
+        return null as unknown as T;
+      }
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useMemo } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { ResponseValidationError } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +42,7 @@ const PAGE_SIZE = 50;
 export default function SubscribersAdmin() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  const { data: subscribers = [], isLoading: subsLoading } = useQuery<Subscriber[]>({
+  const { data: subscribers = [], isLoading: subsLoading, error: subsError } = useQuery<Subscriber[]>({
     queryKey: ["/api/subscribers"],
     enabled: isAuthenticated,
   });
@@ -50,11 +52,28 @@ export default function SubscribersAdmin() {
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
 
+  const { toast } = useToast();
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       setTimeout(() => { window.location.href = "/api/login"; }, 500);
     }
   }, [isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    if (subsError instanceof ResponseValidationError) {
+      console.error("[ResponseValidationError]", {
+        url: subsError.url,
+        method: subsError.method,
+        message: subsError.message,
+      });
+      toast({
+        title: "Update available",
+        description: "We deployed an update — please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [subsError, toast]);
 
   const isAdmin = user?.role === "admin";
 

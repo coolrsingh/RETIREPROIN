@@ -26,6 +26,8 @@ import {
   CreateLeadResponse,
   GetProfileResponse,
   UpdateProfileResponse,
+  ListLeadsResponse,
+  ListSubscribersResponse,
 } from "@workspace/api-zod";
 import type { ZodTypeAny } from "zod";
 import { setResponseValidator } from "./custom-fetch";
@@ -69,6 +71,10 @@ const ROUTE_SCHEMAS: RouteSchema[] = [
   // Profile
   { method: "GET", pattern: /\/profile($|\?)/, schema: GetProfileResponse },
   { method: "PUT", pattern: /\/profile($|\?)/, schema: UpdateProfileResponse },
+
+  // Admin list endpoints
+  { method: "GET", pattern: /\/leads($|\?)/, schema: ListLeadsResponse },
+  { method: "GET", pattern: /\/subscribers($|\?)/, schema: ListSubscribersResponse },
 ];
 
 // ---------------------------------------------------------------------------
