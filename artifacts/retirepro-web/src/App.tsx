@@ -26,6 +26,7 @@ import Blog9 from "@/pages/blog-9";
 import Blog10 from "@/pages/blog-10";
 import Blog11 from "@/pages/blog-11";
 import BlogSubscribePopup from "@/components/blog-subscribe-popup";
+import ClarityAnalytics from "@/components/clarity-analytics";
 import GuestPlanPreview from "@/pages/guest-plan-preview";
 import FreePlan from "@/pages/free-plan";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -52,10 +53,13 @@ function ScrollToTop() {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+  const isBlogPage = location === "/blog" || location.startsWith("/blog/");
 
   return (
     <>
     <ScrollToTop />
+    {isBlogPage && <ClarityAnalytics />}
     <Switch>
       {/* Always-public pages */}
       <Route path="/go" component={AdLanding} />
