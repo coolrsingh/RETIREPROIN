@@ -55,11 +55,13 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
   const isBlogPage = location === "/blog" || location.startsWith("/blog/");
+  const isFreePlanPage = location === "/free-plan";
 
   return (
     <>
     <ScrollToTop />
-    {isBlogPage && <ClarityAnalytics />}
+    {isBlogPage && <ClarityAnalytics projectId="xy8ayun8sm" />}
+    {isFreePlanPage && <ClarityAnalytics projectId="xy8bw01xo3" />}
     <Switch>
       {/* Always-public pages */}
       <Route path="/go" component={AdLanding} />

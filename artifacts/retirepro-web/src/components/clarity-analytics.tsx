@@ -1,16 +1,18 @@
 import { useEffect } from "react";
 
-// Microsoft Clarity project ID for the blog section.
-const CLARITY_PROJECT_ID = "xy8ayun8sm";
+interface ClarityAnalyticsProps {
+  /** Microsoft Clarity project ID for the page(s) this is mounted on. */
+  projectId: string;
+}
 
 /**
- * Injects the Microsoft Clarity tracking snippet once per page load.
- * Mount this only on the pages that should be tracked (see App.tsx, which
- * renders it for /blog and /blog/* routes).
+ * Injects the Microsoft Clarity tracking snippet for a given project ID,
+ * once per page load. Different sections of the site use different Clarity
+ * projects, so mount this with the right `projectId` per route (see App.tsx).
  */
-export default function ClarityAnalytics() {
+export default function ClarityAnalytics({ projectId }: ClarityAnalyticsProps) {
   useEffect(() => {
-    if (document.querySelector(`script[src^="https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}"]`)) {
+    if (document.querySelector(`script[src^="https://www.clarity.ms/tag/${projectId}"]`)) {
       return;
     }
 
@@ -25,8 +27,8 @@ export default function ClarityAnalytics() {
       t.src = "https://www.clarity.ms/tag/" + i;
       const y = l.getElementsByTagName(r)[0];
       y.parentNode?.insertBefore(t, y);
-    })(window, document, "clarity", "script", CLARITY_PROJECT_ID);
-  }, []);
+    })(window, document, "clarity", "script", projectId);
+  }, [projectId]);
 
   return null;
 }
