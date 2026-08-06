@@ -15,8 +15,13 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/context/AuthContext";
+import { configureZodValidation } from "@/hooks/useApi";
 
 SplashScreen.preventAutoHideAsync();
+
+if (__DEV__) {
+  configureZodValidation(true);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
