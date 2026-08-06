@@ -187,6 +187,7 @@ export default function Landing() {
             <BrandLogo href={null} textClassName="text-slate-900" />
             <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
               <Link href="/blog" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Blog</Link>
+              <Link href="/faq" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>FAQ</Link>
               <Link href="/free-plan" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Free Planner</Link>
             </nav>
             <button
@@ -771,7 +772,7 @@ export default function Landing() {
               <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>RetirePro</span>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 24px" }}>
-              {[["Blog", "/blog"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"], ["Terms", "/terms-and-conditions"]].map(([l, h]) => (
+              {[["Blog", "/blog"], ["FAQ", "/faq"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"], ["Terms", "/terms-and-conditions"]].map(([l, h]) => (
                 <Link key={l} href={h} style={{ fontSize: 13, color: "rgba(255,255,255,.4)", textDecoration: "none", transition: "color .15s" }}
                   onMouseEnter={(e: any) => e.currentTarget.style.color = "#fff"}
                   onMouseLeave={(e: any) => e.currentTarget.style.color = "rgba(255,255,255,.4)"}
