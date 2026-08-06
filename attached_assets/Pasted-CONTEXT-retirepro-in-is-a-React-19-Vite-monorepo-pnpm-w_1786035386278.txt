@@ -1,0 +1,41 @@
+CONTEXT: retirepro.in is a React 19 + Vite monorepo (pnpm workspaces) using wouter for routing, hosted on Replit. Google Search Console is reporting an indexing problem: only 2 of 14 known pages are indexed. The breakdown is:
+- 3 pages have a "Redirect error" (Google tried to crawl them and hit a broken/looping/invalid redirect)
+- 1 page shows "Alternative page with proper canonical tag" (likely fine, just verify)
+- 8 pages show "Discovered – currently not indexed" (Google knows the URLs but hasn't crawled/indexed them yet — common for internal linking or crawl-priority issues)
+
+GOAL: Fix the redirect errors, verify canonical tags are correct, and improve crawlability so Google indexes more of the site.
+
+HARD CONSTRAINT: Do not modify mobile CSS, breakpoints, or media queries. This is a routing/backend/SEO-config task, not a UI redesign.
+
+Please do the following, in order:
+
+---
+
+STEP 1: Audit all redirects in the app
+
+Search the codebase for anywhere redirects are configured — this could be in:
+- wouter route definitions (any <Redirect> components or programmatic redirects)
+- Replit's own hosting config (.replit file, or any vercel.json / netlify.toml / server.js redirect rules if present)
+- Any middleware or server-side routing (Express, if used)
+
+For each redirect found, check for:
+1. Redirect loops (A → B → A)
+2. Redirect chains longer than 1 hop (A → B → C should be simplified to A → C directly)
+3. Redirects pointing to a URL that itself 404s or doesn't exist
+4. Mixed http/https or www/non-www redirect conflicts
+5. Trailing slash inconsistencies (e.g. /blog vs /blog/) that might be causing unintended redirect behavior
+
+Fix any broken redirect so each one resolves in a single valid hop.
+
+---
+
+STEP 2: Verify canonical tags
+
+Check that every page has a self-referencing canonical tag (<link rel="canonical" href="...">) in its <head>, matching its own actual URL exactly (correct protocol, no trailing slash mismatches, no query string unless intentional). This is likely handled via react-helmet-async or similar — check what's already in use in the codebase and confirm it's applied consistently across all routes, especially the blog pages.
+
+---
+
+STEP 3: Check and regenerate sitemap.xml
+
+Locate the sitemap.xml (check /public or wherever static assets are served). Confirm:
+1. It includes ALL current
