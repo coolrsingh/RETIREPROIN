@@ -1,0 +1,64 @@
+CONTEXT: retirepro.in is a React 19 + Vite monorepo (pnpm workspaces) using wouter for routing, hosted on Replit. Google Search Console is reporting an indexing problem: only 2 of 14 known pages are indexed. The breakdown is:
+- 3 pages have a "Redirect error" (Google tried to crawl them and hit a broken/looping/invalid redirect)
+- 1 page shows "Alternative page with proper canonical tag" (likely fine, just verify)
+- 8 pages show "Discovered – currently not indexed" (Google knows the URLs but hasn't crawled/indexed them yet — common for internal linking or crawl-priority issues)
+
+GOAL: Fix the redirect errors, verify canonical tags are correct, and improve crawlability so Google indexes more of the site.
+
+HARD CONSTRAINT: Do not modify mobile CSS, breakpoints, or media queries. This is a routing/backend/SEO-config task, not a UI redesign.
+
+Please do the following, in order:
+
+---
+
+STEP 1: Audit all redirects in the app
+
+Search the codebase for anywhere redirects are configured — this could be in:
+- wouter route definitions (any <Redirect> components or programmatic redirects)
+- Replit's own hosting config (.replit file, or any vercel.json / netlify.toml / server.js redirect rules if present)
+- Any middleware or server-side routing (Express, if used)
+
+For each redirect found, check for:
+1. Redirect loops (A → B → A)
+2. Redirect chains longer than 1 hop (A → B → C should be simplified to A → C directly)
+3. Redirects pointing to a URL that itself 404s or doesn't exist
+4. Mixed http/https or www/non-www redirect conflicts
+5. Trailing slash inconsistencies (e.g. /blog vs /blog/) that might be causing unintended redirect behavior
+
+Fix any broken redirect so each one resolves in a single valid hop.
+
+---
+
+STEP 2: Verify canonical tags
+
+Check that every page has a self-referencing canonical tag (<link rel="canonical" href="...">) in its <head>, matching its own actual URL exactly (correct protocol, no trailing slash mismatches, no query string unless intentional). This is likely handled via react-helmet-async or similar — check what's already in use in the codebase and confirm it's applied consistently across all routes, especially the blog pages.
+
+---
+
+STEP 3: Check and regenerate sitemap.xml
+
+Locate the sitemap.xml (check /public or wherever static assets are served). Confirm:
+1. It includes ALL current live pages — homepage, /plan, /faq, /blog index, and every individual blog post URL (including newer posts if any were added recently)
+2. Every URL in it returns a 200 status (not a redirect, not a 404)
+3. It's accessible at https://retirepro.in/sitemap.xml
+
+If any pages are missing from the sitemap, add them. If the sitemap references pages that no longer exist or ones that redirect, remove or fix those entries.
+
+---
+
+STEP 4: Improve internal linking to boost crawl priority
+
+For the 8 pages stuck in "Discovered – currently not indexed," internal linking signals to Google that a page matters. Confirm:
+1. Every blog post links to at least 2-3 other blog posts (not just the homepage)
+2. The homepage links directly to /plan, /faq, and the blog index
+3. No page is "orphaned" (reachable only via sitemap, with zero internal links pointing to it from anywhere else on the site)
+
+---
+
+After completing all steps, give me:
+1. A list of every redirect issue found and how it was fixed
+2. Confirmation that canonical tags are correctly self-referencing on all pages
+3. The current, updated sitemap.xml contents
+4. A summary of any internal linking gaps found and fixed
+
+Do not deploy/commit until I've reviewed this summary.
