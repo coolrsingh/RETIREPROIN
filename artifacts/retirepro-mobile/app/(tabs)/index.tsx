@@ -69,9 +69,9 @@ export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, authError } = useAuth();
 
-  const { data: scenarios, isLoading, refetch, isRefetching } = useQuery<Scenario[]>({
+  const { data: scenarios, isLoading, isError, error, refetch, isRefetching } = useQuery<Scenario[]>({
     queryKey: ["scenarios"],
     queryFn: () => apiFetch<Scenario[]>("/api/scenarios"),
     enabled: isAuthenticated,
@@ -169,9 +169,30 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </LinearGradient>
 
-      {isLoading ? (
+      {authError ? (
+        <View style={[styles.fill, { alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }]}>
+          <Ionicons name="alert-circle-outline" size={40} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: colors.text, marginTop: 12 }]}>Something went wrong</Text>
+          <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>{authError}</Text>
+        </View>
+      ) : isLoading ? (
         <View style={[styles.fill, { alignItems: "center", justifyContent: "center" }]}>
           <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : isError ? (
+        <View style={[styles.fill, { alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }]}>
+          <Ionicons name="alert-circle-outline" size={40} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: colors.text, marginTop: 12 }]}>Could not load plans</Text>
+          <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
+            {error instanceof Error ? error.message : "An unexpected error occurred. Pull down to retry."}
+          </Text>
+          <TouchableOpacity
+            style={[styles.emptyBtn, { backgroundColor: colors.primary, marginTop: 20 }]}
+            onPress={() => refetch()}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.emptyBtnText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList<Scenario>

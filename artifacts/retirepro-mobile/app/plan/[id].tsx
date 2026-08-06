@@ -159,20 +159,27 @@ export default function PlanDetailScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const { data: scenario, isLoading: scenarioLoading } = useQuery<Scenario>({
+  const { data: scenario, isLoading: scenarioLoading, isError: scenarioError, error: scenarioErr } = useQuery<Scenario>({
     queryKey: ["scenario", id],
     queryFn: () => apiFetch<Scenario>(`/api/scenarios/${id}`),
     enabled: !!id,
+    retry: false,
   });
 
-  const { data: calc, isLoading: calcLoading } = useQuery<Calculations>({
+  const { data: calc, isLoading: calcLoading, isError: calcError, error: calcErr } = useQuery<Calculations>({
     queryKey: ["calc", id],
     queryFn: () =>
       apiFetch<Calculations>(`/api/calc/${id}`, { method: "POST", body: JSON.stringify({}) }),
     enabled: !!scenario,
+    retry: false,
   });
 
   const isLoading = scenarioLoading || calcLoading;
+  const isError = scenarioError || calcError;
+  const errorMessage =
+    (scenarioErr instanceof Error ? scenarioErr.message : null) ??
+    (calcErr instanceof Error ? calcErr.message : null) ??
+    "Failed to load plan details.";
 
   const corpus = calc?.corpusBuildupAtRetirement ?? calc?.summary?.corpusBuildupAtRetirement;
   const required = calc?.corpusRequired ?? calc?.summary?.corpusRequired;
@@ -263,6 +270,15 @@ export default function PlanDetailScreen() {
         <View style={styles.loadingState}>
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={styles.loadingText}>Calculating projections…</Text>
+        </View>
+      ) : isError ? (
+        <View style={styles.errorState}>
+          <Ionicons name="alert-circle-outline" size={40} color="#ef4444" />
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorBody}>{errorMessage}</Text>
+          <TouchableOpacity style={styles.errorRetryBtn} onPress={() => router.back()}>
+            <Text style={styles.errorRetryText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView
@@ -399,6 +415,18 @@ const styles = StyleSheet.create({
 
   loadingState: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   loadingText: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#64748b" },
+
+  errorState: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingHorizontal: 32 },
+  errorTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#0f172a" },
+  errorBody: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#64748b", textAlign: "center", lineHeight: 20 },
+  errorRetryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 30,
+    backgroundColor: "#2563eb",
+  },
+  errorRetryText: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
 
   scroll: { padding: 16, gap: 14 },
 
