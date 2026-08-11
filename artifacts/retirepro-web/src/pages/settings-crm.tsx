@@ -220,7 +220,7 @@ export default function SettingsCrm() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
 
             {/* Inflation Assumptions */}
             <Card className="border-0 shadow-sm" style={{ background: "white" }}>
