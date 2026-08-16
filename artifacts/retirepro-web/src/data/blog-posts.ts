@@ -31,6 +31,36 @@ export interface BlogPost {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: "joint-retirement-planning-for-couples",
+    title: "Joint Retirement Planning for Couples in India: How Much Corpus Do You Really Need?",
+    excerpt:
+      "A couple spending ₹70,000/month today might assume ₹1–2 crore is enough. Here's how to plan retirement together — combined expenses, staggered retirement, and the formula that actually works.",
+    description:
+      "Learn how couples in India can plan retirement together, calculate future expenses, account for inflation, and estimate how much they may need to invest — with real numbers and a practical formula.",
+    readTime: "12 min read",
+    tag: "Couples Planning",
+    tagColor: "bg-pink-100 text-pink-700",
+    gradient: "from-rose-600 to-pink-700",
+    date: "16 Aug 2026",
+    dateTime: "2026-08-16",
+    datePublished: "2026-08-16",
+  },
+  {
+    slug: "epf-early-withdrawal-mistake",
+    title: "The ₹5 Lakh Mistake: Why Withdrawing Your EPF Before 60 Could Cost You ₹50 Lakh+",
+    excerpt:
+      "Withdrawing EPF early feels harmless — until you see what that money would have become at 60. The real math, five common withdrawal situations, and better alternatives for each.",
+    description:
+      "Withdrawing EPF early feels harmless — until you see what that money would have become at 60. Here's the real math on EPF compounding and better alternatives for common situations.",
+    readTime: "10 min read",
+    tag: "EPF & PF",
+    tagColor: "bg-red-100 text-red-700",
+    gradient: "from-red-700 to-orange-800",
+    date: "16 Aug 2026",
+    dateTime: "2026-08-16",
+    datePublished: "2026-08-16",
+  },
+  {
     slug: "sabbatical-mini-retirement-startup-calculator",
     title:
       "The Mini-Retirement Test: How a Techie Can Take 3 Years Off to Build a Startup Without Wrecking Retirement",

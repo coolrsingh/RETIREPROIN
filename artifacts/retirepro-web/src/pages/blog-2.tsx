@@ -303,7 +303,7 @@ export default function Blog2() {
               {[
                 { slug: "how-much-to-retire-india", title: "How Much Money Do You Need to Retire in India?", tag: "Retirement Basics", tagColor: "text-orange-600", gradient: "from-orange-500 to-red-600" },
                 { slug: "why-indians-fail-retirement", title: "Why Most Indians Fail to Plan for Retirement", tag: "Retirement Basics", tagColor: "text-blue-600", gradient: "from-blue-600 to-indigo-700" },
-                { slug: "real-estate-rich-retirement-illusion", title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are Most Exposed", tag: "HNI Planning", tagColor: "text-orange-600", gradient: "from-slate-700 to-slate-900" },
+                { slug: "epf-early-withdrawal-mistake", title: "The ₹5 Lakh Mistake: Why Withdrawing Your EPF Before 60 Costs You ₹50L+", tag: "EPF & PF", tagColor: "text-red-600", gradient: "from-red-700 to-orange-800" },
               ].map(post => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group block bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className={`h-20 bg-gradient-to-br ${post.gradient}`} />

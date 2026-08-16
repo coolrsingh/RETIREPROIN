@@ -293,7 +293,7 @@ export default function Blog9() {
               {[
                 { slug: "nps-vs-ups-vs-ops-which-is-better", title: "NPS vs UPS vs OPS: Which Pension Scheme Is Actually Better?", tag: "Government Pension", tagColor: "text-slate-600", gradient: "from-slate-700 to-slate-900" },
                 { slug: "nps-vs-ppf-vs-sip", title: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Corpus?", tag: "Investment Guide", tagColor: "text-emerald-600", gradient: "from-emerald-600 to-teal-700" },
-                { slug: "how-much-money-to-retire-in-india", title: "How Much Money Do I Need to Retire in India?", tag: "Retirement Basics", tagColor: "text-orange-600", gradient: "from-orange-500 to-red-600" },
+                { slug: "epf-early-withdrawal-mistake", title: "The ₹5 Lakh Mistake: Why Withdrawing Your EPF Before 60 Costs You ₹50L+", tag: "EPF & PF", tagColor: "text-red-600", gradient: "from-red-700 to-orange-800" },
               ].map(post => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group block bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className={`h-20 bg-gradient-to-br ${post.gradient}`} />

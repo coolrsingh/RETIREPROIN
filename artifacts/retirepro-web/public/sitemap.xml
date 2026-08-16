@@ -31,6 +31,18 @@
 
   <!-- Blog posts — newest first -->
   <url>
+    <loc>https://retirepro.in/blog/joint-retirement-planning-for-couples</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://retirepro.in/blog/epf-early-withdrawal-mistake</loc>
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://retirepro.in/blog/sabbatical-mini-retirement-startup-calculator</loc>
     <lastmod>2026-08-01</lastmod>
     <changefreq>monthly</changefreq>

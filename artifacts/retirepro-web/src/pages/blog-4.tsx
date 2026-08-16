@@ -58,11 +58,11 @@ const RELATED = [
     gradient: "from-emerald-600 to-teal-700",
   },
   {
-    slug: "real-estate-rich-retirement-illusion",
-    title: "The ₹40 Crore Illusion: Why India's Wealthiest Retirees Are Most Exposed",
-    tag: "HNI Planning",
-    tagColor: "text-orange-600",
-    gradient: "from-slate-700 to-slate-900",
+    slug: "joint-retirement-planning-for-couples",
+    title: "Joint Retirement Planning for Couples in India",
+    tag: "Couples Planning",
+    tagColor: "text-pink-600",
+    gradient: "from-rose-600 to-pink-700",
   },
 ];
 

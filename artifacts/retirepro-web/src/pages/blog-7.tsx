@@ -293,7 +293,7 @@ export default function Blog7() {
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 { slug: "why-indians-fail-retirement", title: "Why Most Indians Fail to Plan for Retirement", tag: "Retirement Basics", tagColor: "text-blue-600", gradient: "from-blue-600 to-indigo-700" },
-                { slug: "nps-vs-ups-vs-ops-which-is-better", title: "NPS vs UPS vs OPS: Which Pension Scheme Is Better?", tag: "Government Pension", tagColor: "text-slate-600", gradient: "from-slate-700 to-slate-900" },
+                { slug: "joint-retirement-planning-for-couples", title: "Joint Retirement Planning for Couples in India", tag: "Couples Planning", tagColor: "text-pink-600", gradient: "from-rose-600 to-pink-700" },
                 { slug: "nps-vs-ppf-vs-sip", title: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Corpus?", tag: "Investment Guide", tagColor: "text-emerald-600", gradient: "from-emerald-600 to-teal-700" },
               ].map(post => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} className="group block bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
