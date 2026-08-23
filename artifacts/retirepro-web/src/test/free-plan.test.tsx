@@ -40,7 +40,8 @@ class MockResizeObserver {
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByTestId("input-full-name"), "Arjun Sharma");
-  await user.type(screen.getByTestId("input-dob"), "1985-06-15");
+  await user.selectOptions(screen.getByTestId("input-dob-month"), "06");
+  await user.selectOptions(screen.getByTestId("input-dob-year"), "1985");
 
   const incomeInput = screen.getByTestId("input-monthly-income");
   await user.clear(incomeInput);
@@ -93,7 +94,7 @@ describe("FreePlan page — API integration", () => {
 
     const body = JSON.parse(init.body);
     expect(body.fullName).toBe("Arjun Sharma");
-    expect(body.dob).toBe("1985-06-15");
+    expect(body.dob).toBe("1985-06-01");
     expect(body.monthlyIncomeTotal).toBe(80000);
     expect(body.monthlyExpenseTotal).toBe(40000);
   });

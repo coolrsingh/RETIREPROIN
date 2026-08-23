@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChartLine, ArrowLeft, Zap, Lock } from "lucide-react";
+import { ChartLine, ArrowLeft, Zap, Lock, FileSpreadsheet } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import KpiCards from "@/components/kpi-cards";
 import PlanChart from "@/components/plan-chart";
@@ -29,6 +29,8 @@ export default function GuestPlanPreview() {
   const [calculations, setCalculations] = useState<any>(null);
   const [guestForm, setGuestForm] = useState<GuestForm | null>(null);
   const [chartTimeRange, setChartTimeRange] = useState("25Y");
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   useEffect(() => {
     const raw = sessionStorage.getItem("guestCalcResult");
@@ -63,6 +65,37 @@ export default function GuestPlanPreview() {
     returnPre: guestForm?.returnPre ?? "12",
     returnPost: "8",
     lifeExpectancy: 85,
+  };
+
+  const handleGuestExcelExport = async () => {
+    setIsExporting(true);
+    setExportError("");
+    try {
+      const response = await fetch("/api/export/excel/guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ calculations, form: guestForm }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Could not create your Excel file.");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const name = (guestForm?.fullName || "Retirement Plan").replace(/[^a-zA-Z0-9 ]/g, "");
+      link.href = downloadUrl;
+      link.download = `${name || "Retirement Plan"} - Retirement Plan.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Could not create your Excel file.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -105,23 +138,25 @@ export default function GuestPlanPreview() {
           <div className="flex items-center gap-2 text-sm text-amber-800">
             <Lock className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span>
-              You're viewing a preview plan.{" "}
+                Your preview is ready—download a copy now.{" "}
               <button
                 onClick={() => { window.location.href = "/api/login"; }}
                 className="font-semibold text-[#F15A24] hover:underline"
               >
                 Sign in
               </button>{" "}
-              to save your plan and unlock Excel export.
+                to save it permanently and revisit it any time.
             </span>
           </div>
           <Button
             size="sm"
-            onClick={() => { window.location.href = "/api/login"; }}
-            className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full text-xs flex-shrink-0"
+            onClick={handleGuestExcelExport}
+            disabled={isExporting}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-full text-xs flex-shrink-0"
+            data-testid="button-guest-excel-export"
           >
-            <Zap className="h-3 w-3 mr-1" />
-            Create Free Account
+            <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
+            {isExporting ? "Preparing..." : "Download Excel"}
           </Button>
         </div>
       </motion.div>
@@ -157,6 +192,33 @@ export default function GuestPlanPreview() {
             </div>
           </div>
         </div>
+
+        <section
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          data-testid="guest-excel-export-widget"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+              <FileSpreadsheet className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-emerald-950">Your Excel report is ready</p>
+              <p className="text-xs text-emerald-800">Free to download. Create an account only when you want to save this plan.</p>
+            </div>
+          </div>
+          <Button
+            onClick={handleGuestExcelExport}
+            disabled={isExporting}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white"
+            data-testid="button-guest-excel-export-widget"
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            {isExporting ? "Preparing Excel..." : "Download Excel"}
+          </Button>
+        </section>
+        {exportError && (
+          <p className="mb-6 text-sm text-red-700" role="alert">{exportError}</p>
+        )}
 
         {/* KPI Cards */}
         <KpiCards calculations={calculations} />
@@ -272,7 +334,7 @@ export default function GuestPlanPreview() {
             Save this plan and track your progress
           </h2>
           <p className="mb-6 max-w-xl mx-auto" style={{ color: "rgba(251,248,242,0.72)" }}>
-            Create a free account to save your plan, adjust assumptions, download your full Excel report, and get year-by-year projections.
+            Create a free account to save your plan, adjust assumptions, and revisit your projections any time.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button

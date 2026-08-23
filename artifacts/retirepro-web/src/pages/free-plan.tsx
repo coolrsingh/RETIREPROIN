@@ -91,7 +91,7 @@ export default function FreePlan() {
             >
               Sign in
             </button>{" "}
-            to save it permanently and export to Excel.
+            to save it permanently and revisit it any time.
           </p>
           <Button
             size="sm"
