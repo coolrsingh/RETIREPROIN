@@ -912,17 +912,17 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
                   />
                 </div>
                 <div>
-                  <Label>Date of Birth</Label>
-                  <Input 
-                    type="date"
+                  <Label>Month and Year of Birth</Label>
+                  <MonthYearPicker
                     value={child.dob}
-                    onChange={(e) => {
+                    onChange={(dob) => {
                       const updated = [...children];
-                      updated[index].dob = e.target.value;
+                      updated[index].dob = dob;
                       setChildren(updated);
                       form.setValue("children", updated);
                     }}
-                    data-testid={`input-child-dob-${index}`}
+                    monthTestId={`input-child-dob-month-${index}`}
+                    yearTestId={`input-child-dob-year-${index}`}
                   />
                 </div>
                 <div>

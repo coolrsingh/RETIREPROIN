@@ -240,7 +240,8 @@ describe("QuickPlanForm – child row validation", () => {
     await fillRequiredFields(user);
 
     await user.click(screen.getByTestId("button-add-child"));
-    await user.type(screen.getByTestId("input-child-dob-0"), "2015-03-20");
+    await user.selectOptions(screen.getByTestId("input-child-dob-month-0"), "03");
+    await user.selectOptions(screen.getByTestId("input-child-dob-year-0"), "2015");
 
     await user.click(screen.getByTestId("button-create-plan"));
 

@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { X, Mail, CheckCircle2, ArrowRight, TrendingDown } from "lucide-react";
 
-const STORAGE_KEY = "retirepro_blog_subscribed";
+const STORAGE_KEY = "retirepro_newsletter_subscribed";
+const LEGACY_STORAGE_KEY = "retirepro_blog_subscribed";
+const SESSION_PROMPT_KEY = "retirepro_exit_newsletter_prompted";
 const POPUP_DELAY_MS = 150_000; // 2.5 minutes
 
 const HOOKS = [
@@ -22,17 +24,27 @@ export default function BlogSubscribePopup() {
 
   const onBlogArticle = location.startsWith("/blog/");
 
+  const hasSubscribed = () =>
+    localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+
+  const hasSeenPromptThisSession = () =>
+    sessionStorage.getItem(SESSION_PROMPT_KEY);
+
+  const openExitPrompt = () => {
+    if (visible || hasSubscribed() || hasSeenPromptThisSession()) return;
+    sessionStorage.setItem(SESSION_PROMPT_KEY, "shown");
+    setVisible(true);
+  };
+
   useEffect(() => {
     if (!onBlogArticle) {
       if (timerRef.current) clearTimeout(timerRef.current);
       return;
     }
-    if (localStorage.getItem(STORAGE_KEY)) return;
+    if (hasSubscribed() || hasSeenPromptThisSession()) return;
 
     timerRef.current = setTimeout(() => {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        setVisible(true);
-      }
+      openExitPrompt();
     }, POPUP_DELAY_MS);
 
     return () => {
@@ -40,9 +52,21 @@ export default function BlogSubscribePopup() {
     };
   }, [onBlogArticle, location]);
 
+  useEffect(() => {
+    const handleMouseOut = (event: MouseEvent) => {
+      // Exit-intent should only fire when the pointer leaves the browser window
+      // through the top edge—not when the user simply moves between elements.
+      if (event.relatedTarget === null && event.clientY <= 0) {
+        openExitPrompt();
+      }
+    };
+
+    document.addEventListener("mouseout", handleMouseOut);
+    return () => document.removeEventListener("mouseout", handleMouseOut);
+  }, [visible, location]);
+
   const dismiss = () => {
     setVisible(false);
-    localStorage.setItem(STORAGE_KEY, "dismissed");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +78,7 @@ export default function BlogSubscribePopup() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), source: "blog-popup" }),
+        body: JSON.stringify({ email: email.trim(), source: onBlogArticle ? "blog-exit-intent" : "site-exit-intent" }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -121,17 +145,16 @@ export default function BlogSubscribePopup() {
                 You're in!
               </h3>
               <p className="text-sm leading-relaxed" style={{ color: "#C4A96A" }}>
-                Next deep-dive arriving soon. No spam, ever.
+                One or two useful retirement notes a month. No spam, ever.
               </p>
             </div>
           ) : (
             <>
               <h2 className="text-lg font-bold mb-1.5 leading-snug" style={{ color: "#FBF8F2", fontFamily: "'Fraunces', serif" }}>
-                Get India's sharpest retirement insights
+                Before you go—keep your retirement plan on track
               </h2>
               <p className="text-sm leading-relaxed mb-5" style={{ color: "#B0956B" }}>
-                One article a week. Real numbers, India-specific context — no generic advice, no spam.
-                Join <strong style={{ color: "#E8940A" }}>2,400+ readers</strong> already planning smarter.
+                Share your email and get one or two useful retirement insights a month. Small check-ins help you revisit your calculation before the years slip by.
               </p>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -177,7 +200,7 @@ export default function BlogSubscribePopup() {
                   {state === "loading" ? (
                     <span className="animate-spin rounded-full h-4 w-4 border-2 border-slate-900 border-t-transparent" />
                   ) : (
-                    <>Send me the next article <ArrowRight className="h-4 w-4" /></>
+                    <>Keep me updated <ArrowRight className="h-4 w-4" /></>
                   )}
                 </button>
               </form>
@@ -195,7 +218,7 @@ export default function BlogSubscribePopup() {
                 className="w-full text-center text-xs mt-2 underline underline-offset-2 transition-colors"
                 style={{ color: "rgba(180,150,100,0.45)" }}
               >
-                No thanks, I'll continue reading
+                No thanks, I'll continue without updates
               </button>
             </>
           )}

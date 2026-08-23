@@ -564,14 +564,14 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 </div>
 
                 {/* Existing EMI */}
-                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4">
-                  <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4" data-testid="card-existing-emi">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4 text-rose-600" />
                       <span className="font-semibold text-sm text-rose-900">Existing EMI</span>
                       <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">Optional</span>
                     </div>
-                    <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" />
+                    <Switch checked={hasExistingEMI} onCheckedChange={setHasExistingEMI} data-testid="toggle-existing-emi" className="shrink-0" />
                   </div>
                   {hasExistingEMI && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -912,17 +912,17 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   />
                 </div>
                 <div>
-                  <Label>Date of Birth</Label>
-                  <Input
-                    type="date"
+                  <Label>Month and Year of Birth</Label>
+                  <MonthYearPicker
                     value={child.dob}
-                    onChange={(e) => {
+                    onChange={(dob) => {
                       const updated = [...children];
-                      updated[index].dob = e.target.value;
+                      updated[index].dob = dob;
                       setChildren(updated);
                       form.setValue("children", updated, { shouldValidate: true });
                     }}
-                    data-testid={`input-child-dob-${index}`}
+                    monthTestId={`input-child-dob-month-${index}`}
+                    yearTestId={`input-child-dob-year-${index}`}
                   />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {(form.formState.errors.children as any)?.[index]?.dob?.message && (

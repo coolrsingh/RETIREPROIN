@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -65,10 +65,6 @@ export default function PlanDashboard() {
     enabled: !!scenario,
   });
 
-  // Export nudge banner — shown once when calculations first load
-  const [showExportBanner, setShowExportBanner] = useState(false);
-  const exportBannerShown = useRef(false);
-
   // Initialise live rate inputs from loaded assumptions
   useEffect(() => {
     if (scenario?.assumptions && !liveRates) {
@@ -78,15 +74,6 @@ export default function PlanDashboard() {
       });
     }
   }, [scenario]);
-
-  useEffect(() => {
-    if (calculations && !calculationsLoading && !exportBannerShown.current) {
-      exportBannerShown.current = true;
-      const timer = setTimeout(() => setShowExportBanner(true), 1500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [calculations, calculationsLoading]);
 
   // Scroll to top whenever the plan dashboard mounts (route doesn't change when
   // navigating plan → dashboard, so ScrollToTop in App.tsx doesn't fire)
@@ -121,14 +108,6 @@ export default function PlanDashboard() {
       });
     }
   }, [isAuthenticated, isLoading, toast]);
-
-  const handleExportPDF = () => {
-    if (isAuthenticated) {
-      window.open(`/api/export/pdf/${params?.id}`, '_blank');
-    } else {
-      setShowLeadModal(true);
-    }
-  };
 
   const handleRecalculate = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/calc", params?.id, liveRates] });
@@ -246,14 +225,6 @@ export default function PlanDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <a
-                href={`/api/export/excel/${scenario.id}`}
-                download
-                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Excel
-              </a>
               <button
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -277,6 +248,32 @@ export default function PlanDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Signed-in plan benefit: concise, persistent Excel export */}
+        <section
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          data-testid="excel-export-widget"
+          aria-label="Excel export for signed-in users"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+              <FileSpreadsheet className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-emerald-950">Excel export</p>
+              <p className="text-xs text-emerald-800">Available with your signed-in plan.</p>
+            </div>
+          </div>
+          <a
+            href={`/api/export/excel/${scenario.id}`}
+            download
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+            data-testid="link-export-excel"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Export Excel
+          </a>
+        </section>
 
         {/* Live Return Rate Adjuster */}
         <Card className="mb-6 border-orange-200 bg-orange-50">
@@ -331,38 +328,6 @@ export default function PlanDashboard() {
         {/* KPI Cards */}
         {calculations && (
           <KpiCards calculations={calculations} />
-        )}
-
-        {/* Export nudge banner */}
-        {showExportBanner && (
-          <div className="mb-6 flex items-center justify-between gap-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-5 py-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <FileSpreadsheet className="h-5 w-5 text-emerald-700" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-emerald-900">Your plan is ready to export!</p>
-                <p className="text-xs text-emerald-700 mt-0.5">Download all your numbers, projections, and year-by-year data to Excel for your records or to share with your advisor.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <a
-                href={`/api/export/excel/${params?.id}`}
-                download
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Download Excel
-              </a>
-              <button
-                onClick={() => setShowExportBanner(false)}
-                className="text-emerald-500 hover:text-emerald-700 p-1 rounded"
-                aria-label="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
         )}
 
         {/* Net Worth Projection — full width */}
