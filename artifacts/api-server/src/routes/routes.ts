@@ -33,6 +33,68 @@ const updateScenarioBodySchema = z.object({
   assumptions: updateScenarioAssumptionsSchema.optional(),
 });
 
+function generateExcelBuffer(
+  scenarioData: { name?: string; assumptions?: Record<string, unknown> },
+  calculations: any,
+) {
+  const wb = XLSX.utils.book_new();
+  const summaryRows = [
+    ["Retirement Plan Summary", "", "", ""],
+    ["Plan Name", scenarioData.name || "Retirement Plan", "", ""],
+    ["Generated On", new Date().toLocaleDateString('en-IN'), "", ""],
+    ["", "", "", ""],
+    ["Metric", "Value", "", ""],
+    ["Projected Corpus at Retirement", `₹${(calculations.summary.projectedCorpusAtRetirement / 10000000).toFixed(2)} Cr`, "", ""],
+    ["Required Corpus at Retirement", `₹${(calculations.summary.requiredCorpusAtRetirement / 10000000).toFixed(2)} Cr`, "", ""],
+    ["Surplus / Gap", calculations.summary.gap > 0 ? `-₹${(calculations.summary.gap / 10000000).toFixed(2)} Cr (Shortfall)` : "Surplus — on track!", "", ""],
+    ["Retirement Year", calculations.summary.retirementYear.toString(), "", ""],
+    ["SIP Required to Close Gap", calculations.summary.sipRequired && calculations.summary.sipRequired > 0 ? `₹${calculations.summary.sipRequired.toLocaleString('en-IN')} / month` : "None — no gap!", "", ""],
+  ];
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+  summarySheet['!cols'] = [{ wch: 35 }, { wch: 30 }, { wch: 20 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+
+  const headers = [
+    "Year", "Age", "Annual Income (₹)", "Regular Expenses (₹)",
+    "EMI Payments (₹)", "Goal Expenses (₹)", "Total Outflow (₹)",
+    "Net Surplus / Deficit (₹)", "Portfolio Return (₹)", "Net Worth (₹)", "Notes & Events"
+  ];
+  const detailRows = [headers, ...calculations.yearlyDetail.map((row: any) => [
+    row.year, row.age, row.income, row.regularExpenses, row.emiExpenses,
+    row.goalExpenses, row.totalExpenses, row.netSavings, row.portfolioReturn,
+    row.netWorth, row.notes.join('; ')
+  ])];
+  const detailSheet = XLSX.utils.aoa_to_sheet(detailRows);
+  detailSheet['!cols'] = [
+    { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 22 }, { wch: 18 },
+    { wch: 20 }, { wch: 20 }, { wch: 24 }, { wch: 20 }, { wch: 18 }, { wch: 60 }
+  ];
+  XLSX.utils.book_append_sheet(wb, detailSheet, "Year-by-Year Projections");
+
+  const assumptions = scenarioData.assumptions ?? {};
+  const assumptionRows = [
+    ["Planning Assumptions Used", ""],
+    ["Inflation (General)", `${assumptions.inflationHeadline || '6.0'}%`],
+    ["Inflation (Education)", `${assumptions.inflationEdu || '8.0'}%`],
+    ["Pre-retirement Return", `${assumptions.returnPre || '10.0'}%`],
+    ["Post-retirement Return", `${assumptions.returnPost || '7.0'}%`],
+    ["Life Expectancy", `${assumptions.lifeExpectancy || 85} years`],
+    ["Income Growth Rate", "8% per annum"],
+  ];
+  const assumptionSheet = XLSX.utils.aoa_to_sheet(assumptionRows);
+  assumptionSheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, assumptionSheet, "Assumptions");
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+}
+
+function sendExcelFile(res: any, name: string, excelBuffer: Buffer) {
+  const safeName = name.replace(/[^a-zA-Z0-9 ]/g, '') || "Retirement Plan";
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeName} - Retirement Plan.xlsx"`);
+  res.setHeader('Content-Length', excelBuffer.length);
+  res.end(excelBuffer);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -945,77 +1007,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const calculations = await calculateRetirementPlan(scenarioData);
 
-      const wb = XLSX.utils.book_new();
-
-      // Summary Sheet
-      const summaryRows = [
-        ["Retirement Plan Summary", "", "", ""],
-        ["Plan Name", scenarioData.name, "", ""],
-        ["Generated On", new Date().toLocaleDateString('en-IN'), "", ""],
-        ["", "", "", ""],
-        ["Metric", "Value", "", ""],
-        ["Projected Corpus at Retirement", `₹${(calculations.summary.projectedCorpusAtRetirement / 10000000).toFixed(2)} Cr`, "", ""],
-        ["Required Corpus at Retirement", `₹${(calculations.summary.requiredCorpusAtRetirement / 10000000).toFixed(2)} Cr`, "", ""],
-        ["Surplus / Gap", calculations.summary.gap > 0 ? `-₹${(calculations.summary.gap / 10000000).toFixed(2)} Cr (Shortfall)` : "Surplus — on track!", "", ""],
-        ["Retirement Year", calculations.summary.retirementYear.toString(), "", ""],
-        ["SIP Required to Close Gap", calculations.summary.sipRequired && calculations.summary.sipRequired > 0 ? `₹${calculations.summary.sipRequired.toLocaleString('en-IN')} / month` : "None — no gap!", "", ""],
-      ];
-      const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
-      summarySheet['!cols'] = [{ wch: 35 }, { wch: 30 }, { wch: 20 }, { wch: 20 }];
-      XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
-
-      // Year-by-Year Detail Sheet
-      const headers = [
-        "Year", "Age", "Annual Income (₹)", "Regular Expenses (₹)",
-        "EMI Payments (₹)", "Goal Expenses (₹)", "Total Outflow (₹)",
-        "Net Surplus / Deficit (₹)", "Portfolio Return (₹)", "Net Worth (₹)", "Notes & Events"
-      ];
-      
-      const detailRows = [headers, ...calculations.yearlyDetail.map(row => [
-        row.year,
-        row.age,
-        row.income,
-        row.regularExpenses,
-        row.emiExpenses,
-        row.goalExpenses,
-        row.totalExpenses,
-        row.netSavings,
-        row.portfolioReturn,
-        row.netWorth,
-        row.notes.join('; ')
-      ])];
-
-      const detailSheet = XLSX.utils.aoa_to_sheet(detailRows);
-      detailSheet['!cols'] = [
-        { wch: 8 }, { wch: 8 }, { wch: 20 }, { wch: 22 },
-        { wch: 18 }, { wch: 20 }, { wch: 20 },
-        { wch: 24 }, { wch: 20 }, { wch: 18 }, { wch: 60 }
-      ];
-      XLSX.utils.book_append_sheet(wb, detailSheet, "Year-by-Year Projections");
-
-      // Assumptions Sheet
-      const assumptionRows = [
-        ["Planning Assumptions Used", ""],
-        ["Inflation (General)", `${scenarioData.assumptions?.inflationHeadline || '6.0'}%`],
-        ["Inflation (Education)", `${scenarioData.assumptions?.inflationEdu || '8.0'}%`],
-        ["Pre-retirement Return", `${scenarioData.assumptions?.returnPre || '10.0'}%`],
-        ["Post-retirement Return", `${scenarioData.assumptions?.returnPost || '7.0'}%`],
-        ["Life Expectancy", `${scenarioData.assumptions?.lifeExpectancy || 85} years`],
-        ["Income Growth Rate", "8% per annum"],
-      ];
-      const assumptionSheet = XLSX.utils.aoa_to_sheet(assumptionRows);
-      assumptionSheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
-      XLSX.utils.book_append_sheet(wb, assumptionSheet, "Assumptions");
-
-      const excelBuffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-      
-      const safeName = scenarioData.name.replace(/[^a-zA-Z0-9 ]/g, '');
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="${safeName} - Retirement Plan.xlsx"`);
-      res.setHeader('Content-Length', excelBuffer.length);
-      res.end(excelBuffer);
+      const excelBuffer = generateExcelBuffer(scenarioData, calculations);
+      sendExcelFile(res, scenarioData.name, excelBuffer);
     } catch (error) {
       console.error("Error generating Excel:", error);
+      res.status(500).json({ message: "Failed to generate Excel" });
+    }
+  });
+
+  // Guest export: allows users to experience the report before signing in.
+  // The guest calculation is stateless and is already held in the browser.
+  app.post('/api/export/excel/guest', async (req, res) => {
+    try {
+      const { calculations, form } = req.body ?? {};
+      if (
+        !calculations ||
+        !calculations.summary ||
+        !Array.isArray(calculations.yearlyDetail) ||
+        calculations.yearlyDetail.length > 200
+      ) {
+        return res.status(400).json({ message: "Invalid guest calculation data" });
+      }
+
+      const name = typeof form?.fullName === "string" ? form.fullName.trim() : "";
+      const scenarioData = {
+        name: name ? `${name}'s Retirement Plan` : "Your Retirement Plan",
+        assumptions: {
+          inflationHeadline: form?.inflationRate || "6",
+          inflationEdu: "8",
+          returnPre: form?.returnPre || "12",
+          returnPost: "8",
+          lifeExpectancy: 85,
+        },
+      };
+      const excelBuffer = generateExcelBuffer(scenarioData, calculations);
+      sendExcelFile(res, scenarioData.name, excelBuffer);
+    } catch (error) {
+      console.error("Error generating guest Excel:", error);
       res.status(500).json({ message: "Failed to generate Excel" });
     }
   });
