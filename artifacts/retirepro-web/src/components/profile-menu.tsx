@@ -20,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { User, Phone, Calendar, TrendingUp, Wallet, PiggyBank, BarChart2, Edit2, LogOut, Share2, Check } from "lucide-react";
+import MonthYearPicker from "@/components/month-year-picker";
 
 function fmt(v: string | null | undefined, prefix = "₹") {
   if (!v) return "—";
@@ -129,7 +130,7 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Your Saved Data</p>
 
             <DataRow icon={<Phone className="h-3.5 w-3.5 text-slate-400" />} label="Phone" value={p?.phone || "—"} />
-            <DataRow icon={<Calendar className="h-3.5 w-3.5 text-slate-400" />} label="Date of Birth" value={p?.dob ? new Date(p.dob).toLocaleDateString("en-IN") : "—"} />
+            <DataRow icon={<Calendar className="h-3.5 w-3.5 text-slate-400" />} label="Birth Month & Year" value={p?.dob ? new Date(`${p.dob.slice(0, 7)}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : "—"} />
             <DataRow icon={<User className="h-3.5 w-3.5 text-slate-400" />} label="Retirement Age" value={p?.retirementAge ? `${p.retirementAge} yrs` : "—"} />
             <DataRow icon={<TrendingUp className="h-3.5 w-3.5 text-slate-400" />} label="Monthly Income" value={fmt(p?.monthlyIncome)} />
             <DataRow icon={<Wallet className="h-3.5 w-3.5 text-slate-400" />} label="Monthly Expenses" value={fmt(p?.monthlyExpenses)} />
@@ -193,8 +194,13 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
               <Input value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+91 98765 43210" />
             </div>
             <div>
-              <Label>Date of Birth</Label>
-              <Input type="date" value={form.dob || ""} onChange={e => setForm({ ...form, dob: e.target.value })} />
+              <Label>Month and Year of Birth</Label>
+              <MonthYearPicker
+                value={form.dob || ""}
+                onChange={dob => setForm({ ...form, dob })}
+                monthTestId="profile-dob-month"
+                yearTestId="profile-dob-year"
+              />
             </div>
             <div>
               <Label>Retirement Age</Label>

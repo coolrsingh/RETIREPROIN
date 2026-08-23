@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, Calculator, Heart, Building, Coins, Banknote } from "lucide-react";
+import MonthYearPicker from "@/components/month-year-picker";
 
 interface EnhancedPlanFormProps {
   onSubmit: (data: QuickPlan) => void;
@@ -165,9 +166,14 @@ export default function EnhancedPlanForm({ onSubmit, isLoading, mode }: Enhanced
                 name="dob"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
+                    <FormLabel>Month and Year of Birth</FormLabel>
                     <FormControl>
-                      <Input type="date" data-testid="input-dob" {...field} />
+                      <MonthYearPicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        monthTestId="input-dob-month"
+                        yearTestId="input-dob-year"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

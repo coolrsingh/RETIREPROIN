@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { SliderField } from "@/components/slider-field";
+import MonthYearPicker from "@/components/month-year-picker";
 import {
   Plus, Trash2, Zap, Coffee, CreditCard, TrendingUp,
   Calculator, Lock, Target, Users, HandCoins, PiggyBank,
@@ -356,9 +357,14 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                 name="dob"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
+                    <FormLabel>Month and Year of Birth</FormLabel>
                     <FormControl>
-                      <Input type="date" data-testid="input-dob" {...field} />
+                      <MonthYearPicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        monthTestId="input-dob-month"
+                        yearTestId="input-dob-year"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

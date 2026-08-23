@@ -14,7 +14,8 @@ function renderForm(overrides: { onSubmit?: (data: QuickPlan) => void; isLoading
 
 async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByTestId("input-full-name"), "Jane Doe");
-  await user.type(screen.getByTestId("input-dob"), "1985-06-15");
+  await user.selectOptions(screen.getByTestId("input-dob-month"), "06");
+  await user.selectOptions(screen.getByTestId("input-dob-year"), "1985");
   const incomeInput = screen.getByTestId("input-monthly-income");
   await user.clear(incomeInput);
   await user.type(incomeInput, "60000");
@@ -28,7 +29,8 @@ describe("QuickPlanForm – required field validation", () => {
     const user = userEvent.setup();
     const { onSubmit } = renderForm();
 
-    await user.type(screen.getByTestId("input-dob"), "1985-06-15");
+    await user.selectOptions(screen.getByTestId("input-dob-month"), "06");
+    await user.selectOptions(screen.getByTestId("input-dob-year"), "1985");
     const incomeInput = screen.getByTestId("input-monthly-income");
     await user.clear(incomeInput);
     await user.type(incomeInput, "60000");
@@ -69,7 +71,8 @@ describe("QuickPlanForm – required field validation", () => {
     const { onSubmit } = renderForm();
 
     await user.type(screen.getByTestId("input-full-name"), "Jane Doe");
-    await user.type(screen.getByTestId("input-dob"), "1985-06-15");
+    await user.selectOptions(screen.getByTestId("input-dob-month"), "06");
+    await user.selectOptions(screen.getByTestId("input-dob-year"), "1985");
 
     const incomeInput = screen.getByTestId("input-monthly-income");
     await user.clear(incomeInput);
@@ -142,7 +145,8 @@ describe("QuickPlanForm – valid submission", () => {
     const { onSubmit } = renderForm();
 
     await user.type(screen.getByTestId("input-full-name"), "Jane Doe");
-    await user.type(screen.getByTestId("input-dob"), "1985-06-15");
+    await user.selectOptions(screen.getByTestId("input-dob-month"), "06");
+    await user.selectOptions(screen.getByTestId("input-dob-year"), "1985");
 
     const incomeInput = screen.getByTestId("input-monthly-income");
     await user.clear(incomeInput);
@@ -160,7 +164,7 @@ describe("QuickPlanForm – valid submission", () => {
 
     const submitted = onSubmit.mock.calls[0][0];
     expect(submitted.fullName).toBe("Jane Doe");
-    expect(submitted.dob).toBe("1985-06-15");
+    expect(submitted.dob).toBe("1985-06-01");
     expect(submitted.monthlyIncomeTotal).toBe(80000);
     expect(submitted.monthlyExpenseTotal).toBe(40000);
   });
@@ -170,7 +174,8 @@ describe("QuickPlanForm – valid submission", () => {
     renderForm();
 
     await user.type(screen.getByTestId("input-full-name"), "Jane Doe");
-    await user.type(screen.getByTestId("input-dob"), "1985-06-15");
+    await user.selectOptions(screen.getByTestId("input-dob-month"), "06");
+    await user.selectOptions(screen.getByTestId("input-dob-year"), "1985");
 
     const incomeInput = screen.getByTestId("input-monthly-income");
     await user.clear(incomeInput);
