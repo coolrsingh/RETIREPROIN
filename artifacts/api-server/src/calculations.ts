@@ -193,6 +193,11 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
 
   let currentNetWorth = totalAssets;
   let mergedForDrawdown = false;
+  // Chronological net cash flow (income - expenses, before returns) for every
+  // post-retirement year, starting at retirementYear. Used after the loop to
+  // derive the required corpus directly from the same mechanics the chart uses,
+  // instead of a disconnected perpetuity approximation.
+  const postRetirementCashFlows: number[] = [];
 
   for (let year = currentYear; year <= lifeExpectancy + birthYear; year++) {
     const yearsFromNow = year - currentYear;
@@ -351,6 +356,7 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
       }
       portfolioReturn = currentNetWorth * returnPost;
       currentNetWorth = currentNetWorth * (1 + returnPost) + netSavings;
+      postRetirementCashFlows.push(netSavings);
     }
 
     // Ensure net worth doesn't go negative
@@ -383,14 +389,26 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     });
   }
 
-  // Calculate required corpus at retirement using the 4% safe withdrawal rate equivalent.
-  // Use the goal-adjusted post-retirement expense if provided so the required corpus
-  // reflects the chosen retirement lifestyle, not just current spending.
-  const retirementExpenseBase = postRetirementMonthlyExpenseOverride !== null
-    ? postRetirementMonthlyExpenseOverride
-    : monthlyExpenses;
-  const retirementExpenses = retirementExpenseBase * Math.pow(1 + inflationHeadline, retirementYear - currentYear) * 12;
-  const requiredCorpusAtRetirement = retirementExpenses / returnPost;
+  // Calculate required corpus at retirement directly from the same year-by-year
+  // post-retirement cash flows that drive the chart, instead of a disconnected
+  // perpetuity approximation (which ignored that expenses keep inflating every
+  // year while the corpus compounds at a nominal, not inflation-adjusted, rate —
+  // that mismatch could understate the required corpus and mask a real shortfall).
+  //
+  // requiredCorpusAtRetirement is measured on the same basis as
+  // projectedCorpusAtRetirement (the balance immediately after retirementYear's
+  // own cash flow, matching netWorthSeries). Starting from that balance, we walk
+  // every subsequent year's actual net cash flow (postRetirementCashFlows[1..]),
+  // discount each back to retirementYear at returnPost, and take the worst
+  // (most negative) running total — the corpus must be at least large enough to
+  // cover that worst point, or the balance would hit zero before lifeExpectancy.
+  let discountedCumulative = 0;
+  let worstDeficit = 0;
+  for (let i = 1; i < postRetirementCashFlows.length; i++) {
+    discountedCumulative += postRetirementCashFlows[i] / Math.pow(1 + returnPost, i);
+    worstDeficit = Math.min(worstDeficit, discountedCumulative);
+  }
+  const requiredCorpusAtRetirement = Math.max(0, -worstDeficit);
 
   const retirementData = netWorthSeries.find(item => item.year === retirementYear);
   const projectedCorpusAtRetirement = retirementData?.value || 0;

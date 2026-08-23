@@ -278,6 +278,35 @@ describe("calculateRetirementPlan – retired drawdown mode", () => {
     expect(ratio).toBeLessThan(2.1);
   });
 
+  it("flags a real funding gap when the corpus depletes years before life expectancy (regression: the required-corpus formula must reflect the actual drawdown simulation)", async () => {
+    // Reproduces the reported bug: with returnPost (8%) not far above inflation
+    // (6%), the corpus comfortably covers the near-term withdrawal but the
+    // simulation shows it running out well before life expectancy. The old
+    // perpetuity approximation (expense / returnPost) ignored that expenses
+    // keep inflating every year and understated the required corpus enough to
+    // report a $0 gap even though the chart clearly depletes early.
+    const retirementYear = CURRENT_YEAR + 20;
+    const result = await calculateRetirementPlan(
+      accumulatingScenario({
+        monthlyExpense: 80_000,
+        retirementYear,
+        lifeExpectancyAge: 85,
+        returnPre: "12.0",
+        returnPost: "8.0",
+        inflation: "6.0",
+      }) as any
+    );
+
+    const terminalYear = BIRTH_YEAR + 85;
+    const depletesBeforeLifeExpectancy = result.netWorthSeries.some(
+      (p: any) => p.value === 0 && p.year > retirementYear && p.year < terminalYear
+    );
+
+    expect(depletesBeforeLifeExpectancy).toBe(true);
+    expect(result.summary.gap).toBeGreaterThan(0);
+    expect(result.summary.sipRequired).toBeGreaterThan(0);
+  });
+
   it("yearsToCover=25 yields exactly 26 yearly rows ending at currentYear+25", async () => {
     // This is the canonical retired projection horizon test.
     // For a 60-year-old with yearsToCover=25:
