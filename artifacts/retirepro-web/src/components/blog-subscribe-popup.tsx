@@ -14,6 +14,23 @@ const HOOKS = [
 ];
 const HOOK = HOOKS[Math.floor(Math.random() * HOOKS.length)];
 
+function readBrowserStorage(storage: Storage, key: string) {
+  try {
+    return storage.getItem(key);
+  } catch {
+    // Storage can be blocked in an embedded/private browsing context.
+    return null;
+  }
+}
+
+function writeBrowserStorage(storage: Storage, key: string, value: string) {
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // The prompt should remain usable even when persistence is unavailable.
+  }
+}
+
 export default function BlogSubscribePopup() {
   const [location] = useLocation();
   const [visible, setVisible] = useState(false);
@@ -25,14 +42,15 @@ export default function BlogSubscribePopup() {
   const onBlogArticle = location.startsWith("/blog/");
 
   const hasSubscribed = () =>
-    localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    readBrowserStorage(localStorage, STORAGE_KEY) ||
+    readBrowserStorage(localStorage, LEGACY_STORAGE_KEY);
 
   const hasSeenPromptThisSession = () =>
-    sessionStorage.getItem(SESSION_PROMPT_KEY);
+    readBrowserStorage(sessionStorage, SESSION_PROMPT_KEY);
 
   const openExitPrompt = () => {
     if (visible || hasSubscribed() || hasSeenPromptThisSession()) return;
-    sessionStorage.setItem(SESSION_PROMPT_KEY, "shown");
+    writeBrowserStorage(sessionStorage, SESSION_PROMPT_KEY, "shown");
     setVisible(true);
   };
 
@@ -86,7 +104,7 @@ export default function BlogSubscribePopup() {
         setState("error");
       } else {
         setState("success");
-        localStorage.setItem(STORAGE_KEY, "subscribed");
+        writeBrowserStorage(localStorage, STORAGE_KEY, "subscribed");
         setTimeout(() => setVisible(false), 3200);
       }
     } catch {
