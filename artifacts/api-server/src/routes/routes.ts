@@ -1015,39 +1015,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Guest export: allows users to experience the report before signing in.
-  // The guest calculation is stateless and is already held in the browser.
-  app.post('/api/export/excel/guest', async (req, res) => {
-    try {
-      const { calculations, form } = req.body ?? {};
-      if (
-        !calculations ||
-        !calculations.summary ||
-        !Array.isArray(calculations.yearlyDetail) ||
-        calculations.yearlyDetail.length > 200
-      ) {
-        return res.status(400).json({ message: "Invalid guest calculation data" });
-      }
-
-      const name = typeof form?.fullName === "string" ? form.fullName.trim() : "";
-      const scenarioData = {
-        name: name ? `${name}'s Retirement Plan` : "Your Retirement Plan",
-        assumptions: {
-          inflationHeadline: form?.inflationRate || "6",
-          inflationEdu: "8",
-          returnPre: form?.returnPre || "12",
-          returnPost: "8",
-          lifeExpectancy: 85,
-        },
-      };
-      const excelBuffer = generateExcelBuffer(scenarioData, calculations);
-      sendExcelFile(res, scenarioData.name, excelBuffer);
-    } catch (error) {
-      console.error("Error generating guest Excel:", error);
-      res.status(500).json({ message: "Failed to generate Excel" });
-    }
-  });
-
   // Analytics and reporting endpoint for daily emails
   app.get('/api/analytics/daily', isAuthenticated, async (req: any, res) => {
     try {
