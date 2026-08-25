@@ -13,6 +13,7 @@ import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import ModernPlanLimitModal from "@/components/modern-plan-limit-modal";
 import ProfileMenu from "@/components/profile-menu";
+import { trackEvent } from "@/lib/analytics";
 
 export default function PlanForm() {
   const [, navigate] = useLocation();
@@ -48,6 +49,7 @@ export default function PlanForm() {
           description: "Your retirement plan has been created and calculated.",
         });
         if (scenario?.id) {
+          trackEvent("plan_saved", { source: "plan_form" });
           navigate(`/plan/${scenario.id}`);
         } else {
           navigate("/");

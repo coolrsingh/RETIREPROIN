@@ -11,6 +11,7 @@ import PlanChart from "@/components/plan-chart";
 import CashflowChart from "@/components/cashflow-chart";
 import CashflowAdvisor from "@/components/cashflow-advisor";
 import AdvisorSection from "@/components/advisor-section";
+import { trackEvent, trackLoginIntent } from "@/lib/analytics";
 
 interface GuestForm {
   fullName: string;
@@ -39,6 +40,7 @@ export default function GuestPlanPreview() {
     }
     try {
       setCalculations(JSON.parse(raw));
+      trackEvent("guest_preview_viewed", { calculator_type: "guest" });
       if (rawForm) {
         const parsed = JSON.parse(rawForm);
         setGuestForm(parsed);
@@ -86,7 +88,7 @@ export default function GuestPlanPreview() {
             </nav>
           </div>
           <Button
-            onClick={() => { window.location.href = "/api/login"; }}
+            onClick={() => { trackLoginIntent("guest_preview_header"); window.location.href = "/api/login"; }}
             className="text-white rounded-full px-5 h-9 text-sm font-semibold"
             style={{ background: "var(--orange)" }}
           >
@@ -110,7 +112,7 @@ export default function GuestPlanPreview() {
           </div>
           <Button
             size="sm"
-            onClick={() => { window.location.href = "/api/login"; }}
+            onClick={() => { trackLoginIntent("guest_preview_export"); window.location.href = "/api/login"; }}
             className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full text-xs flex-shrink-0"
             data-testid="button-login-to-export"
           >
@@ -216,7 +218,7 @@ export default function GuestPlanPreview() {
                   <Button
                     size="sm"
                     className="mt-3 w-full bg-[#F15A24] hover:bg-[#d44d1e] text-white text-xs rounded-lg"
-                    onClick={() => { window.location.href = "/api/login"; }}
+                    onClick={() => { trackLoginIntent("guest_preview_save"); window.location.href = "/api/login"; }}
                   >
                     Sign In — It's Free
                   </Button>
@@ -272,7 +274,7 @@ export default function GuestPlanPreview() {
             <Button
               className="text-white rounded-full px-8 h-12 text-base font-bold"
               style={{ background: "var(--orange)" }}
-              onClick={() => { window.location.href = "/api/login"; }}
+              onClick={() => { trackLoginIntent("guest_preview_footer"); window.location.href = "/api/login"; }}
             >
               <Zap className="mr-2 h-5 w-5" />
               Create Free Account

@@ -22,6 +22,7 @@ import AssumptionsPanel from "@/components/assumptions-panel";
 import SavingsInsightsChart from "@/components/savings-insights-chart";
 import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
+import { trackEvent } from "@/lib/analytics";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useGetScenario, getGetScenarioQueryKey, useGetCrmDefaults, getGetCrmDefaultsQueryKey, ResponseValidationError } from "@workspace/api-client-react";
@@ -267,6 +268,7 @@ export default function PlanDashboard() {
           <a
             href={`/api/export/excel/${scenario.id}`}
             download
+            onClick={() => trackEvent("excel_exported", { source: "plan_dashboard" })}
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
             data-testid="link-export-excel"
           >
@@ -431,6 +433,7 @@ export default function PlanDashboard() {
       {/* Expert Connect — fixed vertical right-side sidebar poster */}
       <a
         href={`https://wa.me/919819590598?text=${encodeURIComponent(`Hi, I just created my retirement plan on RetirePro for ${scenario?.name ?? "my household"}. Can you help me review it?`)}`}
+        onClick={() => trackEvent("share_clicked", { channel: "whatsapp", source: "plan_dashboard" })}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 py-5 px-2.5 rounded-l-2xl shadow-2xl transition-all duration-200 hover:px-4 hover:shadow-green-400/50 group"

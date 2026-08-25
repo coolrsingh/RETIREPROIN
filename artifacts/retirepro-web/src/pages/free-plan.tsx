@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import BrandLogo from "@/components/brand-logo";
@@ -7,8 +7,13 @@ import { type QuickPlan } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Zap, Lock, CheckCircle, AlertTriangle } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { trackEvent, trackLoginIntent } from "@/lib/analytics";
 
 export default function FreePlan() {
+  useEffect(() => {
+    trackEvent("calculator_started", { calculator_type: "guest", page: "free_plan" });
+  }, []);
+
   usePageMeta({
     title: "Free Retirement Calculator India — No Login | RetirePro",
     description: "Calculate your retirement corpus for free. India-specific assumptions — EPF &amp; NPS balances, inflation, spouse income. Takes 60 seconds. No account needed.",
@@ -35,6 +40,7 @@ export default function FreePlan() {
         throw new Error((err as any).message || "Calculation failed. Please check your inputs.");
       }
       const result = await res.json();
+      trackEvent("calculator_completed", { calculator_type: "guest", page: "free_plan" });
       sessionStorage.setItem("guestCalcResult", JSON.stringify(result));
       sessionStorage.setItem("guestCalcForm", JSON.stringify({
         fullName: data.fullName,
@@ -67,7 +73,7 @@ export default function FreePlan() {
             </span>
           </div>
           <Button
-            onClick={() => { window.location.href = "/api/login"; }}
+            onClick={() => { trackLoginIntent("free_plan_header"); window.location.href = "/api/login"; }}
             className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full px-5 h-9 text-sm font-semibold"
           >
             <Lock className="h-3.5 w-3.5 mr-1.5" />
@@ -86,7 +92,7 @@ export default function FreePlan() {
             <Lock className="h-4 w-4 text-amber-500 flex-shrink-0" />
             Fill in everything below — your plan is calculated instantly.{" "}
             <button
-              onClick={() => { window.location.href = "/api/login"; }}
+              onClick={() => { trackLoginIntent("free_plan_banner"); window.location.href = "/api/login"; }}
               className="font-semibold text-[#F15A24] hover:underline"
             >
               Sign in
@@ -95,7 +101,7 @@ export default function FreePlan() {
           </p>
           <Button
             size="sm"
-            onClick={() => { window.location.href = "/api/login"; }}
+            onClick={() => { trackLoginIntent("free_plan_banner_cta"); window.location.href = "/api/login"; }}
             className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full text-xs flex-shrink-0"
           >
             <Zap className="h-3 w-3 mr-1" />
@@ -160,7 +166,7 @@ export default function FreePlan() {
           </p>
           <Button
             className="bg-[#F15A24] hover:bg-[#d44d1e] text-white rounded-full px-8 h-11 font-bold"
-            onClick={() => { window.location.href = "/api/login"; }}
+            onClick={() => { trackLoginIntent("free_plan_footer_cta"); window.location.href = "/api/login"; }}
           >
             <Zap className="mr-2 h-4 w-4" />
             Create Free Account — Save My Plan

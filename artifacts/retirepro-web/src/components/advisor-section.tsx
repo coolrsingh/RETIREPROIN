@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Phone, AlertTriangle } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 const advisorStyles = `
   @media (min-width: 1920px) {
@@ -63,6 +64,7 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error("api_error");
+      trackEvent("lead_submitted", { source: "advisor_section", status: "success" });
       setStatus("success");
     } catch {
       setStatus("error");

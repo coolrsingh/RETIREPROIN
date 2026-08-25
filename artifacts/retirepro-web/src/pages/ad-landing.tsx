@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { ChartLine, CheckCircle, TrendingUp, Shield, Clock, ArrowRight, Star, Users, IndianRupee } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { trackEvent } from "@/lib/analytics";
 
 const leadSchema = z.object({
   name: z.string().min(2, "Please enter your name"),
@@ -57,10 +58,15 @@ export default function AdLanding() {
       if (!res.ok) throw new Error("Failed to submit");
       return res.json();
     },
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      trackEvent("lead_submitted", { source: "ad_landing", status: "success" });
+      setSubmitted(true);
+    },
   });
 
-  const onSubmit = (data: LeadForm) => leadMutation.mutate(data);
+  const onSubmit = (data: LeadForm) => {
+    leadMutation.mutate(data);
+  };
 
   const benefits = [
     "Know exactly how much corpus you need to retire comfortably",
