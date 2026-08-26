@@ -6,13 +6,13 @@ interface ClarityAnalyticsProps {
 }
 
 /**
- * Injects the Microsoft Clarity tracking snippet for a given project ID,
- * once per page load. Different sections of the site use different Clarity
- * projects, so mount this with the right `projectId` per route (see App.tsx).
+ * Injects the Microsoft Clarity tracking snippet for a given project ID.
+ * Clarity only supports one tag per page, so route-level tracking keeps the
+ * first tag loaded during SPA navigation instead of injecting a second one.
  */
 export default function ClarityAnalytics({ projectId }: ClarityAnalyticsProps) {
   useEffect(() => {
-    if (document.querySelector(`script[src^="https://www.clarity.ms/tag/${projectId}"]`)) {
+    if (document.querySelector('script[src^="https://www.clarity.ms/tag/"]')) {
       return;
     }
 
