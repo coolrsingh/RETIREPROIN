@@ -172,6 +172,9 @@ import Blog8 from "@/pages/blog-8";
 import Blog9 from "@/pages/blog-9";
 import Blog10 from "@/pages/blog-10";
 import Blog11 from "@/pages/blog-11";
+import Blog12 from "@/pages/blog-12";
+import Blog13 from "@/pages/blog-13";
+import Blog14 from "@/pages/blog-14";
 import FreePlan from "@/pages/free-plan";
 import FAQ from "@/pages/faq";
 import AdLanding from "@/pages/ad-landing";
@@ -226,6 +229,9 @@ export function render(url: string): string {
             <Route path="/blog/nps-withdrawal-rules-2026" component={Blog9} />
             <Route path="/blog/best-retirement-planning-tool-india" component={Blog10} />
             <Route path="/blog/sabbatical-mini-retirement-startup-calculator" component={Blog11} />
+            <Route path="/blog/joint-retirement-planning-for-couples" component={Blog12} />
+            <Route path="/blog/epf-early-withdrawal-mistake" component={Blog13} />
+            <Route path="/blog/retirement-planning-in-india-7-smart-ways-to-make-your-money-last" component={Blog14} />
             <Route path="/free-plan" component={FreePlan} />
             <Route path="/faq" component={FAQ} />
             <Route path="/go" component={AdLanding} />

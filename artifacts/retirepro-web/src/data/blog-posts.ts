@@ -31,6 +31,21 @@ export interface BlogPost {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: "retirement-planning-in-india-7-smart-ways-to-make-your-money-last",
+    title: "Retirement Planning in India: 7 Smart Ways to Make Your Money Last",
+    excerpt:
+      "Retirement is more than building a big corpus. Learn how to plan for inflation, healthcare, regular income, market risk and the life you actually want to live.",
+    description:
+      "A practical guide to retirement planning in India: estimate future expenses, build the right asset allocation, use mutual funds and SWP thoughtfully, plan healthcare, and protect your retirement income.",
+    readTime: "11 min read",
+    tag: "Retirement Planning",
+    tagColor: "bg-blue-100 text-blue-700",
+    gradient: "from-blue-700 via-indigo-700 to-slate-900",
+    date: "26 Aug 2026",
+    dateTime: "2026-08-26",
+    datePublished: "2026-08-26",
+  },
+  {
     slug: "joint-retirement-planning-for-couples",
     title: "Joint Retirement Planning for Couples in India: How Much Corpus Do You Really Need?",
     excerpt:
