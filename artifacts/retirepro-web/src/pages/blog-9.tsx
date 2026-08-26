@@ -4,6 +4,7 @@ import { ArrowRight, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "NPS Withdrawal Rules 2026: The New 80:20 Rule, Exit at 15 Years, and Staying Invested Till 85 — Fully Explained",
@@ -129,6 +130,7 @@ export default function Blog9() {
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
 
           <p className="text-slate-600 text-sm italic mb-8 border-l-4 border-amber-400 pl-4">

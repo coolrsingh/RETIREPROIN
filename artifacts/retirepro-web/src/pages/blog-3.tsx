@@ -5,6 +5,7 @@ import { ArrowRight, AlertTriangle, CheckCircle, TrendingDown } from "lucide-rea
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 import {
   AreaChart, Area, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Cell,
@@ -293,6 +294,7 @@ export default function Blog3() {
       </div>
 
       <div className="max-w-[960px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
 
           <p className="text-lg leading-relaxed text-slate-700 mb-8">

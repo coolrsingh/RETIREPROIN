@@ -4,6 +4,7 @@ import { ArrowRight, AlertTriangle, CheckCircle, TrendingUp } from "lucide-react
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "Retirement Planning for Self-Employed Indians: The Complete Guide Nobody Wrote for You",
@@ -123,6 +124,7 @@ export default function Blog8() {
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
 
           <p className="text-lg text-slate-700 leading-relaxed mb-8 italic border-l-4 border-blue-500 pl-4">

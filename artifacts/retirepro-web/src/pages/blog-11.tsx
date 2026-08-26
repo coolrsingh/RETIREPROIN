@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "The Mini-Retirement Test: How a Techie Can Take 3 Years Off to Build a Startup Without Wrecking Retirement",
@@ -82,6 +83,7 @@ export default function Blog11() {
 
       {/* Article body */}
       <article className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -4,6 +4,7 @@ import { ArrowRight, AlertTriangle, CheckCircle, TrendingUp, Heart } from "lucid
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "Joint Retirement Planning for Couples in India: How Much Corpus Do You Really Need?",
@@ -184,6 +185,7 @@ export default function Blog12() {
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-14">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
 
           <Callout type="success">

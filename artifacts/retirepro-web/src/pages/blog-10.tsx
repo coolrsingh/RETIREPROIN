@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle, AlertTriangle, TrendingUp, Shield } from "luci
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "The Single Best Tool to Fix India's Looming Retirement Crisis",
@@ -150,6 +151,7 @@ export default function Blog10() {
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
 
           <ArticleSection title="The Two-Box Calculator Problem">

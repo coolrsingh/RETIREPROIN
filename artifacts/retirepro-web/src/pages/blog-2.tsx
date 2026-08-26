@@ -4,6 +4,7 @@ import { ChartLine, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "NPS vs PPF vs Mutual Fund SIP: Which Builds the Biggest Retirement Corpus in India?",
@@ -156,6 +157,7 @@ export default function Blog2() {
       </div>
 
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
           <p className="text-lg text-slate-700 leading-relaxed mb-8">
             Your colleague swears by NPS for the tax benefits. Your dad thinks PPF is the only safe option. Every finance influencer on YouTube is screaming "SIP hai toh set hai." So who's right? Honestly? <strong>All of them — and none of them.</strong> Because the real answer depends on your stage of life, your tax situation, and how much risk you can actually stomach when markets fall 30%.

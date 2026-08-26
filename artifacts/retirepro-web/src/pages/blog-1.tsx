@@ -4,6 +4,7 @@ import { ChartLine, ArrowRight, BookOpen, TrendingUp, AlertTriangle, CheckCircle
 import BrandLogo from "@/components/brand-logo";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import NewsletterWidget from "@/components/newsletter-widget";
+import BlogShare from "@/components/blog-share";
 
 const ARTICLE_META = {
   headline: "Why Most Indians Fail to Plan for Retirement — And How One Small Habit Can Change Everything",
@@ -133,6 +134,7 @@ export default function Blog1() {
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
           <p className="text-lg text-slate-700 leading-relaxed mb-8 italic border-l-4 border-blue-600 pl-4">
             "Ramesh is 52. He earns a respectable salary, owns a flat, has EPF and a few LIC policies. Ask him about his retirement plan and he'll say: <strong>'I'll figure it out.'</strong> He's been saying that since he was 38."
