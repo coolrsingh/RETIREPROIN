@@ -293,8 +293,9 @@ export default function Blog3() {
         </div>
       </div>
 
-      <div className="max-w-[960px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:grid lg:grid-cols-[1fr_260px] lg:items-start lg:gap-12">
+        <article className="max-w-[720px]">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} className="mb-8 lg:hidden" />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
 
           <p className="text-lg leading-relaxed text-slate-700 mb-8">
@@ -474,6 +475,12 @@ export default function Blog3() {
             </div>
           </div>
         </motion.div>
+        </article>
+        <aside className="hidden lg:block">
+          <div className="sticky top-24">
+            <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
+          </div>
+        </aside>
       </div>
     </div>
   );

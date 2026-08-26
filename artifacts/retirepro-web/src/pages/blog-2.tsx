@@ -125,7 +125,7 @@ export default function Blog2() {
       />
 
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BrandLogo href={null} textClassName="text-slate-800" />
           </Link>
@@ -156,8 +156,9 @@ export default function Blog2() {
         </div>
       </div>
 
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 lg:grid lg:grid-cols-[1fr_260px] lg:items-start lg:gap-12">
+        <article className="max-w-3xl">
+        <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} className="mb-8 lg:hidden" />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
           <p className="text-lg text-slate-700 leading-relaxed mb-8">
             Your colleague swears by NPS for the tax benefits. Your dad thinks PPF is the only safe option. Every finance influencer on YouTube is screaming "SIP hai toh set hai." So who's right? Honestly? <strong>All of them — and none of them.</strong> Because the real answer depends on your stage of life, your tax situation, and how much risk you can actually stomach when markets fall 30%.
@@ -323,7 +324,13 @@ export default function Blog2() {
             </div>
           </div>
         </motion.div>
-      </article>
+        </article>
+        <aside className="hidden lg:block">
+          <div className="sticky top-24">
+            <BlogShare title={ARTICLE_META.headline} slug={ARTICLE_META.slug} />
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
