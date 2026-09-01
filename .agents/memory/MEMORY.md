@@ -3,3 +3,4 @@
 - [Retirepro drizzle push TTY issue](retirepro-drizzle-tty.md) — leads_phone_unique constraint was applied via executeSql, so drizzle-kit push always fails with TTY prompt in post-merge scripts; subscribers table also applied via executeSql for same reason.
 - [Retirepro monorepo tsc project-reference dist folders](retirepro-monorepo-build-refs.md) — editing lib/db or lib/api-zod schemas needs `npx tsc --build lib/db lib/api-zod --force` or consumer tsc shows stale/confusing errors.
 - [Retirepro Clarity loading](retirepro-clarity-loading.md) — Microsoft Clarity supports one tag per page; avoid global plus route-level injection and skip a second tag during SPA navigation.
+- [RetirePro Resend plan email](retirepro-resend-plan-email.md) — private plan exports use a verified Resend sender and a fresh connector client per request.

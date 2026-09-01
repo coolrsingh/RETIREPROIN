@@ -40,6 +40,22 @@ export interface AuthUser {
   planCount: number;
 }
 
+/**
+ * Confirmed recipient for a private plan report
+ */
+export interface PlanReportEmailInput {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  recipientEmail: string;
+}
+
+export interface PlanReportEmailResponse {
+  message: string;
+  recipientEmail: string;
+}
+
 export type ScenarioSummaryMode = typeof ScenarioSummaryMode[keyof typeof ScenarioSummaryMode];
 
 

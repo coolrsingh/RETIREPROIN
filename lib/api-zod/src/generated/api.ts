@@ -351,3 +351,26 @@ export const CreatePlanQuickResponse = zod.object({
 }).describe('Brief scenario info for list views')
 
 
+/**
+ * Generates the authenticated owner's current PDF and Excel plan exports and emails them to a confirmed recipient.
+ * @summary Email a saved retirement plan report
+ */
+export const EmailScenarioReportParams = zod.object({
+  "scenarioId": zod.coerce.string()
+})
+
+export const emailScenarioReportBodyRecipientEmailMin = 3;
+export const emailScenarioReportBodyRecipientEmailMax = 254;
+
+
+
+export const EmailScenarioReportBody = zod.object({
+  "recipientEmail": zod.string().email().min(emailScenarioReportBodyRecipientEmailMin).max(emailScenarioReportBodyRecipientEmailMax)
+}).describe('Confirmed recipient for a private plan report')
+
+export const EmailScenarioReportResponse = zod.object({
+  "message": zod.string(),
+  "recipientEmail": zod.string().email()
+})
+
+

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartLine, ArrowLeft, FileSpreadsheet, Star, RefreshCw, Mail, Lock } from "lucide-react";
+import { ChartLine, ArrowLeft, FileSpreadsheet, Star, RefreshCw, Mail, Send, LoaderCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import PlanChart from "@/components/plan-chart";
@@ -24,8 +24,8 @@ import LeadCaptureModal from "@/components/lead-capture-modal";
 import ProfileMenu from "@/components/profile-menu";
 import { trackEvent } from "@/lib/analytics";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useGetScenario, getGetScenarioQueryKey, useGetCrmDefaults, getGetCrmDefaultsQueryKey, ResponseValidationError } from "@workspace/api-client-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useGetScenario, getGetScenarioQueryKey, useGetCrmDefaults, getGetCrmDefaultsQueryKey, useEmailScenarioReport, ResponseValidationError } from "@workspace/api-client-react";
 
 export default function PlanDashboard() {
   const [match, params] = useRoute("/plan/:id");
@@ -35,6 +35,8 @@ export default function PlanDashboard() {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [chartTimeRange, setChartTimeRange] = useState("25Y");
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
 
   // Live return rate override (user can tweak without saving a new plan)
   const [liveRates, setLiveRates] = useState<{ pre: string; post: string } | null>(null);
@@ -113,6 +115,42 @@ export default function PlanDashboard() {
   const handleRecalculate = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/calc", params?.id, liveRates] });
     toast({ title: "Recalculated", description: "Projections updated with your new return rates." });
+  };
+
+  const emailReport = useEmailScenarioReport({
+    mutation: {
+      onSuccess: (result) => {
+        setEmailDialogOpen(false);
+        toast({
+          title: "Your plan is on its way",
+          description: `The PDF report and Excel workbook were sent to ${result.recipientEmail}.`,
+        });
+        trackEvent("plan_report_emailed", { source: "plan_dashboard" });
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Couldn't send your plan",
+          description: error.message || "Please try again shortly.",
+          variant: "destructive",
+        });
+      },
+    },
+  });
+
+  const openEmailDialog = () => {
+    setRecipientEmail(user?.email ?? "");
+    setEmailDialogOpen(true);
+  };
+
+  const sendEmailReport = () => {
+    if (!scenario || !recipientEmail.trim()) {
+      toast({ title: "Enter an email address", description: "We'll use it only to deliver your plan.", variant: "destructive" });
+      return;
+    }
+    emailReport.mutate({
+      scenarioId: scenario.id,
+      data: { recipientEmail: recipientEmail.trim() },
+    });
   };
 
   if (isLoading || scenarioLoading) {
@@ -227,24 +265,13 @@ export default function PlanDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    window.location.href = "/api/login";
-                  }
-                }}
+                onClick={openEmailDialog}
                 className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition-colors"
-                style={
-                  isAuthenticated
-                    ? { background: "#f1f5f9", color: "#475569", borderColor: "#e2e8f0", cursor: "not-allowed", opacity: 0.7 }
-                    : { background: "#fef3e2", color: "#92660A", borderColor: "rgba(232,148,10,0.35)", cursor: "pointer" }
-                }
-                title={isAuthenticated ? "Email report — coming soon" : "Sign in to unlock"}
+                style={{ background: "#fef3e2", color: "#92660A", borderColor: "rgba(232,148,10,0.35)" }}
+                title="Email your plan report"
               >
-                {isAuthenticated ? <Lock className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                <Mail className="h-4 w-4" />
                 Email report
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: isAuthenticated ? "#e2e8f0" : "rgba(232,148,10,0.2)", color: isAuthenticated ? "#64748b" : "#92660A" }}>
-                  {isAuthenticated ? "Soon" : "Sign in"}
-                </span>
               </button>
             </div>
           </div>
@@ -331,6 +358,34 @@ export default function PlanDashboard() {
         {calculations && (
           <KpiCards calculations={calculations} />
         )}
+
+        <section
+          className="mb-6 overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff8ec] via-white to-[#fff1e8] shadow-sm"
+          aria-label="Email your retirement plan"
+          data-testid="email-plan-cta"
+        >
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f15a24] text-white shadow-sm">
+                <Mail className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-[#1a1208]">Want a copy of your plan emailed to you?</h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66594b]">
+                  Hit below and get your complete retirement plan delivered to your inbox, including the PDF report and Excel workbook.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={openEmailDialog}
+              className="shrink-0 bg-[#f15a24] font-semibold text-white hover:bg-[#d94d1b]"
+              data-testid="button-email-plan"
+            >
+              <Send className="h-4 w-4" />
+              Email my plan
+            </Button>
+          </div>
+        </section>
 
         {/* Net Worth Projection — full width */}
         <Card className="mb-8">
@@ -457,6 +512,44 @@ export default function PlanDashboard() {
           setShowLeadModal(false);
         }}
       />
+
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="max-w-md border-[#f0dec5] bg-[#fffdf9]">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}>Email your plan</DialogTitle>
+            <DialogDescription className="leading-6">
+              We’ll send your current plan as a PDF report and Excel workbook. Please confirm the inbox to use.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="plan-report-recipient">Email address</Label>
+            <Input
+              id="plan-report-recipient"
+              type="email"
+              autoComplete="email"
+              value={recipientEmail}
+              onChange={(event) => setRecipientEmail(event.target.value)}
+              placeholder="you@example.com"
+              disabled={emailReport.isPending}
+              data-testid="input-plan-report-email"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)} disabled={emailReport.isPending}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#f15a24] text-white hover:bg-[#d94d1b]"
+              onClick={sendEmailReport}
+              disabled={emailReport.isPending}
+              data-testid="button-confirm-email-plan"
+            >
+              {emailReport.isPending ? <LoaderCircle className="animate-spin" /> : <Send />}
+              {emailReport.isPending ? "Preparing your plan…" : "Send my plan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

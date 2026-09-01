@@ -28,6 +28,8 @@ import type {
   HealthStatus,
   LeadResponse,
   PlanLimitError,
+  PlanReportEmailInput,
+  PlanReportEmailResponse,
   QuickPlanBody,
   ScenarioData,
   ScenarioSummary,
@@ -1019,5 +1021,78 @@ export const useCreatePlanQuick = <TError = ErrorType<void | PlanLimitError>,
         TContext
       > => {
       return useMutation(getCreatePlanQuickMutationOptions(options));
+    }
+
+export const getEmailScenarioReportUrl = (scenarioId: string,) => {
+
+
+
+
+  return `/api/scenarios/${scenarioId}/email-report`
+}
+
+/**
+ * Generates the authenticated owner's current PDF and Excel plan exports and emails them to a confirmed recipient.
+ * @summary Email a saved retirement plan report
+ */
+export const emailScenarioReport = async (scenarioId: string,
+    planReportEmailInput: PlanReportEmailInput, options?: RequestInit): Promise<PlanReportEmailResponse> => {
+
+  return customFetch<PlanReportEmailResponse>(getEmailScenarioReportUrl(scenarioId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      planReportEmailInput,)
+  }
+);}
+
+
+
+
+export const getEmailScenarioReportMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof emailScenarioReport>>, TError,{scenarioId: string;data: BodyType<PlanReportEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof emailScenarioReport>>, TError,{scenarioId: string;data: BodyType<PlanReportEmailInput>}, TContext> => {
+
+const mutationKey = ['emailScenarioReport'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof emailScenarioReport>>, {scenarioId: string;data: BodyType<PlanReportEmailInput>}> = (props) => {
+          const {scenarioId,data} = props ?? {};
+
+          return  emailScenarioReport(scenarioId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EmailScenarioReportMutationResult = NonNullable<Awaited<ReturnType<typeof emailScenarioReport>>>
+    export type EmailScenarioReportMutationBody = BodyType<PlanReportEmailInput>
+    export type EmailScenarioReportMutationError = ErrorType<void>
+
+    /**
+ * @summary Email a saved retirement plan report
+ */
+export const useEmailScenarioReport = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof emailScenarioReport>>, TError,{scenarioId: string;data: BodyType<PlanReportEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof emailScenarioReport>>,
+        TError,
+        {scenarioId: string;data: BodyType<PlanReportEmailInput>},
+        TContext
+      > => {
+      return useMutation(getEmailScenarioReportMutationOptions(options));
     }
 

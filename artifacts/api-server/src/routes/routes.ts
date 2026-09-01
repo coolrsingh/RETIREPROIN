@@ -4,7 +4,13 @@ import { storage } from "../storage";
 import { setupAuth, isAuthenticated } from "../replitAuth";
 import { calculateRetirementPlan } from "../calculations";
 import { generatePDF } from "../pdf";
+import { sendPlanReportEmail } from "../lib/plan-report-email";
 import { z } from "zod/v4";
+import {
+  EmailScenarioReportBody,
+  EmailScenarioReportParams,
+  EmailScenarioReportResponse,
+} from "@workspace/api-zod";
 import {
   quickPlanSchema, insertScenarioSchema, insertLeadSchema,
   users, scenarios, leads,
@@ -1014,6 +1020,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate Excel" });
     }
   });
+
+  app.post(
+    "/api/scenarios/:scenarioId/email-report",
+    isAuthenticated,
+    async (req: any, res): Promise<void> => {
+      const params = EmailScenarioReportParams.safeParse(req.params);
+      const body = EmailScenarioReportBody.safeParse(req.body);
+
+      if (!params.success || !body.success) {
+        req.log.warn("Invalid plan report email request");
+        res.status(400).json({ message: "Enter a valid email address." });
+        return;
+      }
+
+      try {
+        const userId = req.user.claims.sub;
+        const scenario = await storage.getScenario(params.data.scenarioId);
+        if (!scenario || scenario.userId !== userId) {
+          res.status(404).json({ message: "Scenario not found" });
+          return;
+        }
+
+        const scenarioData = await storage.getScenarioWithAllData(params.data.scenarioId);
+        if (!scenarioData) {
+          res.status(404).json({ message: "Scenario data not found" });
+          return;
+        }
+
+        const user = await storage.getUser(userId);
+        const calculations = await calculateRetirementPlan(scenarioData);
+        const [pdfBuffer, excelBuffer] = await Promise.all([
+          generatePDF(scenarioData, calculations),
+          Promise.resolve(generateExcelBuffer(scenarioData, calculations)),
+        ]);
+        const recipientEmail = body.data.recipientEmail.trim().toLowerCase();
+
+        await sendPlanReportEmail({
+          recipientEmail,
+          recipientName: user?.firstName,
+          planName: scenarioData.name ?? "Retirement Plan",
+          pdfBuffer,
+          excelBuffer,
+        });
+
+        req.log.info({ scenarioId: params.data.scenarioId }, "Sent retirement plan report email");
+        res.json(
+          EmailScenarioReportResponse.parse({
+            message: "Your retirement plan is on its way.",
+            recipientEmail,
+          }),
+        );
+      } catch (error) {
+        req.log.error(
+          { err: error instanceof Error ? error.message : String(error) },
+          "Failed to send retirement plan report email",
+        );
+        res.status(502).json({ message: "We could not send your plan right now. Please try again shortly." });
+      }
+    },
+  );
 
   // Analytics and reporting endpoint for daily emails
   app.get('/api/analytics/daily', isAuthenticated, async (req: any, res) => {

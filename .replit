@@ -105,3 +105,8 @@ externalPort = 80
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+RETIREPRO_EMAIL_FROM = "support@retirepro.in"

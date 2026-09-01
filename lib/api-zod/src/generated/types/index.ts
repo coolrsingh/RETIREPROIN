@@ -17,6 +17,8 @@ export * from './deleteResponse';
 export * from './healthStatus';
 export * from './leadResponse';
 export * from './planLimitError';
+export * from './planReportEmailInput';
+export * from './planReportEmailResponse';
 export * from './quickPlanAssumptionsBody';
 export * from './quickPlanBody';
 export * from './quickPlanChildBody';

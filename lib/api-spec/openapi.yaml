@@ -304,6 +304,40 @@ paths:
               schema:
                 $ref: "#/components/schemas/PlanLimitError"
 
+  /scenarios/{scenarioId}/email-report:
+    post:
+      operationId: emailScenarioReport
+      tags: [scenarios]
+      summary: Email a saved retirement plan report
+      description: Generates the authenticated owner's current PDF and Excel plan exports and emails them to a confirmed recipient.
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanReportEmailInput"
+      responses:
+        "200":
+          description: Plan report queued for email delivery
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanReportEmailResponse"
+        "400":
+          description: Invalid email address
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Scenario not found
+        "502":
+          description: Email delivery failed
+
 components:
   schemas:
     HealthStatus:
@@ -338,6 +372,30 @@ components:
       required:
         - id
         - planCount
+
+    PlanReportEmailInput:
+      type: object
+      description: Confirmed recipient for a private plan report
+      properties:
+        recipientEmail:
+          type: string
+          format: email
+          minLength: 3
+          maxLength: 254
+      required:
+        - recipientEmail
+
+    PlanReportEmailResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        recipientEmail:
+          type: string
+          format: email
+      required:
+        - message
+        - recipientEmail
 
     ScenarioSummary:
       type: object
