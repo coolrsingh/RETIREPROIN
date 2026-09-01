@@ -1288,6 +1288,14 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                   <CardDescription>
                     Planning a career break or sabbatical? During this period, no new savings will be added — your portfolio will only grow through investment returns.
                   </CardDescription>
+                  <a
+                    href="/blog/sabbatical-mini-retirement-startup-calculator"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex text-xs font-medium text-amber-700 underline decoration-amber-300 underline-offset-2 transition-colors hover:text-amber-900 hover:decoration-amber-500"
+                  >
+                    What does a 3-year break actually cost?
+                  </a>
                 </div>
                 <Switch checked={hasMiniRetirement} onCheckedChange={setHasMiniRetirement} data-testid="toggle-mini-retirement" className="mt-1 shrink-0" />
               </div>
