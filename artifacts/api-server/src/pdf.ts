@@ -1,3 +1,5 @@
+import { resolvePdfBrowserExecutable } from "./lib/pdf-browser";
+
 function escapeHtml(value: unknown): string {
   if (value === null || value === undefined) return '';
   return String(value)
@@ -298,6 +300,7 @@ export async function generatePDF(scenarioData: any, calculations: any): Promise
     
     const browser = await puppeteer.default.launch({
       headless: true,
+      executablePath: resolvePdfBrowserExecutable(),
       args: [
         '--no-sandbox', 
         '--disable-setuid-sandbox',

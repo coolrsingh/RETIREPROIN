@@ -5,3 +5,4 @@
 - [Retirepro Clarity loading](retirepro-clarity-loading.md) — Microsoft Clarity supports one tag per page; avoid global plus route-level injection and skip a second tag during SPA navigation.
 - [RetirePro Resend plan email](retirepro-resend-plan-email.md) — private plan exports use a verified Resend sender and a fresh connector client per request.
 - [RetirePro guest plan email](retirepro-guest-plan-email.md) — guest PDF summaries use Resend; optional marketing consent is recorded locally, not synced externally.
+- [RetirePro PDF browser runtime](retirepro-pdf-browser-runtime.md) — Puppeteer needs system Chromium and PATH-based executable resolution for report generation.

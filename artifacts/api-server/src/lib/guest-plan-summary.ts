@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import { RETIREMENT_PROJECTION_DISCLAIMER } from "./retirepro-config";
+import { resolvePdfBrowserExecutable } from "./pdf-browser";
 
 export type GuestPlanSnapshot = {
   name: string;
@@ -86,6 +87,7 @@ export async function generateGuestPlanSummaryPdf(snapshot: GuestPlanSnapshot): 
 
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: resolvePdfBrowserExecutable(),
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
   });
   try {
