@@ -229,9 +229,9 @@ function applyFilterAndSearch(
   leads: Array<{
     createdAt: string | null;
     updatedAt: string | null;
-    name?: string;
-    email?: string;
-    phone?: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
   }>,
   filter: FilterKey,
   searchQuery: string,
@@ -357,6 +357,39 @@ describe("filter + search combined (AND logic)", () => {
     expect(result).toContain(notReEngagedNoSearchMatch);
     expect(result).not.toContain(reEngagedMatchingSearch);
     expect(result).not.toContain(oldMatchingSearch);
+  });
+
+  it("excludes leads with all contact fields null or undefined without throwing", () => {
+    const leadsWithMissingContacts = [
+      {
+        ...makeLead({ createdMsAgo: 1_000, updatedMsAgo: 500 }),
+        name: null,
+        email: null,
+        phone: null,
+      },
+      {
+        ...makeLead({ createdMsAgo: 2_000, updatedMsAgo: 1_500 }),
+        name: undefined,
+        email: undefined,
+        phone: undefined,
+      },
+    ];
+
+    expect(() => applyFilterAndSearch(leadsWithMissingContacts, "all", "priya")).not.toThrow();
+    expect(applyFilterAndSearch(leadsWithMissingContacts, "all", "priya")).toEqual([]);
+  });
+
+  it.each([
+    ["name", "sharma", { name: "Priya Sharma", email: null, phone: undefined }],
+    ["email", "priya@example.com", { name: null, email: "priya@example.com", phone: undefined }],
+    ["phone", "7654", { name: undefined, email: null, phone: "9876543210" }],
+  ] as const)("matches a lead when only its %s field is populated", (_field, searchTerm, contacts) => {
+    const lead = {
+      ...makeLead({ createdMsAgo: 1_000, updatedMsAgo: 500 }),
+      ...contacts,
+    };
+
+    expect(applyFilterAndSearch([lead], "all", searchTerm)).toEqual([lead]);
   });
 
   it("no lead appears more than once regardless of filter+search combination", () => {
