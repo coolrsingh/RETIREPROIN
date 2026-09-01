@@ -1,0 +1,82 @@
+TASK — Make the "Email me my plan" card on /plan/preview actually send the plan,
+without requiring login. Currently it's wired so nothing sends until the user
+signs in — that's the bug to fix.
+
+CONTEXT
+retirepro.in, React 19 + Vite (pnpm workspaces). The card lives on /plan/preview,
+below the 4 stat tiles (Required Corpus / Projected Corpus / Funding Gap / Years
+to Retire). Brevo is already set up for outreach — reuse those existing
+credentials/env vars, don't add a new email provider.
+
+FRONTEND CHANGES (this card only — do not touch the "Log in now to export"
+banner or Excel-export flow above it)
+
+1. Update copy to:
+   - Body: "Enter your email and we'll send your retirement plan summary as a
+     PDF — right away, no login needed."
+   - Small note near the email field: "We'll only use this to send your plan."
+   - Button label: "Email Me My Plan"
+   - Checkbox (unchecked by default, visually separate from the button/field):
+     "Also send me retirement planning articles and updates from RetirePro.
+     I can unsubscribe anytime."
+
+2. On submit:
+   - Client-side email format validation before the request fires.
+   - Disable the button and show a loading state while the request is in flight.
+   - On success: replace the form with "✓ Sent to [email]. Check your inbox."
+   - On error: inline message "Enter a valid email address to continue." (or a
+     generic "Something went wrong — please try again." for non-validation
+     failures). Do not clear what the user typed.
+   - No redirect, no forced sign-in, no account creation as part of this flow.
+
+BACKEND CHANGES
+
+3. New endpoint: POST /api/leads/email-plan
+   Body: { email, planSnapshot, marketingConsent, source: "plan_preview_email_card" }
+   - planSnapshot = the same 4 headline figures shown on the page (Required
+     Corpus, Projected Corpus, Funding Gap, Years to Retire) plus the input
+     assumptions used to compute them.
+   - Validate email server-side too (don't trust client validation alone).
+   - Rate-limit by email + IP (e.g. max 5 requests/day) to stop abuse of the
+     email-sending path.
+
+4. Store the lead: check whether a leads/contacts table already exists in the
+   schema and reuse it if so; otherwise create `plan_email_leads` with:
+   id, email, plan_snapshot (jsonb), marketing_consent (bool),
+   consent_timestamp (timestamptz), source, created_at.
+
+5. Generate a 1-page PDF summary from planSnapshot — check if a PDF/report
+   generator already exists for the signed-in Excel export and reuse/extend
+   it for this lighter version rather than building a new one from scratch.
+   Must include the disclaimer (see #7).
+
+6. Send via the existing Brevo integration:
+   - Transactional email, PDF attached, using the existing RetirePro HTML
+     template (brand colors, no new template needed).
+   - If marketingConsent === true: add the contact to the Brevo marketing
+     list via the API, with the consent timestamp stored as a contact
+     attribute. If false, do NOT add them to any list — email-only send.
+
+7. Standard disclaimer (config value, not hardcoded inline — same principle
+   as the LTCG constants elsewhere in the codebase) appended to both the PDF
+   footer and the email body:
+   "This is an illustrative projection based on the assumptions you
+   provided. It does not constitute investment advice. Consult a
+   SEBI-registered investment adviser or AMFI-registered mutual fund
+   distributor before making any investment decisions."
+
+HARD CONSTRAINTS
+- No mobile CSS/breakpoint changes — desktop-only for this task.
+- Do not touch the "Log in now to export" banner or the full Excel-export
+  flow — that stays exactly as is.
+- Checkbox must default to unchecked. Do not pre-tick it.
+- No fabricated copy, stats, or testimonials anywhere in the new template.
+- Show me a diff before deploying — nothing pushed straight to main.
+
+TEST BEFORE HANDOFF
+- Valid email, checkbox unchecked → PDF arrives, contact NOT added to Brevo
+  marketing list.
+- Valid email, checkbox checked → PDF arrives, contact IS added with
+  consent timestamp.
+- Invalid email format → inline error, no network request fires.
+- 6th submission same day, same email → rate-limited, clear error shown.
