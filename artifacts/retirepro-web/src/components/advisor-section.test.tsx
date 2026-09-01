@@ -135,7 +135,9 @@ describe("AdvisorSection — Submit another button", () => {
     const user = userEvent.setup();
 
     // Submit successfully
+    await user.type(screen.getByTestId("input-advisor-name"), "Test User");
     await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    await user.type(screen.getByTestId("input-advisor-email"), "test@example.com");
     await user.click(screen.getByTestId("button-advisor-submit"));
 
     // Wait for success screen
@@ -156,6 +158,11 @@ describe("AdvisorSection — Submit another button", () => {
     expect(screen.getByTestId("input-advisor-name")).toBeInTheDocument();
     expect(screen.getByTestId("input-advisor-email")).toBeInTheDocument();
     expect(screen.getByTestId("button-advisor-submit")).toBeInTheDocument();
+
+    // All fields should be reset before entering another lead
+    expect(screen.getByTestId("input-advisor-name")).toHaveValue("");
+    expect(screen.getByTestId("input-advisor-phone")).toHaveValue("");
+    expect(screen.getByTestId("input-advisor-email")).toHaveValue("");
   });
 });
 

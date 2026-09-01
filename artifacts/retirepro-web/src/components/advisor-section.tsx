@@ -188,7 +188,13 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                         💬 Message on WhatsApp
                       </a>
                       <button
-                        onClick={() => setStatus("idle")}
+                        onClick={() => {
+                          setName(defaultName);
+                          setPhone("");
+                          setEmail("");
+                          setPhoneError("");
+                          setStatus("idle");
+                        }}
                         className="rounded-xl py-2.5 px-4 text-sm font-medium w-full sm:w-auto"
                         style={{ border: "1.5px solid rgba(0,0,0,0.12)", color: "var(--slate-mid)", background: "transparent" }}
                       >
