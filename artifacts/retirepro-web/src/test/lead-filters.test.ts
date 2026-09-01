@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isReEngaged, passesFilter } from "@/lib/leadFilters";
+import { isReEngaged, matchesSearch, passesFilter } from "@/lib/leadFilters";
 import type { FilterKey } from "@/lib/leadFilters";
 
 // ---------------------------------------------------------------------------
@@ -175,6 +175,49 @@ describe('passesFilter — "30d"', () => {
 });
 
 // ---------------------------------------------------------------------------
+// matchesSearch
+// ---------------------------------------------------------------------------
+
+describe("matchesSearch", () => {
+  const lead = {
+    name: "Priya Sharma",
+    email: "priya@example.com",
+    phone: "9876543210",
+  };
+
+  it("matches a lead by name", () => {
+    expect(matchesSearch(lead, "sharma")).toBe(true);
+  });
+
+  it("matches a lead by email", () => {
+    expect(matchesSearch(lead, "priya@example.com")).toBe(true);
+  });
+
+  it("matches a lead by phone", () => {
+    expect(matchesSearch(lead, "7654")).toBe(true);
+  });
+
+  it("matches case-insensitively across contact fields", () => {
+    expect(matchesSearch(lead, "PRIYA")).toBe(true);
+    expect(matchesSearch(lead, "EXAMPLE.COM")).toBe(true);
+  });
+
+  it("treats a blank or whitespace-only term as matching every lead", () => {
+    expect(matchesSearch(lead, "")).toBe(true);
+    expect(matchesSearch(lead, "   ")).toBe(true);
+  });
+
+  it("does not match when the term is absent from all contact fields", () => {
+    expect(matchesSearch(lead, "rohan")).toBe(false);
+  });
+
+  it("handles missing contact fields safely", () => {
+    expect(matchesSearch({ name: "Priya Sharma" }, "priya")).toBe(true);
+    expect(matchesSearch({ email: null, phone: undefined }, "priya")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Combined filter + search (mirrors leads-admin.tsx filteredLeads logic)
 // ---------------------------------------------------------------------------
 
@@ -194,21 +237,9 @@ function applyFilterAndSearch(
   searchQuery: string,
   now = NOW,
 ): typeof leads {
-  const searchTerm = searchQuery.trim().toLowerCase();
   return leads.filter((lead) => {
     if (!passesFilter(lead, filter, now)) return false;
-    if (searchTerm) {
-      const name = (lead.name ?? "").toLowerCase();
-      const email = (lead.email ?? "").toLowerCase();
-      const phone = (lead.phone ?? "").toLowerCase();
-      if (
-        !name.includes(searchTerm) &&
-        !email.includes(searchTerm) &&
-        !phone.includes(searchTerm)
-      )
-        return false;
-    }
-    return true;
+    return matchesSearch(lead, searchQuery);
   });
 }
 

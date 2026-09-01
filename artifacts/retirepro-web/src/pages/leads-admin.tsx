@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { isReEngaged, passesFilter } from "@/lib/leadFilters";
+import { isReEngaged, matchesSearch, passesFilter } from "@/lib/leadFilters";
 import type { FilterKey } from "@/lib/leadFilters";
 
 type SortKey = "name" | "createdAt" | "updatedAt";
@@ -73,13 +73,7 @@ export default function LeadsAdmin() {
     // Filter button logic
     if (!passesFilter(lead, activeFilter)) return false;
     // Search logic (AND with filter)
-    if (searchTerm) {
-      const name = (lead.name || "").toLowerCase();
-      const email = (lead.email || "").toLowerCase();
-      const phone = (lead.phone || "").toLowerCase();
-      if (!name.includes(searchTerm) && !email.includes(searchTerm) && !phone.includes(searchTerm)) return false;
-    }
-    return true;
+    return matchesSearch(lead, searchTerm);
   });
 
   const sortedLeads = [...filteredLeads].sort((a, b) => {

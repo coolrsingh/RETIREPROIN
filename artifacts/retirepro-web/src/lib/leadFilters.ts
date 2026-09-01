@@ -15,6 +15,22 @@ export function isReEngaged(lead: { updatedAt?: string | null; createdAt?: strin
 
 export type FilterKey = "all" | "re-engaged" | "7d" | "30d";
 
+export type SearchableLead = {
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
+/** Returns true when the lead's name, email, or phone contains the search term. */
+export function matchesSearch(lead: SearchableLead, searchTerm: string): boolean {
+  const normalizedTerm = searchTerm.trim().toLowerCase();
+  if (!normalizedTerm) return true;
+
+  return [lead.name, lead.email, lead.phone].some((value) =>
+    (value ?? "").toLowerCase().includes(normalizedTerm)
+  );
+}
+
 /** Returns true when the lead passes the given filter. */
 export function passesFilter(
   lead: { updatedAt?: string | null; createdAt?: string | null },
