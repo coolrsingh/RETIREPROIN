@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChartLine, ArrowLeft, Zap, Lock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ChartLine, ArrowLeft, Zap, Lock, Mail, Send, CheckCircle2, LoaderCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import KpiCards from "@/components/kpi-cards";
 import PlanChart from "@/components/plan-chart";
@@ -30,6 +33,10 @@ export default function GuestPlanPreview() {
   const [calculations, setCalculations] = useState<any>(null);
   const [guestForm, setGuestForm] = useState<GuestForm | null>(null);
   const [chartTimeRange, setChartTimeRange] = useState("25Y");
+  const [email, setEmail] = useState("");
+  const [hasEmailConsent, setHasEmailConsent] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
     const raw = sessionStorage.getItem("guestCalcResult");
@@ -65,6 +72,37 @@ export default function GuestPlanPreview() {
     returnPre: guestForm?.returnPre ?? "12",
     returnPost: "8",
     lifeExpectancy: 85,
+  };
+
+  const captureEmail = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!hasEmailConsent) {
+      setEmailError("Please confirm that you'd like to receive the plan and retirement updates.");
+      setEmailStatus("error");
+      return;
+    }
+
+    setEmailStatus("loading");
+    setEmailError("");
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), source: "guest-plan-email-cta" }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setEmailError(payload.message || "We couldn't save your email. Please try again.");
+        setEmailStatus("error");
+        return;
+      }
+
+      setEmailStatus("success");
+      trackEvent("guest_plan_email_captured", { source: "guest_plan_preview" });
+    } catch {
+      setEmailError("We couldn't save your email. Please check your connection and try again.");
+      setEmailStatus("error");
+    }
   };
 
   return (
@@ -156,6 +194,90 @@ export default function GuestPlanPreview() {
 
         {/* KPI Cards */}
         <KpiCards calculations={calculations} />
+
+        <section
+          className="mb-6 overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff8ec] via-white to-[#fff1e8] shadow-sm"
+          aria-label="Email your retirement plan"
+          data-testid="guest-email-plan-cta"
+        >
+          <div className="p-5 sm:p-6">
+            {emailStatus === "success" ? (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-[#1a1208]">Your email is saved.</h2>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66594b]">
+                      Create your free account to save this plan and email yourself the complete PDF report and Excel workbook.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => { trackLoginIntent("guest_preview_email_capture"); window.location.href = "/api/login"; }}
+                  className="shrink-0 bg-[#f15a24] font-semibold text-white hover:bg-[#d94d1b]"
+                  data-testid="button-guest-login-after-email"
+                >
+                  <Zap className="h-4 w-4" />
+                  Sign in to save plan
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={captureEmail}>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f15a24] text-white shadow-sm">
+                      <Mail className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-[#1a1208]">Want a copy of your plan emailed to you?</h2>
+                      <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66594b]">
+                        Leave your email below. Once you sign in and save this plan, we’ll send the complete PDF report and Excel workbook to your inbox.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex w-full shrink-0 flex-col gap-2 sm:w-[300px]">
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      required
+                      disabled={emailStatus === "loading"}
+                      data-testid="input-guest-plan-email"
+                    />
+                    <Button
+                      type="submit"
+                      className="bg-[#f15a24] font-semibold text-white hover:bg-[#d94d1b]"
+                      disabled={emailStatus === "loading"}
+                      data-testid="button-capture-guest-plan-email"
+                    >
+                      {emailStatus === "loading" ? <LoaderCircle className="animate-spin" /> : <Send className="h-4 w-4" />}
+                      {emailStatus === "loading" ? "Saving email…" : "Save my email"}
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-start gap-2">
+                  <Checkbox
+                    id="guest-plan-email-consent"
+                    checked={hasEmailConsent}
+                    onCheckedChange={(checked) => setHasEmailConsent(checked === true)}
+                    disabled={emailStatus === "loading"}
+                    data-testid="checkbox-guest-plan-email-consent"
+                  />
+                  <Label htmlFor="guest-plan-email-consent" className="text-xs leading-5 text-[#66594b]">
+                    I agree to receive my plan and occasional retirement planning updates from RetirePro. I can unsubscribe anytime.
+                  </Label>
+                </div>
+                {emailStatus === "error" && (
+                  <p className="mt-2 text-sm text-red-700" role="alert">{emailError}</p>
+                )}
+              </form>
+            )}
+          </div>
+        </section>
 
         {/* Charts + Assumptions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
