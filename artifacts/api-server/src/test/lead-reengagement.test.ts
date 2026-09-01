@@ -48,6 +48,49 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe("lead re-engagement — full storage chain", () => {
+  it("can add a unique conflict target to an existing leads table before same-phone upserts", async () => {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`
+        CREATE TEMP TABLE leads_missing_phone_arbiter (
+          phone varchar NOT NULL,
+          name varchar NOT NULL
+        ) ON COMMIT DROP
+      `);
+
+      const before = await tx.execute(sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM pg_index
+          WHERE indrelid = 'leads_missing_phone_arbiter'::regclass
+            AND indisunique
+        ) AS has_unique_arbiter
+      `);
+      expect(before.rows[0]?.has_unique_arbiter).toBe(false);
+
+      await tx.execute(sql`
+        CREATE UNIQUE INDEX leads_missing_phone_arbiter_phone_idx
+          ON leads_missing_phone_arbiter (phone)
+      `);
+      await tx.execute(sql`
+        INSERT INTO leads_missing_phone_arbiter (phone, name)
+        VALUES ('0000000000', 'First submission')
+      `);
+      await tx.execute(sql`
+        INSERT INTO leads_missing_phone_arbiter (phone, name)
+        VALUES ('0000000000', 'Re-engaged submission')
+        ON CONFLICT (phone) DO UPDATE SET name = EXCLUDED.name
+      `);
+
+      const result = await tx.execute(sql`
+        SELECT phone, name
+        FROM leads_missing_phone_arbiter
+      `);
+      expect(result.rows).toEqual([
+        { phone: "0000000000", name: "Re-engaged submission" },
+      ]);
+    });
+  });
+
   it(
     "second submission for the same phone sets updatedAt > createdAt by >60 s, so isReEngaged is true",
     async () => {

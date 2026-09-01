@@ -499,6 +499,9 @@ export class DatabaseStorage implements IStorage {
 
   // Lead operations
   async createLead(lead: InsertLead): Promise<Lead> {
+    // PostgreSQL requires a unique constraint or unique index for this
+    // phone-targeted upsert. Keep leads_phone_idx unique in the schema so
+    // re-engagement updates remain valid even if the named constraint drifts.
     const [newLead] = await db
       .insert(leads)
       .values(lead)

@@ -6,3 +6,4 @@
 - [RetirePro Resend plan email](retirepro-resend-plan-email.md) — private plan exports use a verified Resend sender and a fresh connector client per request.
 - [RetirePro guest plan email](retirepro-guest-plan-email.md) — guest PDF summaries use Resend; optional marketing consent is recorded locally, not synced externally.
 - [RetirePro PDF browser runtime](retirepro-pdf-browser-runtime.md) — Puppeteer needs system Chromium and PATH-based executable resolution for report generation.
+- [Lead phone conflict indexes](retirepro-lead-conflict-index.md) — PostgreSQL phone upserts require a unique arbiter; a plain B-tree index cannot satisfy ON CONFLICT.

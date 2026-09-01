@@ -11,6 +11,7 @@ import {
   boolean,
   date,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -168,6 +169,7 @@ export const leads = pgTable("leads", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   unique("leads_phone_unique").on(table.phone),
+  uniqueIndex("leads_phone_idx").on(table.phone),
 ]);
 
 export const subscribers = pgTable("subscribers", {

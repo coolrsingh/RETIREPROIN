@@ -155,11 +155,44 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at timestamp DEFAULT now(),
   updated_at timestamp DEFAULT now()
 );
--- Unique constraint on leads.phone (idempotent)
+-- The phone-targeted upsert needs a unique arbiter. Fail loudly rather than
+-- silently dropping re-engagement data if legacy rows contain duplicates.
 DO $$ BEGIN
-  ALTER TABLE leads ADD CONSTRAINT leads_phone_unique UNIQUE (phone);
-EXCEPTION WHEN duplicate_table OR duplicate_object THEN NULL;
+  IF EXISTS (
+    SELECT 1
+    FROM leads
+    GROUP BY phone
+    HAVING COUNT(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Cannot create unique phone conflict target: duplicate phone values exist in leads';
+  END IF;
 END $$;
+-- Ensure the conflict constraint exists on databases created before it was added.
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'leads'::regclass
+      AND conname = 'leads_phone_unique'
+  ) THEN
+    ALTER TABLE leads ADD CONSTRAINT leads_phone_unique UNIQUE (phone);
+  END IF;
+END $$;
+-- Keep a separately named unique B-tree as an explicit conflict target.
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_class AS index_class
+    JOIN pg_namespace AS index_schema ON index_schema.oid = index_class.relnamespace
+    JOIN pg_index AS index_metadata ON index_metadata.indexrelid = index_class.oid
+    WHERE index_schema.nspname = current_schema()
+      AND index_class.relname = 'leads_phone_idx'
+      AND NOT index_metadata.indisunique
+  ) THEN
+    DROP INDEX "leads_phone_idx";
+  END IF;
+END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS "leads_phone_idx" ON leads (phone);
 -- Backfill updated_at column if table existed before it was added to schema
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now();
 
