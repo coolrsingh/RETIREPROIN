@@ -180,7 +180,7 @@ export default function LeadsAdmin() {
             style={{ background: "var(--leaf)", borderColor: "transparent" }}
           >
             <Download className="mr-2 h-4 w-4" />
-            Export CSV{activeFilter !== "all" ? ` (${sortedLeads.length})` : ""}
+            Export CSV{activeFilter !== "all" || searchTerm ? ` (${sortedLeads.length})` : ""}
           </Button>
         </div>
 

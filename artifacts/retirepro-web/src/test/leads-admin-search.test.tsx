@@ -329,4 +329,26 @@ describe("Leads Admin — search + filter", () => {
       expect(exportBtn).not.toBeDisabled();
     });
   });
+
+  it("shows the filtered row count when either search or a filter is active", async () => {
+    renderLeadsAdmin(queryClient);
+    const user = userEvent.setup();
+
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText(/search by name/i);
+    await user.type(input, "alice");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Export CSV (1)" })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Clear search" }));
+    await user.click(screen.getByRole("button", { name: "Last 7 days" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Export CSV (2)" })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "All" }));
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
+  });
 });
