@@ -177,6 +177,20 @@ export const subscribers = pgTable("subscribers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const planEmailLeads = pgTable("plan_email_leads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  planSnapshot: jsonb("plan_snapshot").notNull(),
+  marketingConsent: boolean("marketing_consent").notNull().default(false),
+  consentTimestamp: timestamp("consent_timestamp", { withTimezone: true }),
+  source: varchar("source").notNull(),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("plan_email_leads_email_created_at_idx").on(table.email, table.createdAt),
+  index("plan_email_leads_ip_created_at_idx").on(table.ipAddress, table.createdAt),
+]);
+
 export const crmDefaults = pgTable("crm_defaults", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   inflationHeadline: decimal("inflation_headline", { precision: 5, scale: 2 }).default('6.0'),
@@ -519,6 +533,8 @@ export type InsertCrmDefaults = z.infer<typeof insertCrmDefaultsSchema>;
 export type QuickPlan = z.infer<typeof quickPlanSchema>;
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
+export type PlanEmailLead = typeof planEmailLeads.$inferSelect;
+export type InsertPlanEmailLead = typeof planEmailLeads.$inferInsert;
 
 export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
   id: true,

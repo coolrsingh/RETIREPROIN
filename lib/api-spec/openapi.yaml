@@ -237,6 +237,32 @@ paths:
         "400":
           description: Invalid lead data
 
+  /leads/email-plan:
+    post:
+      operationId: emailGuestPlanSummary
+      tags: [leads]
+      summary: Email a guest retirement plan summary
+      description: Sends a compact PDF summary for a browser-only retirement plan without requiring an account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestPlanEmailInput"
+      responses:
+        "200":
+          description: Plan summary sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestPlanEmailResponse"
+        "400":
+          description: Invalid email or plan summary
+        "429":
+          description: Daily email limit reached
+        "502":
+          description: Email delivery failed
+
   /profile:
     get:
       operationId: getProfile
@@ -396,6 +422,61 @@ components:
       required:
         - message
         - recipientEmail
+
+    GuestPlanSnapshotInput:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - requiredCorpus
+        - projectedCorpus
+        - fundingGap
+        - yearsToRetire
+        - retirementAge
+        - monthlyIncome
+        - monthlyExpenses
+        - monthlySavings
+        - currentAssets
+        - inflationRate
+        - preRetirementReturn
+        - postRetirementReturn
+        - lifeExpectancy
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        requiredCorpus: { type: number, minimum: 0, maximum: 1000000000000 }
+        projectedCorpus: { type: number, minimum: 0, maximum: 1000000000000 }
+        fundingGap: { type: number, minimum: 0, maximum: 1000000000000 }
+        yearsToRetire: { type: integer, minimum: 0, maximum: 80 }
+        retirementAge: { type: integer, minimum: 40, maximum: 100 }
+        monthlyIncome: { type: number, minimum: 0, maximum: 1000000000 }
+        monthlyExpenses: { type: number, minimum: 0, maximum: 1000000000 }
+        monthlySavings: { type: number, minimum: 0, maximum: 1000000000 }
+        currentAssets: { type: number, minimum: 0, maximum: 1000000000000 }
+        inflationRate: { type: number, minimum: 0, maximum: 30 }
+        preRetirementReturn: { type: number, minimum: 0, maximum: 50 }
+        postRetirementReturn: { type: number, minimum: 0, maximum: 50 }
+        lifeExpectancy: { type: integer, minimum: 50, maximum: 110 }
+
+    GuestPlanEmailInput:
+      type: object
+      additionalProperties: false
+      required: [email, planSnapshot, marketingConsent, source]
+      properties:
+        email: { type: string, format: email, minLength: 3, maxLength: 254 }
+        planSnapshot:
+          $ref: "#/components/schemas/GuestPlanSnapshotInput"
+        marketingConsent: { type: boolean }
+        source:
+          type: string
+          enum: ["plan_preview_email_card"]
+
+    GuestPlanEmailResponse:
+      type: object
+      additionalProperties: false
+      required: [message, recipientEmail]
+      properties:
+        message: { type: string }
+        recipientEmail: { type: string, format: email }
 
     ScenarioSummary:
       type: object

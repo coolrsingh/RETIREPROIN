@@ -1,4 +1,5 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
+import { RETIREMENT_PROJECTION_DISCLAIMER } from "./retirepro-config";
 
 type SendPlanReportEmailParams = {
   recipientEmail: string;
@@ -99,4 +100,50 @@ The RetirePro team`,
   if (!response.ok) {
     throw new Error(`Resend request failed with status ${response.status}`);
   }
+}
+
+type SendGuestPlanSummaryEmailParams = {
+  recipientEmail: string;
+  recipientName?: string | null;
+  planName: string;
+  pdfBuffer: Buffer;
+};
+
+export async function sendGuestPlanSummaryEmail({
+  recipientEmail,
+  recipientName,
+  planName,
+  pdfBuffer,
+}: SendGuestPlanSummaryEmailParams): Promise<void> {
+  const from = process.env.RETIREPRO_EMAIL_FROM;
+  if (!from) throw new Error("Email sender is not configured");
+
+  const displayName = recipientName?.trim() || "there";
+  const safePlanName = safeFileName(planName);
+  const connectors = new ReplitConnectors();
+  const response = await connectors.proxy("resend", "/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [recipientEmail],
+      subject: `Your RetirePro plan summary: ${safePlanName}`,
+      text: `Hello ${displayName},
+
+Your retirement plan summary is attached as a PDF.
+
+${RETIREMENT_PROJECTION_DISCLAIMER}
+
+Warmly,
+The RetirePro team`,
+      html: `<div style="background:#fbf8f2;padding:32px 16px;font-family:Arial,sans-serif;color:#1a1208">
+        <div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #f0dec5;border-radius:16px;overflow:hidden">
+          <div style="padding:28px 32px;background:#1a1208;color:#fff"><strong style="font-size:22px">Retire<span style="color:#f15a24">Pro</span></strong><p style="margin:10px 0 0;color:#f8dfc7">Your plan summary is ready.</p></div>
+          <div style="padding:30px 32px"><p style="margin-top:0">Hello ${escapeHtml(displayName)},</p><p style="line-height:1.6">Your retirement plan summary is attached as a PDF, ready to keep for reference.</p>
+          <p style="padding:14px;background:#fff5e9;border-left:4px solid #f15a24;color:#66594b;font-size:12px;line-height:1.5">${RETIREMENT_PROJECTION_DISCLAIMER}</p></div>
+        </div></div>`,
+      attachments: [{ filename: `${safePlanName} - Plan Summary.pdf`, content: pdfBuffer.toString("base64") }],
+    }),
+  });
+  if (!response.ok) throw new Error(`Resend request failed with status ${response.status}`);
 }

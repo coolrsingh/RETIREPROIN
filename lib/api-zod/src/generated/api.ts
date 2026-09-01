@@ -240,6 +240,84 @@ export const CreateLeadResponse = zod.object({
 
 
 /**
+ * Sends a compact PDF summary for a browser-only retirement plan without requiring an account.
+ * @summary Email a guest retirement plan summary
+ */
+export const emailGuestPlanSummaryBodyEmailMin = 3;
+export const emailGuestPlanSummaryBodyEmailMax = 254;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotNameMax = 120;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotRequiredCorpusMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotRequiredCorpusMax = 1000000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotProjectedCorpusMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotProjectedCorpusMax = 1000000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotFundingGapMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotFundingGapMax = 1000000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotYearsToRetireMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotYearsToRetireMax = 80;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotRetirementAgeMin = 40;
+export const emailGuestPlanSummaryBodyPlanSnapshotRetirementAgeMax = 100;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotMonthlyIncomeMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotMonthlyIncomeMax = 1000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotMonthlyExpensesMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotMonthlyExpensesMax = 1000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotMonthlySavingsMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotMonthlySavingsMax = 1000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotCurrentAssetsMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotCurrentAssetsMax = 1000000000000;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotInflationRateMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotInflationRateMax = 30;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotPreRetirementReturnMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotPreRetirementReturnMax = 50;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotPostRetirementReturnMin = 0;
+export const emailGuestPlanSummaryBodyPlanSnapshotPostRetirementReturnMax = 50;
+
+export const emailGuestPlanSummaryBodyPlanSnapshotLifeExpectancyMin = 50;
+export const emailGuestPlanSummaryBodyPlanSnapshotLifeExpectancyMax = 110;
+
+
+
+export const EmailGuestPlanSummaryBody = zod.object({
+  "email": zod.string().email().min(emailGuestPlanSummaryBodyEmailMin).max(emailGuestPlanSummaryBodyEmailMax),
+  "planSnapshot": zod.object({
+  "name": zod.string().min(1).max(emailGuestPlanSummaryBodyPlanSnapshotNameMax),
+  "requiredCorpus": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotRequiredCorpusMin).max(emailGuestPlanSummaryBodyPlanSnapshotRequiredCorpusMax),
+  "projectedCorpus": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotProjectedCorpusMin).max(emailGuestPlanSummaryBodyPlanSnapshotProjectedCorpusMax),
+  "fundingGap": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotFundingGapMin).max(emailGuestPlanSummaryBodyPlanSnapshotFundingGapMax),
+  "yearsToRetire": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotYearsToRetireMin).max(emailGuestPlanSummaryBodyPlanSnapshotYearsToRetireMax),
+  "retirementAge": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotRetirementAgeMin).max(emailGuestPlanSummaryBodyPlanSnapshotRetirementAgeMax),
+  "monthlyIncome": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotMonthlyIncomeMin).max(emailGuestPlanSummaryBodyPlanSnapshotMonthlyIncomeMax),
+  "monthlyExpenses": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotMonthlyExpensesMin).max(emailGuestPlanSummaryBodyPlanSnapshotMonthlyExpensesMax),
+  "monthlySavings": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotMonthlySavingsMin).max(emailGuestPlanSummaryBodyPlanSnapshotMonthlySavingsMax),
+  "currentAssets": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotCurrentAssetsMin).max(emailGuestPlanSummaryBodyPlanSnapshotCurrentAssetsMax),
+  "inflationRate": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotInflationRateMin).max(emailGuestPlanSummaryBodyPlanSnapshotInflationRateMax),
+  "preRetirementReturn": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotPreRetirementReturnMin).max(emailGuestPlanSummaryBodyPlanSnapshotPreRetirementReturnMax),
+  "postRetirementReturn": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotPostRetirementReturnMin).max(emailGuestPlanSummaryBodyPlanSnapshotPostRetirementReturnMax),
+  "lifeExpectancy": zod.number().min(emailGuestPlanSummaryBodyPlanSnapshotLifeExpectancyMin).max(emailGuestPlanSummaryBodyPlanSnapshotLifeExpectancyMax)
+}),
+  "marketingConsent": zod.boolean(),
+  "source": zod.enum(['plan_preview_email_card'])
+})
+
+export const EmailGuestPlanSummaryResponse = zod.object({
+  "message": zod.string(),
+  "recipientEmail": zod.string().email()
+})
+
+
+/**
  * Returns the authenticated user's full profile including financial data
  * @summary Get user profile
  */

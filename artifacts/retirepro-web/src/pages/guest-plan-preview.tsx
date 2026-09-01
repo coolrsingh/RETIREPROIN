@@ -76,8 +76,9 @@ export default function GuestPlanPreview() {
 
   const captureEmail = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!hasEmailConsent) {
-      setEmailError("Please confirm that you'd like to receive the plan and retirement updates.");
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setEmailError("Enter a valid email address to continue.");
       setEmailStatus("error");
       return;
     }
@@ -85,22 +86,47 @@ export default function GuestPlanPreview() {
     setEmailStatus("loading");
     setEmailError("");
     try {
-      const response = await fetch("/api/subscribe", {
+      const summary = calculations.summary;
+      const response = await fetch("/api/leads/email-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), source: "guest-plan-email-cta" }),
+        body: JSON.stringify({
+          email: normalizedEmail,
+          marketingConsent: hasEmailConsent,
+          source: "plan_preview_email_card",
+          planSnapshot: {
+            name: planName,
+            requiredCorpus: Number(summary.requiredCorpusAtRetirement) || 0,
+            projectedCorpus: Number(summary.projectedCorpusAtRetirement) || 0,
+            fundingGap: Math.max(0, Number(summary.gap) || 0),
+            yearsToRetire: Math.max(0, Number(summary.retirementYear) - new Date().getFullYear()),
+            retirementAge: Number(guestForm?.retirementAge) || 60,
+            monthlyIncome: Number(guestForm?.monthlyIncomeTotal) || 0,
+            monthlyExpenses: Number(guestForm?.monthlyExpenseTotal) || 0,
+            monthlySavings: Number(guestForm?.monthlySavings) || 0,
+            currentAssets: Number(guestForm?.assetsLumpSum) || 0,
+            inflationRate: Number(guestForm?.inflationRate) || 6,
+            preRetirementReturn: Number(guestForm?.returnPre) || 12,
+            postRetirementReturn: 8,
+            lifeExpectancy: 85,
+          },
+        }),
       });
-      const payload = await response.json();
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setEmailError(payload.message || "We couldn't save your email. Please try again.");
+        setEmailError(
+          response.status === 400
+            ? "Enter a valid email address to continue."
+            : payload.message || "Something went wrong — please try again.",
+        );
         setEmailStatus("error");
         return;
       }
 
       setEmailStatus("success");
-      trackEvent("guest_plan_email_captured", { source: "guest_plan_preview" });
+      trackEvent("guest_plan_email_sent", { source: "guest_plan_preview", marketing_consent: hasEmailConsent });
     } catch {
-      setEmailError("We couldn't save your email. Please check your connection and try again.");
+      setEmailError("Something went wrong — please try again.");
       setEmailStatus("error");
     }
   };
@@ -208,20 +234,9 @@ export default function GuestPlanPreview() {
                     <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-[#1a1208]">Your email is saved.</h2>
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66594b]">
-                      Create your free account to save this plan and email yourself the complete PDF report and Excel workbook.
-                    </p>
+                    <h2 className="font-semibold text-[#1a1208]">✓ Sent to {email.trim().toLowerCase()}. Check your inbox.</h2>
                   </div>
                 </div>
-                <Button
-                  onClick={() => { trackLoginIntent("guest_preview_email_capture"); window.location.href = "/api/login"; }}
-                  className="shrink-0 bg-[#f15a24] font-semibold text-white hover:bg-[#d94d1b]"
-                  data-testid="button-guest-login-after-email"
-                >
-                  <Zap className="h-4 w-4" />
-                  Sign in to save plan
-                </Button>
               </div>
             ) : (
               <form onSubmit={captureEmail}>
@@ -233,7 +248,7 @@ export default function GuestPlanPreview() {
                     <div>
                       <h2 className="font-semibold text-[#1a1208]">Want a copy of your plan emailed to you?</h2>
                       <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66594b]">
-                        Leave your email below. Once you sign in and save this plan, we’ll send the complete PDF report and Excel workbook to your inbox.
+                        Enter your email and we&apos;ll send your retirement plan summary as a PDF — right away, no login needed.
                       </p>
                     </div>
                   </div>
@@ -255,8 +270,9 @@ export default function GuestPlanPreview() {
                       data-testid="button-capture-guest-plan-email"
                     >
                       {emailStatus === "loading" ? <LoaderCircle className="animate-spin" /> : <Send className="h-4 w-4" />}
-                      {emailStatus === "loading" ? "Saving email…" : "Save my email"}
+                      {emailStatus === "loading" ? "Sending…" : "Email Me My Plan"}
                     </Button>
+                    <p className="text-xs text-[#66594b]">We&apos;ll only use this to send your plan.</p>
                   </div>
                 </div>
                 <div className="mt-4 flex items-start gap-2">
@@ -268,7 +284,7 @@ export default function GuestPlanPreview() {
                     data-testid="checkbox-guest-plan-email-consent"
                   />
                   <Label htmlFor="guest-plan-email-consent" className="text-xs leading-5 text-[#66594b]">
-                    I agree to receive my plan and occasional retirement planning updates from RetirePro. I can unsubscribe anytime.
+                    Also send me retirement planning articles and updates from RetirePro. I can unsubscribe anytime.
                   </Label>
                 </div>
                 {emailStatus === "error" && (

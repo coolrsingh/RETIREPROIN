@@ -25,6 +25,8 @@ import type {
   CreateScenarioBody,
   CrmDefaultsData,
   DeleteResponse,
+  GuestPlanEmailInput,
+  GuestPlanEmailResponse,
   HealthStatus,
   LeadResponse,
   PlanLimitError,
@@ -799,6 +801,78 @@ export const useCreateLead = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateLeadMutationOptions(options));
+    }
+
+export const getEmailGuestPlanSummaryUrl = () => {
+
+
+
+
+  return `/api/leads/email-plan`
+}
+
+/**
+ * Sends a compact PDF summary for a browser-only retirement plan without requiring an account.
+ * @summary Email a guest retirement plan summary
+ */
+export const emailGuestPlanSummary = async (guestPlanEmailInput: GuestPlanEmailInput, options?: RequestInit): Promise<GuestPlanEmailResponse> => {
+
+  return customFetch<GuestPlanEmailResponse>(getEmailGuestPlanSummaryUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      guestPlanEmailInput,)
+  }
+);}
+
+
+
+
+export const getEmailGuestPlanSummaryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof emailGuestPlanSummary>>, TError,{data: BodyType<GuestPlanEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof emailGuestPlanSummary>>, TError,{data: BodyType<GuestPlanEmailInput>}, TContext> => {
+
+const mutationKey = ['emailGuestPlanSummary'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof emailGuestPlanSummary>>, {data: BodyType<GuestPlanEmailInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  emailGuestPlanSummary(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EmailGuestPlanSummaryMutationResult = NonNullable<Awaited<ReturnType<typeof emailGuestPlanSummary>>>
+    export type EmailGuestPlanSummaryMutationBody = BodyType<GuestPlanEmailInput>
+    export type EmailGuestPlanSummaryMutationError = ErrorType<void>
+
+    /**
+ * @summary Email a guest retirement plan summary
+ */
+export const useEmailGuestPlanSummary = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof emailGuestPlanSummary>>, TError,{data: BodyType<GuestPlanEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof emailGuestPlanSummary>>,
+        TError,
+        {data: BodyType<GuestPlanEmailInput>},
+        TContext
+      > => {
+      return useMutation(getEmailGuestPlanSummaryMutationOptions(options));
     }
 
 export const getGetProfileUrl = () => {

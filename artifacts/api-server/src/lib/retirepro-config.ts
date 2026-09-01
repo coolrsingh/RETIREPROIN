@@ -1,0 +1,2 @@
+export const RETIREMENT_PROJECTION_DISCLAIMER =
+  "This is an illustrative projection based on the assumptions you provided. It does not constitute investment advice. Consult a SEBI-registered investment adviser or AMFI-registered mutual fund distributor before making any investment decisions.";

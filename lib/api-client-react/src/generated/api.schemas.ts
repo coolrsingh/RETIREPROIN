@@ -56,6 +56,102 @@ export interface PlanReportEmailResponse {
   recipientEmail: string;
 }
 
+export interface GuestPlanSnapshotInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  requiredCorpus: number;
+  /**
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  projectedCorpus: number;
+  /**
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  fundingGap: number;
+  /**
+     * @minimum 0
+     * @maximum 80
+     */
+  yearsToRetire: number;
+  /**
+     * @minimum 40
+     * @maximum 100
+     */
+  retirementAge: number;
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     */
+  monthlyIncome: number;
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     */
+  monthlyExpenses: number;
+  /**
+     * @minimum 0
+     * @maximum 1000000000
+     */
+  monthlySavings: number;
+  /**
+     * @minimum 0
+     * @maximum 1000000000000
+     */
+  currentAssets: number;
+  /**
+     * @minimum 0
+     * @maximum 30
+     */
+  inflationRate: number;
+  /**
+     * @minimum 0
+     * @maximum 50
+     */
+  preRetirementReturn: number;
+  /**
+     * @minimum 0
+     * @maximum 50
+     */
+  postRetirementReturn: number;
+  /**
+     * @minimum 50
+     * @maximum 110
+     */
+  lifeExpectancy: number;
+}
+
+export type GuestPlanEmailInputSource = typeof GuestPlanEmailInputSource[keyof typeof GuestPlanEmailInputSource];
+
+
+export const GuestPlanEmailInputSource = {
+  plan_preview_email_card: 'plan_preview_email_card',
+} as const;
+
+export interface GuestPlanEmailInput {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  planSnapshot: GuestPlanSnapshotInput;
+  marketingConsent: boolean;
+  source: GuestPlanEmailInputSource;
+}
+
+export interface GuestPlanEmailResponse {
+  message: string;
+  recipientEmail: string;
+}
+
 export type ScenarioSummaryMode = typeof ScenarioSummaryMode[keyof typeof ScenarioSummaryMode];
 
 

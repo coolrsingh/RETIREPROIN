@@ -4,21 +4,24 @@ import { storage } from "../storage";
 import { setupAuth, isAuthenticated } from "../replitAuth";
 import { calculateRetirementPlan } from "../calculations";
 import { generatePDF } from "../pdf";
-import { sendPlanReportEmail } from "../lib/plan-report-email";
+import { sendGuestPlanSummaryEmail, sendPlanReportEmail } from "../lib/plan-report-email";
+import { generateGuestPlanSummaryPdf, type GuestPlanSnapshot } from "../lib/guest-plan-summary";
 import { z } from "zod/v4";
 import {
   EmailScenarioReportBody,
   EmailScenarioReportParams,
   EmailScenarioReportResponse,
+  EmailGuestPlanSummaryBody,
+  EmailGuestPlanSummaryResponse,
 } from "@workspace/api-zod";
 import {
   quickPlanSchema, insertScenarioSchema, insertLeadSchema,
-  users, scenarios, leads,
+  users, scenarios, leads, planEmailLeads,
   assumptions, householdMembers, incomeItems, expenseItems, goals, assets, liabilities, miniRetirements,
 } from "@workspace/db";
 
 import { db } from "../db";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, gte } from "drizzle-orm";
 import * as XLSX from "xlsx";
 import { crmDefaultsUpdateSchema } from "../schemas/crm-defaults";
 import { buildGuestAssets } from "../plan-mapper";
@@ -478,6 +481,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Guest plan calculation error:", error);
       res.status(500).json({ message: "Calculation failed", error: error.message });
+    }
+  });
+
+  // Guest plan summary email — intentionally unauthenticated. The payload is a
+  // display-only summary from the browser; it is not used to create a saved plan.
+  app.post('/api/leads/email-plan', async (req: any, res): Promise<void> => {
+    const parsed = EmailGuestPlanSummaryBody.safeParse(req.body);
+    if (!parsed.success) {
+      req.log.warn({ issues: parsed.error.issues }, "Invalid guest plan email request");
+      res.status(400).json({ message: "Enter a valid email address to continue." });
+      return;
+    }
+
+    const email = parsed.data.email.trim().toLowerCase();
+    const forwardedFor = req.get("x-forwarded-for");
+    const ipAddress = typeof forwardedFor === "string"
+      ? forwardedFor.split(",")[0]?.trim() || req.ip
+      : req.ip;
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    try {
+      const [dailyRequestCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(planEmailLeads)
+        .where(and(
+          gte(planEmailLeads.createdAt, since),
+          or(
+            eq(planEmailLeads.email, email),
+            ...(ipAddress ? [eq(planEmailLeads.ipAddress, ipAddress)] : []),
+          ),
+        ));
+
+      if (Number(dailyRequestCount?.count ?? 0) >= 5) {
+        req.log.warn("Guest plan email daily rate limit reached");
+        res.status(429).json({ message: "You have reached today’s email limit. Please try again tomorrow." });
+        return;
+      }
+
+      const snapshot = parsed.data.planSnapshot as GuestPlanSnapshot;
+      const pdfBuffer = await generateGuestPlanSummaryPdf(snapshot);
+      await sendGuestPlanSummaryEmail({
+        recipientEmail: email,
+        recipientName: snapshot.name,
+        planName: snapshot.name,
+        pdfBuffer,
+      });
+
+      await db.insert(planEmailLeads).values({
+        email,
+        planSnapshot: snapshot,
+        marketingConsent: parsed.data.marketingConsent,
+        consentTimestamp: parsed.data.marketingConsent ? new Date() : null,
+        source: parsed.data.source,
+        ipAddress: ipAddress ?? null,
+      });
+
+      req.log.info("Guest plan summary email sent");
+      res.json(EmailGuestPlanSummaryResponse.parse({
+        message: "Your plan summary has been sent.",
+        recipientEmail: email,
+      }));
+    } catch (error) {
+      req.log.error({ err: error }, "Guest plan summary email failed");
+      res.status(502).json({ message: "Something went wrong — please try again." });
     }
   });
 
