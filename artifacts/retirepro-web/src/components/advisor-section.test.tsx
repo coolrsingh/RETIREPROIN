@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AdvisorSection from "./advisor-section";
 
@@ -222,6 +222,27 @@ describe("AdvisorSection — optional email field", () => {
 
     await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
     // email field intentionally left empty
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.email).toBeUndefined();
+  });
+
+  it("omits email from the POST body when the user enters only whitespace", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    render(<AdvisorSection defaultName="Test User" />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    const emailInput = screen.getByTestId("input-advisor-email");
+    Object.defineProperty(emailInput, "value", {
+      configurable: true,
+      value: "   ",
+    });
+    fireEvent.change(emailInput, { target: { value: "   " } });
     await user.click(screen.getByTestId("button-advisor-submit"));
 
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
