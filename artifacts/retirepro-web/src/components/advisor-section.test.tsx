@@ -203,6 +203,30 @@ describe("AdvisorSection — duplicate submission prevention", () => {
       expect(screen.getByText("You're on the list!")).toBeInTheDocument(),
     );
   });
+
+  it("ignores rapid duplicate submissions triggered by pressing Enter twice", async () => {
+    let resolveFetch!: () => void;
+    const inflight = new Promise<{ ok: boolean }>(resolve => {
+      resolveFetch = () => resolve({ ok: true });
+    });
+    mockFetch.mockReturnValueOnce(inflight);
+
+    render(<AdvisorSection defaultName="Test User" />);
+    const user = userEvent.setup();
+    const phoneInput = screen.getByTestId("input-advisor-phone");
+
+    await user.type(phoneInput, "9876543210");
+    phoneInput.focus();
+    await user.keyboard("{Enter}{Enter}");
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("button-advisor-submit")).toBeDisabled();
+
+    resolveFetch();
+    await waitFor(() =>
+      expect(screen.getByText("You're on the list!")).toBeInTheDocument(),
+    );
+  });
 });
 
 describe("AdvisorSection — optional email field", () => {

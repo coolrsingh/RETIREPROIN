@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Phone, AlertTriangle } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
@@ -43,14 +43,17 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [phoneError, setPhoneError] = useState("");
+  const submissionInFlight = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submissionInFlight.current) return;
     setPhoneError("");
     if (!/^\d{10,}$/.test(phone.trim())) {
       setPhoneError("Enter a valid 10-digit mobile number");
       return;
     }
+    submissionInFlight.current = true;
     setStatus("submitting");
     try {
       const body: Record<string, string> = {
@@ -68,6 +71,8 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
       setStatus("success");
     } catch {
       setStatus("error");
+    } finally {
+      submissionInFlight.current = false;
     }
   };
 
