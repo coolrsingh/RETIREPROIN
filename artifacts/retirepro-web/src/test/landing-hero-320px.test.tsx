@@ -27,8 +27,8 @@ import { render, screen } from "@testing-library/react";
 
 vi.mock("wouter", () => ({
   useLocation: () => ["/", vi.fn()],
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  Link: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>{children}</a>
   ),
 }));
 
@@ -264,5 +264,51 @@ describe("Landing hero – 320px layout regression", () => {
     ) as HTMLElement | null;
     expect(section).not.toBeNull();
     expect(section!.style.overflow).toBe("hidden");
+  });
+});
+
+describe("Landing ticker and stats – 320px layout regression", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 320,
+    });
+    window.dispatchEvent(new Event("resize"));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    });
+  });
+
+  it("clips the nowrap ticker content and keeps the decorative ticker hidden from assistive technology", () => {
+    render(<Landing />);
+    const ticker = screen.getByTestId("landing-ticker");
+
+    expect(ticker.style.overflow).toBe("hidden");
+    expect(ticker).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("uses auto-fit stats columns whose minimum is capped at the available content width", () => {
+    render(<Landing />);
+    const statsGrid = screen.getByTestId("landing-stats-grid");
+
+    expect(statsGrid.style.gridTemplateColumns).toBe(
+      "repeat(auto-fit, minmax(min(280px, 100%), 1fr))"
+    );
+  });
+
+  it("does not give the ticker or stats grid an explicit width wider than the 320px viewport", () => {
+    render(<Landing />);
+    const ticker = screen.getByTestId("landing-ticker");
+    const statsGrid = screen.getByTestId("landing-stats-grid");
+
+    expect(ticker.style.width).toBe("");
+    expect(statsGrid.style.width).toBe("");
+    expect(statsGrid.style.minWidth).toBe("");
   });
 });

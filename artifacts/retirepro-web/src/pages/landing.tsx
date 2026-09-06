@@ -352,7 +352,7 @@ export default function Landing() {
         </section>
 
         {/* ── TICKER ───────────────────────────────────────────────────────── */}
-        <div style={{ overflow: "hidden", background: "var(--navy)", padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.08)" }} aria-hidden>
+        <div data-testid="landing-ticker" style={{ overflow: "hidden", background: "var(--navy)", padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.08)" }} aria-hidden>
           <div style={{ display: "flex", gap: 40, whiteSpace: "nowrap", animation: "ticker 36s linear infinite", fontFamily: "var(--font-mono)", fontSize: 11 }}>
             {TICKERS.map((t, i) => (
               <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
@@ -379,7 +379,10 @@ export default function Landing() {
               </p>
             </motion.div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            <div
+              data-testid="landing-stats-grid"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20 }}
+            >
               {[
                 { n: 75.5, d: 1, s: "%", label: "of Indians have no retirement corpus", src: "PFRDA Annual Report 2023–24", accent: "#FCD34D" },
                 { n: 3.6, d: 1, s: "×", label: "more corpus needed if you start at 40 vs 30", src: "Compounding at 12% CAGR", accent: "#F87171" },
