@@ -8,20 +8,27 @@ declare global {
       target: string,
       params?: AnalyticsParams,
     ) => void;
+    umami?: {
+      track: (name: string, data?: AnalyticsParams) => void;
+    };
   }
 }
 
 /**
- * Sends an anonymous GA4 event when analytics is available.
- * Tracking must never block or break the product if a browser blocks GA.
+ * Sends anonymous product events to configured analytics providers.
+ * Tracking must never block or break the product if a provider is unavailable.
  */
 export function trackEvent(name: string, params: AnalyticsParams = {}) {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") {
-    return;
+  if (typeof window === "undefined") return;
+
+  try {
+    window.gtag?.("event", name, params);
+  } catch {
+    // Analytics is best-effort and must not affect the user flow.
   }
 
   try {
-    window.gtag("event", name, params);
+    window.umami?.track(name, params);
   } catch {
     // Analytics is best-effort and must not affect the user flow.
   }
