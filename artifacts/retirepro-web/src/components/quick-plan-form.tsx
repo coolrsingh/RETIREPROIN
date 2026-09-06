@@ -1356,74 +1356,76 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
             <CardDescription>Adjust these to match your expectations — smart defaults applied</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="assumptions.inflationHeadline"
-              render={({ field }) => (
-                <FormItem>
-                  <SliderField
-                    label="Annual Inflation"
-                    value={field.value ?? 7}
-                    onChange={field.onChange}
-                    min={3}
-                    max={12}
-                    step={0.5}
-                    unit="%"
-                    lowLabel="3% (optimistic)"
-                    highLabel="12% (severe)"
-                    hint="Historical India CPI averages 5–7%. Retirement planning typically uses 6–7%."
-                    testId="input-inflation"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {personaMode === "accumulating" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="assumptions.returnPre"
+                name="assumptions.inflationHeadline"
                 render={({ field }) => (
                   <FormItem>
                     <SliderField
-                      label="Pre-retirement Investment Return"
-                      value={field.value ?? 12}
+                      label="Annual Inflation"
+                      value={field.value ?? 7}
                       onChange={field.onChange}
-                      min={4}
-                      max={18}
+                      min={3}
+                      max={12}
                       step={0.5}
                       unit="%"
-                      lowLabel="4% (FD-only)"
-                      highLabel="18% (aggressive)"
-                      hint="Nifty 50 has returned ~13% CAGR over 20 years. 10–12% is a balanced assumption."
-                      testId="input-pre-return"
+                      lowLabel="3% (optimistic)"
+                      highLabel="12% (severe)"
+                      hint="Historical India CPI averages 5–7%. Retirement planning typically uses 6–7%."
+                      testId="input-inflation"
                     />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-            <FormField
-              control={form.control}
-              name="assumptions.returnPost"
-              render={({ field }) => (
-                <FormItem>
-                  <SliderField
-                    label="Post-retirement Investment Return"
-                    value={field.value ?? 8}
-                    onChange={field.onChange}
-                    min={3}
-                    max={12}
-                    step={0.5}
-                    unit="%"
-                    lowLabel="3% (bonds only)"
-                    highLabel="12%"
-                    hint="Conservative 6–8% is recommended for post-retirement (debt-heavy allocation)."
-                    testId="input-post-return"
-                  />
-                  <FormMessage />
-                </FormItem>
+              {personaMode === "accumulating" && (
+                <FormField
+                  control={form.control}
+                  name="assumptions.returnPre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <SliderField
+                        label="Pre-retirement Investment Return"
+                        value={field.value ?? 12}
+                        onChange={field.onChange}
+                        min={4}
+                        max={18}
+                        step={0.5}
+                        unit="%"
+                        lowLabel="4% (FD-only)"
+                        highLabel="18% (aggressive)"
+                        hint="Nifty 50 has returned ~13% CAGR over 20 years. 10–12% is a balanced assumption."
+                        testId="input-pre-return"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
+              <FormField
+                control={form.control}
+                name="assumptions.returnPost"
+                render={({ field }) => (
+                  <FormItem>
+                    <SliderField
+                      label="Post-retirement Investment Return"
+                      value={field.value ?? 8}
+                      onChange={field.onChange}
+                      min={3}
+                      max={12}
+                      step={0.5}
+                      unit="%"
+                      lowLabel="3% (bonds only)"
+                      highLabel="12%"
+                      hint="Conservative 6–8% is recommended for post-retirement (debt-heavy allocation)."
+                      testId="input-post-return"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 

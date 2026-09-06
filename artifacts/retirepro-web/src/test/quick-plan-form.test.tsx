@@ -456,4 +456,13 @@ describe("QuickPlanForm – 320px layout regression (no horizontal overflow)", (
     // Also confirm the sm: responsive variant is present so wider screens use more cols
     expect(goalRow!.className).toContain("sm:grid-cols-3");
   });
+
+  it("planning assumptions grid defaults to grid-cols-1 so it doesn't overflow when the form loads", () => {
+    renderForm();
+
+    const card = screen.getByTestId("card-assumptions");
+    const fieldGrid = card.querySelector('[class*="grid-cols-1"]');
+    expect(fieldGrid).not.toBeNull();
+    expect(fieldGrid!.className).toContain("md:grid-cols-3");
+  });
 });
