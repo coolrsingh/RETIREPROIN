@@ -42,30 +42,41 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
   const { summary } = calculations;
   const yearsToRetirement = calculateYearsToRetirement(summary.retirementYear);
   const funded = summary.gap <= 0;
+  const standardCardStyle: React.CSSProperties = funded
+    ? {
+        ...CARD_BASE,
+        border: "1px solid rgba(22,163,74,0.25)",
+      }
+    : CARD_BASE;
+  const standardAccent = funded ? "#15803D" : "#92660A";
+  const standardIconBackground = funded ? "rgba(22,163,74,0.1)" : "rgba(232,148,10,0.1)";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <div
+      className={`grid grid-cols-1 md:grid-cols-2 ${funded ? "lg:grid-cols-4" : "lg:grid-cols-5"} gap-4 mb-8`}
+      data-testid="kpi-cards"
+    >
       {/* Required Corpus */}
-      <div className="rounded-2xl p-4 sm:p-5" style={CARD_BASE} data-testid="kpi-required-corpus">
+      <div className="rounded-2xl p-4 sm:p-5" style={standardCardStyle} data-testid="kpi-required-corpus">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: standardAccent }}>
             Required Corpus
           </p>
           <span
             className="flex-shrink-0 flex items-center justify-center rounded-lg"
-            style={{ width: 34, height: 34, background: "rgba(232,148,10,0.1)", fontSize: 16 }}
+            style={{ width: 34, height: 34, background: standardIconBackground, fontSize: 16 }}
           >
             🎯
           </span>
         </div>
-        <p style={{ ...NUM_STYLE, color: "#1A1208" }}>
+        <p style={{ ...NUM_STYLE, color: funded ? "#15803D" : "#1A1208" }}>
           {formatCurrency(summary.requiredCorpusAtRetirement)}
         </p>
         <p className="text-xs mt-2" style={{ color: "#64748B" }}>Target retirement corpus needed</p>
       </div>
 
       {/* Projected Corpus */}
-      <div className="rounded-2xl p-4 sm:p-5" style={CARD_BASE} data-testid="kpi-projected-corpus">
+      <div className="rounded-2xl p-4 sm:p-5" style={standardCardStyle} data-testid="kpi-projected-corpus">
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#15803D" }}>
             Projected Corpus
@@ -117,19 +128,19 @@ export default function KpiCards({ calculations }: KpiCardsProps) {
       </div>
 
       {/* Years to Retirement */}
-      <div className="rounded-2xl p-4 sm:p-5" style={CARD_BASE} data-testid="kpi-years-to-retirement">
+      <div className="rounded-2xl p-4 sm:p-5" style={standardCardStyle} data-testid="kpi-years-to-retirement">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#92660A" }}>
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: standardAccent }}>
             Years to Retire
           </p>
           <span
             className="flex-shrink-0 flex items-center justify-center rounded-lg"
-            style={{ width: 34, height: 34, background: "rgba(232,148,10,0.1)", fontSize: 16 }}
+            style={{ width: 34, height: 34, background: standardIconBackground, fontSize: 16 }}
           >
             📅
           </span>
         </div>
-        <p style={{ ...NUM_STYLE, color: "#1A1208" }}>
+        <p style={{ ...NUM_STYLE, color: funded ? "#15803D" : "#1A1208" }}>
           {yearsToRetirement}
         </p>
         <p className="text-xs mt-2" style={{ color: "#64748B" }}>Time to build your corpus</p>
