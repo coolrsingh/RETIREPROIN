@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import QuickPlanForm from "@/components/quick-plan-form";
 import type { QuickPlan } from "@shared/schema";
@@ -319,6 +319,53 @@ describe("QuickPlanForm – child row validation", () => {
       expect(onSubmit).toHaveBeenCalledOnce();
     });
     expect(screen.queryByTestId("error-child-dob-0")).not.toBeInTheDocument();
+  });
+});
+
+describe("QuickPlanForm – custom goals", () => {
+  it("reindexes the remaining goals without losing their values when the middle goal is removed", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+
+    await user.click(screen.getByTestId("button-add-custom-goal"));
+    await user.click(screen.getByTestId("button-add-custom-goal"));
+    await user.click(screen.getByTestId("button-add-custom-goal"));
+
+    const goals = [
+      { name: "Home renovation", cost: "500000", years: "4" },
+      { name: "World trip", cost: "300000", years: "6" },
+      { name: "Business launch", cost: "800000", years: "8" },
+    ];
+
+    for (const [index, goal] of goals.entries()) {
+      await user.type(screen.getByTestId(`input-goal-name-${index}`), goal.name);
+      await user.type(screen.getByTestId(`input-goal-cost-${index}`), goal.cost);
+      fireEvent.change(screen.getByTestId(`input-goal-years-${index}`), {
+        target: { value: goal.years },
+      });
+    }
+
+    await user.click(screen.getByTestId("button-remove-goal-1"));
+
+    expect(screen.getByTestId("input-goal-name-0")).toHaveValue("Home renovation");
+    expect(screen.getByTestId("input-goal-cost-0")).toHaveValue(500000);
+    expect(screen.getByTestId("input-goal-years-0")).toHaveValue(4);
+    expect(screen.getByTestId("input-goal-name-1")).toHaveValue("Business launch");
+    expect(screen.getByTestId("input-goal-cost-1")).toHaveValue(800000);
+    expect(screen.getByTestId("input-goal-years-1")).toHaveValue(8);
+    expect(screen.queryByTestId("input-goal-name-2")).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledOnce();
+    });
+    expect(onSubmit.mock.calls[0][0].customGoals).toEqual([
+      { name: "Home renovation", todaysCost: 500000, yearsFromNow: 4 },
+      { name: "Business launch", todaysCost: 800000, yearsFromNow: 8 },
+    ]);
   });
 });
 
