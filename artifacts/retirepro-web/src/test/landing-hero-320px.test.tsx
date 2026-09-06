@@ -265,6 +265,17 @@ describe("Landing hero – 320px layout regression", () => {
     expect(section).not.toBeNull();
     expect(section!.style.overflow).toBe("hidden");
   });
+
+  it("allows very long urgency-bar text to wrap instead of widening the viewport", () => {
+    render(<Landing />);
+    const urgencyBar = screen.getByTestId("landing-urgency-bar");
+
+    expect(urgencyBar.style.overflowWrap).toBe("break-word");
+    expect(urgencyBar.style.wordBreak).toBe("break-word");
+    expect(urgencyBar.style.whiteSpace).not.toBe("nowrap");
+    expect(urgencyBar.style.width).toBe("");
+    expect(urgencyBar.style.minWidth).toBe("");
+  });
 });
 
 describe("Landing ticker and stats – 320px layout regression", () => {

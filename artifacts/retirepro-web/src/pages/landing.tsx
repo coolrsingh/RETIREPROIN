@@ -211,10 +211,10 @@ export default function Landing() {
         {/* ── HERO ─────────────────────────────────────────────────────────── */}
         <section style={{ paddingTop: 64, background: "var(--bg)", overflow: "hidden" }}>
           {/* Top urgency bar */}
-          <div style={{
+          <div data-testid="landing-urgency-bar" style={{
             background: "var(--navy)", padding: "10px 24px", textAlign: "center",
             fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.9)",
-            letterSpacing: ".01em",
+            letterSpacing: ".01em", overflowWrap: "break-word", wordBreak: "break-word",
           }}>
             <span style={{ color: "#FCD34D", marginRight: 8 }}>⚠</span>
             76% of Indians have zero retirement savings — calculate where you stand in 60 seconds.
