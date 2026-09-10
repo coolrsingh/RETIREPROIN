@@ -168,7 +168,8 @@ export default function Landing() {
 
         @media (max-width: 479px) {
           .ai-card-outer { padding: 24px 20px !important; gap: 20px !important; }
-          .header-nav-link { display: none !important; }
+          .lp-header { padding-left: 16px !important; padding-right: 16px !important; }
+          .header-nav { display: none !important; }
           .header-sign-in { padding: 8px 16px !important; font-size: 13px !important; }
         }
 
@@ -183,9 +184,9 @@ export default function Landing() {
           background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)",
           borderBottom: "1px solid var(--border)",
         }}>
-          <div className="lp-section" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64, maxWidth: 1200 }}>
+          <div className="lp-section lp-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64, maxWidth: 1200, gap: 12 }}>
             <BrandLogo href={null} textClassName="text-slate-900" />
-            <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
+            <nav className="header-nav" style={{ display: "flex", alignItems: "center", gap: 32 }}>
               <Link href="/blog" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Blog</Link>
               <Link href="/faq" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>FAQ</Link>
               <Link href="/free-plan" className="header-nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--slate)", textDecoration: "none" }}>Free Planner</Link>
@@ -197,7 +198,7 @@ export default function Landing() {
                 background: "var(--orange)", color: "#fff", border: "none", cursor: "pointer",
                 fontWeight: 700, fontSize: 14, padding: "10px 24px", borderRadius: 100,
                 fontFamily: "var(--font-sans)",
-                transition: "opacity .15s",
+                 transition: "opacity .15s", flexShrink: 0,
               }}
               onMouseEnter={e => (e.currentTarget.style.opacity = ".88")}
               onMouseLeave={e => (e.currentTarget.style.opacity = "1")}

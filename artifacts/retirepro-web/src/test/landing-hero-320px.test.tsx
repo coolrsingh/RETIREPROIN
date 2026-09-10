@@ -127,6 +127,25 @@ function get640pxMediaBody(): string {
   return "";
 }
 
+function get479pxMediaBody(): string {
+  const css = getAllStyles();
+  const marker = "max-width: 479px";
+  const start = css.indexOf(marker);
+  if (start === -1) return "";
+  const openBrace = css.indexOf("{", start);
+  if (openBrace === -1) return "";
+
+  let depth = 0;
+  for (let i = openBrace; i < css.length; i++) {
+    if (css[i] === "{") depth++;
+    else if (css[i] === "}") {
+      depth--;
+      if (depth === 0) return css.slice(openBrace + 1, i);
+    }
+  }
+  return "";
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -275,6 +294,18 @@ describe("Landing hero – 320px layout regression", () => {
     expect(urgencyBar.style.whiteSpace).not.toBe("nowrap");
     expect(urgencyBar.style.width).toBe("");
     expect(urgencyBar.style.minWidth).toBe("");
+  });
+
+  it("keeps the logo and Sign In button fully rendered in the 320px header", () => {
+    render(<Landing />);
+    const header = document.querySelector(".lp-header");
+    const signIn = screen.getByTestId("button-login");
+    const mobileCss = get479pxMediaBody();
+
+    expect(header).not.toBeNull();
+    expect(signIn.style.flexShrink).toBe("0");
+    expect(mobileCss).toMatch(/\.lp-header\s*\{[^}]*padding-left:\s*16px\s*!important[^}]*padding-right:\s*16px\s*!important/);
+    expect(mobileCss).toMatch(/\.header-nav\s*\{[^}]*display:\s*none\s*!important/);
   });
 });
 

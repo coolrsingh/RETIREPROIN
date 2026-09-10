@@ -15,13 +15,13 @@ export default function BrandLogo({
   className = "",
 }: BrandLogoProps) {
   const inner = (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex shrink-0 items-center gap-2 whitespace-nowrap ${className}`}>
       <img
         src={logoUrl}
         alt="RetirePro logo"
         width={size}
         height={size}
-        style={{ width: size, height: size, objectFit: "contain" }}
+        style={{ width: size, height: size, objectFit: "contain", flexShrink: 0 }}
       />
       <span className={`text-xl font-bold tracking-tight ${textClassName}`}>RetirePro</span>
     </div>
