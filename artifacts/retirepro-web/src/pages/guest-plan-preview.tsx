@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ChartLine, ArrowLeft, Zap, Lock, Mail, Send, CheckCircle2, LoaderCircle } from "lucide-react";
+import { ArrowLeft, Zap, Lock, Mail, Send, CheckCircle2, LoaderCircle } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import KpiCards from "@/components/kpi-cards";
 import PlanChart from "@/components/plan-chart";
@@ -18,14 +18,121 @@ import { trackEvent, trackLoginIntent } from "@/lib/analytics";
 
 interface GuestForm {
   fullName: string;
+  personaMode?: "accumulating" | "retired";
   dob: string;
   retirementAge: string;
   monthlyIncomeTotal: string;
   monthlyExpenseTotal: string;
   monthlySavings: string;
   assetsLumpSum: string;
+  currentCorpus?: string;
+  monthlyWithdrawal?: string;
+  yearsToCover?: string;
   returnPre: string;
+  returnPost?: string;
   inflationRate: string;
+}
+
+const formatCurrency = (value: number) => {
+  if (value >= 10_000_000) return `₹${(value / 10_000_000).toFixed(1)} Cr`;
+  if (value >= 100_000) return `₹${(value / 100_000).toFixed(1)} L`;
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
+};
+
+export function getDrawdownSummary(calculations: any, guestForm: GuestForm | null) {
+  const currentYear = new Date().getFullYear();
+  const series: { year: number; value: number }[] = calculations?.netWorthSeries ?? [];
+  const startingCorpus = Number(guestForm?.currentCorpus)
+    || Number(calculations?.summary?.projectedCorpusAtRetirement)
+    || 0;
+  const monthlyWithdrawal = Number(guestForm?.monthlyWithdrawal)
+    || Number(guestForm?.monthlyExpenseTotal)
+    || 0;
+  const annualWithdrawalRate = startingCorpus > 0
+    ? (monthlyWithdrawal * 12 / startingCorpus) * 100
+    : 0;
+  const exhaustionPoint = series.find((point, index) =>
+    point.value <= 0 && (index === 0 || series[index - 1].value > 0)
+  );
+  const finalYear = series.at(-1)?.year ?? currentYear;
+  const yearsLasting = exhaustionPoint
+    ? Math.max(0, exhaustionPoint.year - currentYear)
+    : Math.max(0, finalYear - currentYear);
+
+  return {
+    startingCorpus,
+    monthlyWithdrawal,
+    annualWithdrawalRate,
+    safeWithdrawalRate: 4,
+    isWithinSafeRate: annualWithdrawalRate <= 4,
+    exhaustionYear: exhaustionPoint?.year ?? null,
+    yearsLasting,
+    lastsThroughProjection: !exhaustionPoint,
+  };
+}
+
+function DrawdownSummary({ calculations, guestForm }: { calculations: any; guestForm: GuestForm | null }) {
+  const summary = getDrawdownSummary(calculations, guestForm);
+  const cardStyle: React.CSSProperties = {
+    background: "#FFFFFF",
+    border: "1px solid rgba(232,148,10,0.18)",
+    boxShadow: "0 2px 12px rgba(26,18,8,0.06)",
+  };
+
+  return (
+    <section className="mb-8" aria-labelledby="drawdown-summary-title" data-testid="drawdown-summary">
+      <div className="mb-4">
+        <h2 id="drawdown-summary-title" className="text-2xl font-bold text-slate-900">
+          Your retirement drawdown outlook
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Based on your current corpus, monthly withdrawal, inflation, and expected returns.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl p-5" style={cardStyle} data-testid="drawdown-starting-corpus">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Corpus at start</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(summary.startingCorpus)}</p>
+          <p className="mt-2 text-xs text-slate-500">Available to fund retirement today</p>
+        </div>
+        <div className="rounded-2xl p-5" style={cardStyle} data-testid="drawdown-exhaustion-year">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Projected exhaustion</p>
+          <p className={`mt-2 text-2xl font-bold ${summary.exhaustionYear ? "text-orange-700" : "text-emerald-700"}`}>
+            {summary.exhaustionYear ?? "Not projected"}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            {summary.exhaustionYear ? "First year the corpus reaches zero" : "Corpus remains above zero for the full projection"}
+          </p>
+        </div>
+        <div className="rounded-2xl p-5" style={cardStyle} data-testid="drawdown-years-lasting">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Corpus lasts</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {summary.lastsThroughProjection ? `${summary.yearsLasting}+ years` : `${summary.yearsLasting} years`}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            {summary.lastsThroughProjection ? "Through the selected planning horizon" : "At the current withdrawal plan"}
+          </p>
+        </div>
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            ...cardStyle,
+            background: summary.isWithinSafeRate ? "rgba(22,163,74,0.05)" : "rgba(241,90,36,0.05)",
+            borderColor: summary.isWithinSafeRate ? "rgba(22,163,74,0.25)" : "rgba(241,90,36,0.25)",
+          }}
+          data-testid="drawdown-withdrawal-check"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Withdrawal check</p>
+          <p className={`mt-2 text-2xl font-bold ${summary.isWithinSafeRate ? "text-emerald-700" : "text-orange-700"}`}>
+            {summary.annualWithdrawalRate.toFixed(1)}% / year
+          </p>
+          <p className={`mt-2 text-xs ${summary.isWithinSafeRate ? "text-emerald-700" : "text-orange-700"}`}>
+            {summary.isWithinSafeRate ? "Within" : "Above"} the 4% safe-withdrawal guideline
+          </p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default function GuestPlanPreview() {
@@ -66,11 +173,12 @@ export default function GuestPlanPreview() {
   }
 
   const planName = guestForm?.fullName ? `${guestForm.fullName}'s Retirement Plan` : "Your Retirement Plan";
+  const isRetired = guestForm?.personaMode === "retired";
 
   const assumptions = {
     inflationHeadline: guestForm?.inflationRate ?? "6",
     returnPre: guestForm?.returnPre ?? "12",
-    returnPost: "8",
+    returnPost: guestForm?.returnPost ?? "8",
     lifeExpectancy: 85,
   };
 
@@ -218,8 +326,10 @@ export default function GuestPlanPreview() {
           </div>
         </div>
 
-        {/* KPI Cards */}
-        <KpiCards calculations={calculations} />
+        {/* Persona-specific summary */}
+        {isRetired
+          ? <DrawdownSummary calculations={calculations} guestForm={guestForm} />
+          : <KpiCards calculations={calculations} />}
 
         <section
           className="mb-6 overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-[#fff8ec] via-white to-[#fff1e8] shadow-sm"
@@ -302,7 +412,7 @@ export default function GuestPlanPreview() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Net Worth Projection</CardTitle>
+                  <CardTitle>{isRetired ? "Corpus Drawdown Projection" : "Net Worth Projection"}</CardTitle>
                   <div className="flex items-center gap-2">
                     {["10Y", "25Y", "Life"].map(range => (
                       <Button
@@ -334,10 +444,14 @@ export default function GuestPlanPreview() {
                 <div className="space-y-4">
                   {[
                     { label: "Inflation (General)", value: `${assumptions.inflationHeadline}%` },
-                    { label: "Return (Pre-retirement)", value: `${assumptions.returnPre}%` },
+                    ...(!isRetired ? [{ label: "Return (Pre-retirement)", value: `${assumptions.returnPre}%` }] : []),
                     { label: "Return (Post-retirement)", value: `${assumptions.returnPost}%` },
-                    { label: "Life Expectancy", value: `${assumptions.lifeExpectancy} years` },
-                    { label: "Retirement Age", value: `${guestForm?.retirementAge ?? 60} years` },
+                    ...(isRetired
+                      ? [{ label: "Planning Horizon", value: `${guestForm?.yearsToCover ?? 25} years` }]
+                      : [
+                          { label: "Life Expectancy", value: `${assumptions.lifeExpectancy} years` },
+                          { label: "Retirement Age", value: `${guestForm?.retirementAge ?? 60} years` },
+                        ]),
                   ].map(item => (
                     <div key={item.label} className="flex justify-between items-center">
                       <span className="text-sm text-slate-600">{item.label}</span>
@@ -381,12 +495,14 @@ export default function GuestPlanPreview() {
           </CardContent>
         </Card>
 
-        {/* Cashflow Advisor */}
-        <Card className="mt-2 mb-8">
-          <CardContent className="pt-4">
-            <CashflowAdvisor calculations={calculations} />
-          </CardContent>
-        </Card>
+        {/* Cashflow Advisor is accumulation-specific */}
+        {!isRetired && (
+          <Card className="mt-2 mb-8">
+            <CardContent className="pt-4">
+              <CashflowAdvisor calculations={calculations} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Talk to an Expert */}
         <AdvisorSection defaultName={guestForm?.fullName ?? ""} />

@@ -44,13 +44,18 @@ export default function FreePlan() {
       sessionStorage.setItem("guestCalcResult", JSON.stringify(result));
       sessionStorage.setItem("guestCalcForm", JSON.stringify({
         fullName: data.fullName,
+        personaMode: data.personaMode ?? "accumulating",
         dob: data.dob,
         retirementAge: String(data.retirementAge),
         monthlyIncomeTotal: String(data.monthlyIncomeTotal),
         monthlyExpenseTotal: String(data.monthlyExpenseTotal),
         monthlySavings: String(data.monthlySavings),
         assetsLumpSum: String(data.assetsLumpSum ?? 0),
+        currentCorpus: String(data.currentCorpus ?? 0),
+        monthlyWithdrawal: String(data.monthlyWithdrawal ?? 0),
+        yearsToCover: String(data.yearsToCover ?? 25),
         returnPre: String(data.assumptions?.returnPre ?? 12),
+        returnPost: String(data.assumptions?.returnPost ?? 8),
         inflationRate: String(data.assumptions?.inflationHeadline ?? 7),
       }));
       navigate("/plan/preview");
