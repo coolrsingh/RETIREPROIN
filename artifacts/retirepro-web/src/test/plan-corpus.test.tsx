@@ -113,6 +113,7 @@ describe("plan card corpus display — rendered value matches API response", () 
 
 const mockMutate = vi.fn();
 const mockUseUpdateScenario = vi.fn();
+const mockUseListScenarios = vi.fn();
 
 vi.mock("@workspace/api-client-react", async () => {
   const actual = await vi.importActual<typeof import("@workspace/api-client-react")>(
@@ -128,8 +129,18 @@ vi.mock("@workspace/api-client-react", async () => {
         isPending: false,
       };
     },
+    useListScenarios: (opts: any) => mockUseListScenarios(opts),
   };
 });
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    user: { id: "user-test-123", firstName: "Test", role: "user" },
+    isAuthenticated: true,
+    isLoading: false,
+    error: null,
+  }),
+}));
 
 // Mock wouter so AssumptionsPanel can render without a router.
 vi.mock("wouter", () => ({
@@ -141,6 +152,7 @@ vi.mock("wouter", () => ({
 }));
 
 import AssumptionsPanel from "@/components/assumptions-panel";
+import Home from "@/pages/home";
 import { getListScenariosQueryKey, getGetScenarioQueryKey } from "@workspace/api-client-react";
 // The singleton queryClient is what AssumptionsPanel calls invalidateQueries on.
 import { queryClient as singletonQc } from "@/lib/queryClient";
@@ -429,7 +441,69 @@ describe("AssumptionsPanel — display driven by cache invalidation and refetch"
 });
 
 // ---------------------------------------------------------------------------
-// 4. Query-key contract verification
+// 4. Home plan card — scenarios-list refetch renders the updated corpus
+// ---------------------------------------------------------------------------
+
+describe("Home — plan card follows scenarios-list cache refetch", () => {
+  const scenarioId = "scenario-home-corpus";
+  const initialScenario = {
+    id: scenarioId,
+    name: "Retirement Plan",
+    mode: "quick",
+    selfRetirementAge: 60,
+    projectedCorpus: 30_000_000,
+    updatedAt: "2026-09-10T00:00:00.000Z",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    singletonQc.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    singletonQc.clear();
+  });
+
+  it("renders the updated projectedCorpus after list invalidation and refetch without a hard reload", async () => {
+    const listKey = getListScenariosQueryKey();
+    let currentScenarios = [initialScenario];
+    const mockListFetch = vi.fn(async () => currentScenarios);
+
+    singletonQc.setQueryData(listKey, currentScenarios);
+    mockUseListScenarios.mockImplementation(() =>
+      useQuery({
+        queryKey: listKey,
+        queryFn: mockListFetch,
+        staleTime: Infinity,
+      })
+    );
+
+    render(
+      <QueryClientProvider client={singletonQc}>
+        <Home />
+      </QueryClientProvider>
+    );
+
+    const planCard = screen.getByTestId(`card-scenario-${scenarioId}`);
+    expect(planCard).toHaveTextContent("₹3.0 Cr projected");
+
+    currentScenarios = [{ ...initialScenario, projectedCorpus: 45_000_000 }];
+
+    await act(async () => {
+      await singletonQc.invalidateQueries({ queryKey: listKey });
+    });
+
+    await waitFor(() => expect(mockListFetch).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(planCard).toHaveTextContent("₹4.5 Cr projected");
+    });
+    expect(planCard).not.toHaveTextContent("₹3.0 Cr projected");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. Query-key contract verification
 // ---------------------------------------------------------------------------
 
 describe("query-key contract — getListScenariosQueryKey stability", () => {
