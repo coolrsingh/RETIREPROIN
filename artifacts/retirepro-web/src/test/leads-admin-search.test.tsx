@@ -7,8 +7,7 @@
  *  - The clear (×) button resets the search input to empty.
  *  - Empty state shows the typed search term and a "Clear search" link when
  *    no rows match.
- *  - Export CSV button is disabled when the combined result is empty,
- *    confirming it operates on the filtered+searched set.
+ *  - Export CSV remains available and exports all leads regardless of filters.
  */
 
 import React from "react";
@@ -306,9 +305,9 @@ describe("Leads Admin — search + filter", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 7. Export CSV button is disabled when the combined result is empty
+  // 7. Export CSV remains independent of the visible filters
   // -------------------------------------------------------------------------
-  it("disables Export CSV button when search + filter produce zero rows", async () => {
+  it("keeps Export CSV enabled when search + filter produce zero rows", async () => {
     renderLeadsAdmin(queryClient);
     const user = userEvent.setup();
 
@@ -317,7 +316,7 @@ describe("Leads Admin — search + filter", () => {
 
     await waitFor(() => {
       const exportBtn = screen.getByRole("button", { name: /export csv/i });
-      expect(exportBtn).toBeDisabled();
+      expect(exportBtn).not.toBeDisabled();
     });
   });
 
@@ -330,7 +329,7 @@ describe("Leads Admin — search + filter", () => {
     });
   });
 
-  it("shows the filtered row count when either search or a filter is active", async () => {
+  it("does not label the all-leads export with the filtered row count", async () => {
     renderLeadsAdmin(queryClient);
     const user = userEvent.setup();
 
@@ -339,13 +338,13 @@ describe("Leads Admin — search + filter", () => {
     const input = screen.getByPlaceholderText(/search by name/i);
     await user.type(input, "alice");
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Export CSV (1)" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "Clear search" }));
     await user.click(screen.getByRole("button", { name: "Last 7 days" }));
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Export CSV (2)" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "All" }));

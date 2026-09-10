@@ -6,7 +6,7 @@ import { ResponseValidationError } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown, Filter, Search, X } from "lucide-react";
+import { ArrowLeft, Download, Users, Mail, Phone, Globe, ArrowUpDown, ArrowUp, ArrowDown, Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import BrandLogo from "@/components/brand-logo";
 import { Link } from "wouter";
@@ -16,6 +16,7 @@ import type { FilterKey } from "@/lib/leadFilters";
 
 type SortKey = "name" | "createdAt" | "updatedAt";
 type SortDir = "asc" | "desc";
+const PAGE_SIZE = 50;
 
 function SortIcon({ col, sortBy, sortDir }: { col: SortKey; sortBy: SortKey; sortDir: SortDir }) {
   if (sortBy !== col) return <ArrowUpDown className="inline ml-1 h-3.5 w-3.5 text-slate-400" />;
@@ -31,6 +32,7 @@ export default function LeadsAdmin() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   const { data: leads = [], isLoading: leadsLoading, error: leadsError } = useQuery<any[]>({
     queryKey: ["/api/leads"],
@@ -94,12 +96,20 @@ export default function LeadsAdmin() {
     return 0;
   });
 
+  useEffect(() => {
+    setPage(1);
+  }, [activeFilter, searchQuery, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedLeads.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageLeads = sortedLeads.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const reEngagedCount = leads.filter(isReEngaged).length;
 
   const downloadCSV = () => {
-    if (!sortedLeads || sortedLeads.length === 0) return;
+    if (leads.length === 0) return;
     const headers = ["Name", "Email", "Phone", "Source", "Medium", "Campaign", "First contact", "Last contact", "Re-engaged"];
-    const rows = sortedLeads.map((l: any) => [
+    const rows = leads.map((l: any) => [
       l.name,
       l.email,
       l.phone,
@@ -169,12 +179,12 @@ export default function LeadsAdmin() {
           </div>
           <Button
             onClick={downloadCSV}
-            disabled={sortedLeads.length === 0}
+            disabled={leads.length === 0}
             className="text-white hover:opacity-90"
             style={{ background: "var(--leaf)", borderColor: "transparent" }}
           >
             <Download className="mr-2 h-4 w-4" />
-            Export CSV{activeFilter !== "all" || searchTerm ? ` (${sortedLeads.length})` : ""}
+            Export CSV
           </Button>
         </div>
 
@@ -330,8 +340,9 @@ export default function LeadsAdmin() {
                 </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left" style={{ borderBottom: "1px solid rgba(232,148,10,0.15)" }}>
                       <th
@@ -361,7 +372,7 @@ export default function LeadsAdmin() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedLeads.map((lead: any) => {
+                    {pageLeads.map((lead: any) => {
                       const reEngaged = isReEngaged(lead);
                       return (
                         <tr key={lead.id} className="hover:bg-amber-50/40 transition-colors" style={{ borderBottom: "1px solid rgba(232,148,10,0.08)" }}>
@@ -422,8 +433,43 @@ export default function LeadsAdmin() {
                       );
                     })}
                   </tbody>
-                </table>
-              </div>
+                  </table>
+                </div>
+                {totalPages > 1 && (
+                  <div
+                    className="mt-4 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t"
+                    style={{ borderColor: "rgba(232,148,10,0.12)" }}
+                  >
+                    <span className="text-sm" style={{ color: "var(--slate-mid)" }}>
+                      Page {safePage} of {totalPages} · {sortedLeads.length} lead{sortedLeads.length !== 1 ? "s" : ""}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                        disabled={safePage === 1}
+                        aria-label="Previous page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                        disabled={safePage === totalPages}
+                        aria-label="Next page"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
