@@ -260,10 +260,11 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                           onChange={e => { setPhone(e.target.value); setPhoneError(""); }}
                           data-testid="input-advisor-phone"
                           type="tel"
+                          aria-describedby={phoneError ? "advisor-phone-error" : undefined}
                           required
                         />
                         {phoneError && (
-                          <p className="mt-1 text-xs" style={{ color: "#E53E3E" }}>{phoneError}</p>
+                          <p id="advisor-phone-error" role="alert" className="mt-1 text-xs" style={{ color: "#E53E3E" }}>{phoneError}</p>
                         )}
                       </div>
 
