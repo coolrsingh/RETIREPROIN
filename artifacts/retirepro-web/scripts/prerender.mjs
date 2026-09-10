@@ -55,6 +55,10 @@ function esc(str) {
     .replace(/"/g, "&quot;");
 }
 
+function withTrailingSlash(url) {
+  return url.endsWith("/") ? url : `${url}/`;
+}
+
 /**
  * Build a route-specific HTML page:
  *   1. Replace <head> metadata (title, description, canonical, OG, Twitter)
@@ -64,6 +68,8 @@ function esc(str) {
  */
 function buildHtml({ title, description, canonical, ogUrl, ogType = "website", ogImage, jsonLd, bodyHtml, noindex = false }) {
   const img = ogImage || "https://retirepro.in/opengraph.jpg";
+  const canonicalUrl = withTrailingSlash(canonical);
+  const openGraphUrl = withTrailingSlash(ogUrl);
   let html = baseHtml;
 
   // <title>
@@ -78,18 +84,18 @@ function buildHtml({ title, description, canonical, ogUrl, ogType = "website", o
   // canonical
   html = html.replace(
     /(<link\s+rel="canonical"\s+href=")[^"]*(")/,
-    `$1${esc(canonical)}$2`,
+    `$1${esc(canonicalUrl)}$2`,
   );
 
   // og:type / og:url / og:title / og:description / og:image
   html = html.replace(/(<meta\s+property="og:type"\s+content=")[^"]*(")/,        `$1${ogType}$2`);
-  html = html.replace(/(<meta\s+property="og:url"\s+content=")[^"]*(")/,         `$1${esc(ogUrl)}$2`);
+  html = html.replace(/(<meta\s+property="og:url"\s+content=")[^"]*(")/,         `$1${esc(openGraphUrl)}$2`);
   html = html.replace(/(<meta\s+property="og:title"\s+content=")[^"]*(")/,       `$1${esc(title)}$2`);
   html = html.replace(/(<meta\s+property="og:description"\s+content=")[^"]*(")/,`$1${esc(description)}$2`);
   html = html.replace(/(<meta\s+property="og:image"\s+content=")[^"]*(")/,       `$1${esc(img)}$2`);
 
   // twitter:url / title / description / image
-  html = html.replace(/(<meta\s+name="twitter:url"\s+content=")[^"]*(")/,        `$1${esc(ogUrl)}$2`);
+  html = html.replace(/(<meta\s+name="twitter:url"\s+content=")[^"]*(")/,        `$1${esc(openGraphUrl)}$2`);
   html = html.replace(/(<meta\s+name="twitter:title"\s+content=")[^"]*(")/,      `$1${esc(title)}$2`);
   html = html.replace(/(<meta\s+name="twitter:description"\s+content=")[^"]*(")/,`$1${esc(description)}$2`);
   html = html.replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*(")/,      `$1${esc(img)}$2`);
@@ -146,23 +152,25 @@ function safeRender(url) {
  */
 function writeLegal(slug, srcFile, { title, description, canonical, ogUrl }) {
   let html = readFileSync(join(legalSrcDir, srcFile), "utf-8");
+  const canonicalUrl = withTrailingSlash(canonical);
+  const openGraphUrl = withTrailingSlash(ogUrl);
 
   const ogBlock = `
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="${ogUrl}" />
+   <meta property="og:url" content="${openGraphUrl}" />
   <meta property="og:title" content="${esc(title)}" />
   <meta property="og:description" content="${esc(description)}" />
   <meta property="og:image" content="https://retirepro.in/opengraph.jpg" />
   <meta property="og:site_name" content="RetirePro" />
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="${ogUrl}" />
+   <meta name="twitter:url" content="${openGraphUrl}" />
   <meta name="twitter:title" content="${esc(title)}" />
   <meta name="twitter:description" content="${esc(description)}" />
   <meta name="twitter:image" content="https://retirepro.in/opengraph.jpg" />
   <!-- Canonical -->
-  <link rel="canonical" href="${canonical}" />
+   <link rel="canonical" href="${canonicalUrl}" />
   <meta name="robots" content="index, follow" />`;
 
   html = html.replace("</head>", `${ogBlock}\n</head>`);

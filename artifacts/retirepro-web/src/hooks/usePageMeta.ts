@@ -25,6 +25,10 @@ function getCanonicalEl(): HTMLLinkElement | null {
   return document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
 }
 
+function withTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url : `${url}/`;
+}
+
 function setMeta(name: string, value: string | undefined): string {
   const el = getMetaEl(name);
   const prev = el?.content ?? "";
@@ -46,11 +50,16 @@ export function usePageMeta(meta: PageMeta) {
       description: setMeta("description", meta.description),
       ogTitle: setOg("og:title", meta.ogTitle ?? meta.title),
       ogDescription: setOg("og:description", meta.ogDescription ?? meta.description),
-      ogUrl: setOg("og:url", meta.ogUrl),
+      ogUrl: setOg("og:url", meta.ogUrl ? withTrailingSlash(meta.ogUrl) : undefined),
       ogType: setOg("og:type", meta.ogType),
       twitterTitle: setMeta("twitter:title", meta.twitterTitle ?? meta.ogTitle ?? meta.title),
       twitterDescription: setMeta("twitter:description", meta.twitterDescription ?? meta.ogDescription ?? meta.description),
-      twitterUrl: setMeta("twitter:url", meta.twitterUrl ?? meta.ogUrl),
+      twitterUrl: setMeta(
+        "twitter:url",
+        meta.twitterUrl || meta.ogUrl
+          ? withTrailingSlash(meta.twitterUrl ?? meta.ogUrl!)
+          : undefined,
+      ),
       canonical: getCanonicalEl()?.href ?? "",
     };
 
@@ -58,7 +67,7 @@ export function usePageMeta(meta: PageMeta) {
 
     if (meta.canonical !== undefined) {
       const el = getCanonicalEl();
-      if (el) el.href = meta.canonical;
+      if (el) el.href = withTrailingSlash(meta.canonical);
     }
 
     return () => {

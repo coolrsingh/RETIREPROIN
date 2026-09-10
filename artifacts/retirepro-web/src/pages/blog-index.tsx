@@ -45,7 +45,7 @@ export default function BlogIndex() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.15, duration: 0.5 }}
               >
-                <Link href={`/blog/${post.slug}`} className="group block bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <Link href={`/blog/${post.slug}/`} className="group block bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <div className={`h-48 bg-gradient-to-br ${post.gradient} flex items-end p-6`}>
                       <span className={`text-sm font-semibold px-3 py-1 rounded-full bg-white/20 text-white backdrop-blur-sm`}>
                         {post.tag}
