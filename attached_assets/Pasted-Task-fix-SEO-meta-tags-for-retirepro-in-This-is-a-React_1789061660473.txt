@@ -1,0 +1,56 @@
+Task: fix SEO meta tags for retirepro.in. This is a React SPA. Every route
+currently serves the SAME static index.html with a hardcoded title and
+canonical="https://retirepro.in", so Google sees all 22 pages as duplicates of
+the homepage. Only 8 of 22 pages are indexed.
+
+Do EXACTLY these 4 changes. Do not refactor anything else. Do not add SSR.
+Do not add a new framework. Do not change styling or components.
+
+--- CHANGE 1: canonical URLs must use trailing slashes ---
+The server 301-redirects /blog/foo to /blog/foo/ (with slash), but the
+client-side canonical tag currently outputs the NO-slash version. That is a
+redirect loop from Google's point of view.
+Find where the canonical <link> is set at runtime (React Helmet, react-helmet-async,
+a useEffect, or a custom SEO component) and make it always output a trailing slash,
+e.g. https://retirepro.in/blog/why-indians-fail-retirement/
+Homepage stays https://retirepro.in/
+
+--- CHANGE 2: sitemap.xml must use trailing slashes ---
+Open public/sitemap.xml (or wherever sitemap.xml lives). Add a trailing slash to
+every single <loc> except the homepage. Example:
+  before: <loc>https://retirepro.in/blog/nps-vs-ppf-vs-sip</loc>
+  after:  <loc>https://retirepro.in/blog/nps-vs-ppf-vs-sip/</loc>
+Do not add, remove or reorder any URLs. There are 22.
+
+--- CHANGE 3: build-time prerender of meta tags (the important one) ---
+The app already has correct per-route SEO data, because the right title and
+description appear after JavaScript runs. FIND that existing data source (a routes
+array, a blog posts array/JSON, MDX frontmatter, or the SEO component's props).
+REUSE it. Do not invent new titles or descriptions.
+
+Then add a post-build Node script, scripts/prerender-meta.mjs, that runs AFTER
+the normal build and, for every route in that data source:
+  1. reads the built index.html from the output folder (detect: dist/ or build/)
+  2. replaces <title>...</title> with that route's title
+  3. replaces the meta name="description" content with that route's description
+  4. replaces the canonical href with https://retirepro.in<route>/  (trailing slash)
+  5. replaces og:title, og:description and og:url the same way (add them if absent)
+  6. writes the result to <output>/<route>/index.html, creating folders as needed
+Leave the root index.html as the homepage version.
+
+Wire it into package.json so it runs automatically, e.g.
+  "build": "<existing build command> && node scripts/prerender-meta.mjs"
+Use only Node built-ins (fs, path, url). Do not install any npm packages.
+
+--- CHANGE 4: make the blog index crawlable in raw HTML ---
+On /blog, make sure every post is a real <a href="/blog/<slug>/"> anchor tag
+(with the trailing slash), not an onClick/router.push div or button. If they are
+already anchors, leave them alone and say so.
+
+--- ACCEPTANCE CHECK (do this and paste the output) ---
+After building, run these and show me the results:
+  grep -o '<title>[^<]*</title>' dist/index.html
+  grep -o '<title>[^<]*</title>' dist/blog/why-indians-fail-retirement/index.html
+  grep -o 'rel="canonical"[^>]*' dist/blog/why-indians-fail-retirement/index.html
+(substitute build/ for dist/ if that is the output folder)
+The two titles MUST be different, and the canonical MUST end with a trailing slash.
