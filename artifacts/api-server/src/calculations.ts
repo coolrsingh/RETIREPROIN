@@ -118,9 +118,11 @@ export async function calculateRetirementPlan(scenarioData: ScenarioData): Promi
     return isNaN(parsed) ? defaultDecimal : parsed / 100;
   };
 
-  const epfAsset = scenarioData.assets.find((a: any) => a.id === 'epf');
-  const npsAsset = scenarioData.assets.find((a: any) => a.id === 'nps');
-  const generalAssetsList = scenarioData.assets.filter((a: any) => a.id !== 'epf' && a.id !== 'nps');
+  const isEpfAsset = (asset: any) => asset.id === 'epf' || String(asset.id).startsWith('epf:');
+  const isNpsAsset = (asset: any) => asset.id === 'nps' || String(asset.id).startsWith('nps:');
+  const epfAsset = scenarioData.assets.find(isEpfAsset);
+  const npsAsset = scenarioData.assets.find(isNpsAsset);
+  const generalAssetsList = scenarioData.assets.filter((a: any) => !isEpfAsset(a) && !isNpsAsset(a));
 
   let generalBalance = generalAssetsList.reduce((sum: number, a: any) => sum + parseFloat(a.value || '0'), 0);
   const generalReturnPreRate = parseRateOrDefault(generalAssetsList[0]?.expectedReturnPre, returnPre);

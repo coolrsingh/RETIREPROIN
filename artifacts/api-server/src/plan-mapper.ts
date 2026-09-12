@@ -77,21 +77,21 @@ export function buildGuestAssets(
       expectedReturnPost: returnPostStr,
     });
   }
-  if (planData.epfCorpus && planData.epfCorpus > 0) {
+  if ((planData.epfCorpus ?? 0) > 0 || (planData.epfMonthlyContribution ?? 0) > 0) {
     assets.push({
       id: "epf",
       kind: "equity",
-      value: String(planData.epfCorpus),
+      value: String(planData.epfCorpus ?? 0),
       expectedReturnPre: planData.epfReturn != null ? String(planData.epfReturn) : "8",
       expectedReturnPost: returnPostStr,
       monthlyContribution: String(planData.epfMonthlyContribution ?? 0),
     });
   }
-  if (planData.npsCorpus && planData.npsCorpus > 0) {
+  if ((planData.npsCorpus ?? 0) > 0 || (planData.npsMonthlyContribution ?? 0) > 0) {
     assets.push({
       id: "nps",
       kind: "equity",
-      value: String(planData.npsCorpus),
+      value: String(planData.npsCorpus ?? 0),
       expectedReturnPre: planData.npsReturn != null ? String(planData.npsReturn) : "10",
       expectedReturnPost: returnPostStr,
       monthlyContribution: String(planData.npsMonthlyContribution ?? 0),

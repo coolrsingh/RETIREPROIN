@@ -115,6 +115,20 @@ describe("buildGuestAssets – per-asset return overrides", () => {
     expect(assets.find((a) => a.id === "epf")!.monthlyContribution).toBe("3000");
     expect(assets.find((a) => a.id === "nps")!.monthlyContribution).toBe("5000");
   });
+
+  it("creates an NPS asset for a monthly contribution even when the current corpus is zero", () => {
+    const assets = buildGuestAssets(
+      { personaMode: "accumulating", npsCorpus: 0, npsMonthlyContribution: 5000 },
+      "12.0",
+      "8.0",
+    );
+
+    expect(assets.find((a) => a.id === "nps")).toMatchObject({
+      value: "0",
+      expectedReturnPre: "10",
+      monthlyContribution: "5000",
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -122,6 +136,25 @@ describe("buildGuestAssets – per-asset return overrides", () => {
 // ---------------------------------------------------------------------------
 
 describe("calculateRetirementPlan – EPF/NPS independent buckets", () => {
+  it("recognizes saved scenario-scoped NPS IDs and grows contributions at 10%", async () => {
+    const result = await calculateRetirementPlan(
+      baseScenario({
+        assets: [{
+          id: "nps:scenario-id",
+          kind: "equity",
+          value: "0",
+          expectedReturnPre: "10",
+          expectedReturnPost: "8",
+          monthlyContribution: "5000",
+        }],
+        monthlyIncome: 50_000,
+        monthlyExpense: 50_000,
+      }) as any,
+    );
+
+    expect(result.netWorthSeries.find((p) => p.year === CURRENT_YEAR + 1)!.value).toBeGreaterThan(120_000);
+  });
+
   it("EPF grows faster with a higher expectedReturnPre than a lower one, all else equal", async () => {
     const lowReturn = await calculateRetirementPlan(
       baseScenario({

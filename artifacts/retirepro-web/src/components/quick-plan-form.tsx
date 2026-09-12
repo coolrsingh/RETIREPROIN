@@ -1266,6 +1266,11 @@ export default function QuickPlanForm({ onSubmit, isLoading, profileDefaults }: 
                       <p className="text-xs text-emerald-700 mt-1">
                         Your monthly NPS deduction (80CCD(1B) gives extra ₹50,000 tax benefit). Deducted from Monthly Savings above.
                       </p>
+                      {npsMonthlyContributionWatch > 0 && (
+                        <p className="text-xs font-medium text-emerald-800 mt-2" data-testid="note-nps-contribution-included">
+                          Included in your NPS corpus projection at the NPS return rate (10% by default).
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

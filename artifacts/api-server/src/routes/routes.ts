@@ -777,21 +777,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Each carries its own expected return and monthly contribution, which
           // calculations.ts grows independently of the general savings pool.
           if (!authIsRetired) {
-            if (planData.epfCorpus && planData.epfCorpus > 0) {
+            if ((planData.epfCorpus ?? 0) > 0 || (planData.epfMonthlyContribution ?? 0) > 0) {
               await tx.insert(assets).values({
+                id: `epf:${scenarioId}`,
                 scenarioId,
                 kind: 'equity',
-                value: planData.epfCorpus.toString(),
+                value: (planData.epfCorpus ?? 0).toString(),
                 expectedReturnPre: planData.epfReturn?.toString() || '8',
                 expectedReturnPost: crmDefaults.returnPost,
                 monthlyContribution: (planData.epfMonthlyContribution ?? 0).toString(),
               });
             }
-            if (planData.npsCorpus && planData.npsCorpus > 0) {
+            if ((planData.npsCorpus ?? 0) > 0 || (planData.npsMonthlyContribution ?? 0) > 0) {
               await tx.insert(assets).values({
+                id: `nps:${scenarioId}`,
                 scenarioId,
                 kind: 'equity',
-                value: planData.npsCorpus.toString(),
+                value: (planData.npsCorpus ?? 0).toString(),
                 expectedReturnPre: planData.npsReturn?.toString() || '10',
                 expectedReturnPost: crmDefaults.returnPost,
                 monthlyContribution: (planData.npsMonthlyContribution ?? 0).toString(),
