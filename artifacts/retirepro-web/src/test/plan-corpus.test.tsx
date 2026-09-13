@@ -336,7 +336,50 @@ describe("AssumptionsPanel — display driven by cache invalidation and refetch"
     singletonQc.clear();
   });
 
-  it("shows the updated inflationHeadline without a page reload — value comes from cache refetch, not manual prop update", async () => {
+  it.each([
+    {
+      field: "inflationHeadline",
+      inputTestId: "input-inflation-headline",
+      displayTestId: "assumption-inflation-headline",
+      initialDisplay: "6.0%",
+      updatedValue: "7.5",
+      updatedDisplay: "7.5%",
+    },
+    {
+      field: "inflationEdu",
+      inputTestId: "input-inflation-edu",
+      displayTestId: "assumption-inflation-edu",
+      initialDisplay: "8.0%",
+      updatedValue: "9.5",
+      updatedDisplay: "9.5%",
+    },
+    {
+      field: "returnPre",
+      inputTestId: "input-return-pre",
+      displayTestId: "assumption-return-pre",
+      initialDisplay: "10.0%",
+      updatedValue: "11.5",
+      updatedDisplay: "11.5%",
+    },
+    {
+      field: "returnPost",
+      inputTestId: "input-return-post",
+      displayTestId: "assumption-return-post",
+      initialDisplay: "7.0%",
+      updatedValue: "8.5",
+      updatedDisplay: "8.5%",
+    },
+    {
+      field: "lifeExpectancy",
+      inputTestId: "input-life-expectancy",
+      displayTestId: "assumption-life-expectancy",
+      initialDisplay: "85 years",
+      updatedValue: "90",
+      updatedDisplay: "90 years",
+    },
+  ] as const)(
+    "shows the updated $field without a page reload — value comes from cache refetch, not manual prop update",
+    async ({ field, inputTestId, displayTestId, initialDisplay, updatedValue, updatedDisplay }) => {
     const user = userEvent.setup();
 
     const initialScenario = {
@@ -354,7 +397,10 @@ describe("AssumptionsPanel — display driven by cache invalidation and refetch"
 
     const updatedScenario = {
       ...initialScenario,
-      assumptions: { ...initialScenario.assumptions, inflationHeadline: "7.5" },
+      assumptions: {
+        ...initialScenario.assumptions,
+        [field]: field === "lifeExpectancy" ? Number(updatedValue) : updatedValue,
+      },
     };
 
     // The queryFn returns whichever scenario data is current.
@@ -395,20 +441,17 @@ describe("AssumptionsPanel — display driven by cache invalidation and refetch"
       </QueryClientProvider>
     );
 
-    // Initial display shows "6.0%".
-    expect(screen.getByTestId("assumption-inflation-headline")).toHaveTextContent("6.0%");
+    expect(screen.getByTestId(displayTestId)).toHaveTextContent(initialDisplay);
 
-    // Enter edit mode, change inflationHeadline to "7.5", and click Save.
     await user.click(screen.getByTestId("button-edit-assumptions"));
-    const input = screen.getByTestId("input-inflation-headline");
+    const input = screen.getByTestId(inputTestId);
     await user.clear(input);
-    await user.type(input, "7.5");
+    await user.type(input, updatedValue);
     await user.click(screen.getByTestId("button-save-assumptions"));
 
     expect(mockMutate).toHaveBeenCalledOnce();
 
     // Swap the data the queryFn will return BEFORE triggering onSuccess.
-    // This way the refetch that invalidateQueries triggers reads "7.5".
     currentScenarioData = updatedScenario;
 
     // Simulate the PUT response arriving successfully.
@@ -430,13 +473,11 @@ describe("AssumptionsPanel — display driven by cache invalidation and refetch"
     // manual rerender).
     await waitFor(() => expect(mockScenarioFetch).toHaveBeenCalled());
 
-    // The dashboard now shows "7.5%" — the value from the refreshed cache.
-    // No page reload. No manual rerender in the test.
     await waitFor(() => {
-      expect(screen.getByTestId("assumption-inflation-headline")).toHaveTextContent("7.5%");
+      expect(screen.getByTestId(displayTestId)).toHaveTextContent(updatedDisplay);
     });
 
-    expect(screen.getByTestId("assumption-inflation-headline")).not.toHaveTextContent("6.0%");
+    expect(screen.getByTestId(displayTestId)).not.toHaveTextContent(initialDisplay);
   });
 });
 
