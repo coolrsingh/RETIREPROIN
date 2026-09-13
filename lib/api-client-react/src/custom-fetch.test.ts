@@ -191,3 +191,34 @@ describe("configureZodValidation — profile endpoints", () => {
     configureZodValidation(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Lead capture response validation
+// ---------------------------------------------------------------------------
+
+describe("configureZodValidation — lead capture", () => {
+  it("throws ResponseValidationError when POST /lead response is missing phone", async () => {
+    configureZodValidation(true);
+
+    stubFetch(makeFetchResponse({ id: "lead-1", name: "Alice" }));
+
+    await expect(
+      customFetch("/api/lead", { method: "POST" }),
+    ).rejects.toBeInstanceOf(ResponseValidationError);
+  });
+
+  it("passes through a well-formed POST /lead response without error", async () => {
+    configureZodValidation(true);
+
+    const validLead = {
+      id: "lead-1",
+      name: "Alice",
+      phone: "+1 555 0100",
+    };
+    stubFetch(makeFetchResponse(validLead));
+
+    await expect(
+      customFetch("/api/lead", { method: "POST" }),
+    ).resolves.toEqual(validLead);
+  });
+});
