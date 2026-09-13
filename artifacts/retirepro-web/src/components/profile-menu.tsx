@@ -15,11 +15,12 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { User, Phone, Calendar, TrendingUp, Wallet, PiggyBank, BarChart2, Edit2, LogOut, Share2, Check } from "lucide-react";
+import { User, Phone, Calendar, TrendingUp, Wallet, PiggyBank, BarChart2, Edit2, LogOut, Share2, Check, Trash2 } from "lucide-react";
 import MonthYearPicker from "@/components/month-year-picker";
 
 function fmt(v: string | null | undefined, prefix = "₹") {
@@ -34,6 +35,8 @@ interface ProfileMenuProps {
 
 export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletionConfirmation, setDeletionConfirmation] = useState("");
   const [shared, setShared] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -75,6 +78,22 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
     mutationFn: () => apiRequest("POST", "/api/share", {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/account", { confirmation: deletionConfirmation }),
+    onSuccess: () => {
+      queryClient.clear();
+      setDeleteOpen(false);
+      window.location.assign("/");
+    },
+    onError: () => {
+      toast({
+        title: "Account deletion failed",
+        description: "Your data has not been deleted. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -174,6 +193,18 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
               <LogOut className="h-3.5 w-3.5 mr-1" />
               Sign Out
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={() => {
+                setDeletionConfirmation("");
+                setDeleteOpen(true);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              Delete RetirePro data
+            </Button>
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -231,6 +262,44 @@ export default function ProfileMenu({ user, isAdmin }: ProfileMenuProps) {
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button onClick={() => saveMutation.mutate({ data: form })} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete your RetirePro account?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes your RetirePro profile, saved plans, financial information, and associated records. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="delete-account-confirmation">
+              Type <span className="font-semibold">DELETE</span> to confirm
+            </Label>
+            <Input
+              id="delete-account-confirmation"
+              value={deletionConfirmation}
+              onChange={(event) => setDeletionConfirmation(event.target.value)}
+              autoComplete="off"
+              placeholder="DELETE"
+            />
+            <p className="text-xs text-slate-500">
+              This removes data held by RetirePro, not your separate Replit sign-in account.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteMutation.isPending}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deletionConfirmation !== "DELETE" || deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Permanently delete data"}
             </Button>
           </DialogFooter>
         </DialogContent>

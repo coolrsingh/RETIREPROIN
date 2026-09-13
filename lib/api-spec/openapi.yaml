@@ -53,6 +53,26 @@ paths:
         "401":
           description: Unauthenticated
 
+  /account:
+    delete:
+      operationId: deleteAccount
+      tags: [auth]
+      summary: Delete RetirePro account data
+      description: Permanently deletes the authenticated user's RetirePro profile, saved plans, and associated data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountDeletionRequest"
+      responses:
+        "204":
+          description: Account data deleted
+        "400":
+          description: Deletion confirmation is invalid
+        "401":
+          description: Unauthenticated
+
   /scenarios:
     get:
       operationId: listScenarios
@@ -398,6 +418,16 @@ components:
       required:
         - id
         - planCount
+
+    AccountDeletionRequest:
+      type: object
+      description: Confirmation required before permanently deleting RetirePro-held account data.
+      properties:
+        confirmation:
+          type: string
+          enum: ["DELETE"]
+      required:
+        - confirmation
 
     PlanReportEmailInput:
       type: object

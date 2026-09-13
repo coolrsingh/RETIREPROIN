@@ -13,6 +13,7 @@ import {
   EmailScenarioReportResponse,
   EmailGuestPlanSummaryBody,
   EmailGuestPlanSummaryResponse,
+  DeleteAccountBody,
 } from "@workspace/api-zod";
 import {
   quickPlanSchema, insertScenarioSchema, insertLeadSchema,
@@ -117,6 +118,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.delete('/api/account', isAuthenticated, async (req: any, res): Promise<void> => {
+    const parsed = DeleteAccountBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: 'Type DELETE to confirm account deletion.' });
+      return;
+    }
+
+    try {
+      const userId = req.user.claims.sub;
+      await storage.deleteUserData(userId);
+      req.logout(() => {
+        req.session.destroy(() => {
+          res.clearCookie('connect.sid');
+          res.sendStatus(204);
+        });
+      });
+    } catch (error) {
+      req.log.error({ err: error }, 'Account data deletion failed');
+      res.status(500).json({ message: 'We could not delete your account data. Please try again.' });
     }
   });
 

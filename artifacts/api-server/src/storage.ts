@@ -12,6 +12,8 @@ import {
   leads,
   crmDefaults,
   subscribers,
+  planEmailLeads,
+  sessions,
   type User,
   type UpsertUser,
   type Scenario,
@@ -39,7 +41,7 @@ import {
   type Subscriber,
 } from "@workspace/db";
 import { db } from "./db";
-import { eq, and, or, sql, desc } from "drizzle-orm";
+import { eq, and, or, sql, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -59,6 +61,7 @@ export interface IStorage {
   decrementPlanCount(userId: string): Promise<void>;
   updateUserProfile(userId: string, profile: Partial<UpsertUser>): Promise<User>;
   incrementShareCount(userId: string): Promise<User>;
+  deleteUserData(userId: string): Promise<void>;
   
   // Subscriber operations
   subscribeEmail(email: string, source?: string): Promise<Subscriber>;
@@ -205,6 +208,48 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async deleteUserData(userId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      const [user] = await tx
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, userId));
+      const userScenarios = await tx
+        .select({ id: scenarios.id })
+        .from(scenarios)
+        .where(eq(scenarios.userId, userId));
+      const scenarioIds = userScenarios.map((scenario) => scenario.id);
+
+      if (scenarioIds.length > 0) {
+        await Promise.all([
+          tx.delete(assumptions).where(inArray(assumptions.scenarioId, scenarioIds)),
+          tx.delete(householdMembers).where(inArray(householdMembers.scenarioId, scenarioIds)),
+          tx.delete(incomeItems).where(inArray(incomeItems.scenarioId, scenarioIds)),
+          tx.delete(expenseItems).where(inArray(expenseItems.scenarioId, scenarioIds)),
+          tx.delete(goals).where(inArray(goals.scenarioId, scenarioIds)),
+          tx.delete(assets).where(inArray(assets.scenarioId, scenarioIds)),
+          tx.delete(liabilities).where(inArray(liabilities.scenarioId, scenarioIds)),
+          tx.delete(miniRetirements).where(inArray(miniRetirements.scenarioId, scenarioIds)),
+          tx.delete(leads).where(inArray(leads.scenarioId, scenarioIds)),
+        ]);
+        await tx.delete(scenarios).where(inArray(scenarios.id, scenarioIds));
+      }
+
+      if (user?.email) {
+        await Promise.all([
+          tx.delete(subscribers).where(eq(subscribers.email, user.email)),
+          tx.delete(planEmailLeads).where(eq(planEmailLeads.email, user.email)),
+          tx.delete(leads).where(eq(leads.email, user.email)),
+        ]);
+      }
+
+      await tx
+        .delete(sessions)
+        .where(sql`${sessions.sess} #>> '{passport,user,claims,sub}' = ${userId}`);
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   // Scenario operations

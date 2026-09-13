@@ -40,6 +40,20 @@ export interface AuthUser {
   planCount: number;
 }
 
+export type AccountDeletionRequestConfirmation = typeof AccountDeletionRequestConfirmation[keyof typeof AccountDeletionRequestConfirmation];
+
+
+export const AccountDeletionRequestConfirmation = {
+  DELETE: 'DELETE',
+} as const;
+
+/**
+ * Confirmation required before permanently deleting RetirePro-held account data.
+ */
+export interface AccountDeletionRequest {
+  confirmation: AccountDeletionRequestConfirmation;
+}
+
 /**
  * Confirmed recipient for a private plan report
  */

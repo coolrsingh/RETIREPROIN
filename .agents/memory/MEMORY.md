@@ -7,3 +7,4 @@
 - [RetirePro guest plan email](retirepro-guest-plan-email.md) — guest PDF summaries use Resend; optional marketing consent is recorded locally, not synced externally.
 - [RetirePro PDF browser runtime](retirepro-pdf-browser-runtime.md) — Puppeteer needs system Chromium and PATH-based executable resolution for report generation.
 - [Lead phone conflict indexes](retirepro-lead-conflict-index.md) — PostgreSQL phone upserts require a unique arbiter; a plain B-tree index cannot satisfy ON CONFLICT.
+- [RetirePro account deletion](retirepro-account-deletion.md) — deletion erases RetirePro-held data and sessions, not the separate Replit identity; re-login begins a fresh app profile.

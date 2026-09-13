@@ -34,6 +34,15 @@ export const GetAuthUserResponse = zod.object({
 
 
 /**
+ * Permanently deletes the authenticated user's RetirePro profile, saved plans, and associated data.
+ * @summary Delete RetirePro account data
+ */
+export const DeleteAccountBody = zod.object({
+  "confirmation": zod.enum(['DELETE'])
+}).describe('Confirmation required before permanently deleting RetirePro-held account data.')
+
+
+/**
  * Returns all retirement scenarios for the authenticated user
  * @summary List user scenarios
  */
