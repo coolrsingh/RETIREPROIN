@@ -19,6 +19,11 @@ interface AssumptionsPanelProps {
       lifeExpectancy?: number | null;
       source?: string | null;
     } | null;
+    assets?: Array<{
+      id: string;
+      expectedReturnPre?: string | null;
+      monthlyContribution?: string | null;
+    }>;
   };
   /** CRM-level defaults; taxRegime lives here, not in the assumptions table. */
   crmDefaults?: {
@@ -28,6 +33,12 @@ interface AssumptionsPanelProps {
 
 export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsPanelProps) {
   const assumptions = scenario.assumptions;
+  const epfAsset = scenario.assets?.find(asset => asset.id === 'epf' || asset.id.startsWith('epf:'));
+  const npsAsset = scenario.assets?.find(asset => asset.id === 'nps' || asset.id.startsWith('nps:'));
+  const otherAsset = scenario.assets?.find(asset =>
+    asset.id !== 'epf' && !asset.id.startsWith('epf:') &&
+    asset.id !== 'nps' && !asset.id.startsWith('nps:')
+  );
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editValues, setEditValues] = useState({
@@ -36,6 +47,13 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
     returnPre: assumptions?.returnPre || '10.0',
     returnPost: assumptions?.returnPost || '7.0',
     lifeExpectancy: assumptions?.lifeExpectancy || 85,
+  });
+  const [assetEditValues, setAssetEditValues] = useState({
+    otherReturn: otherAsset?.expectedReturnPre || assumptions?.returnPre || '10.0',
+    epfReturn: epfAsset?.expectedReturnPre || '8.0',
+    epfContribution: epfAsset?.monthlyContribution || '0',
+    npsReturn: npsAsset?.expectedReturnPre || '10.0',
+    npsContribution: npsAsset?.monthlyContribution || '0',
   });
 
   const updateAssumptionsMutation = useUpdateScenario({
@@ -65,6 +83,22 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
   });
 
   const handleSave = () => {
+    const rates = [assetEditValues.otherReturn, assetEditValues.epfReturn, assetEditValues.npsReturn];
+    const contributions = [assetEditValues.epfContribution, assetEditValues.npsContribution];
+    const invalidRate = rates.some(value => value.trim() === '' || Number(value) < 0 || Number(value) > 30);
+    const invalidContribution = contributions.some(value =>
+      value.trim() === '' || Number(value) < 0 || Number(value) > 100000000
+    );
+
+    if (invalidRate || invalidContribution) {
+      toast({
+        title: "Check asset settings",
+        description: "Returns must be 0–30%, and monthly contributions must be between ₹0 and ₹10 crore.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     updateAssumptionsMutation.mutate({
       id: scenario.id,
       data: {
@@ -73,6 +107,25 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
           ...editValues,
           source: 'user',
         },
+        assets: [
+          {
+            id: otherAsset?.id,
+            bucket: 'other',
+            expectedReturnPre: assetEditValues.otherReturn,
+          },
+          {
+            id: epfAsset?.id,
+            bucket: 'epf',
+            expectedReturnPre: assetEditValues.epfReturn,
+            monthlyContribution: assetEditValues.epfContribution,
+          },
+          {
+            id: npsAsset?.id,
+            bucket: 'nps',
+            expectedReturnPre: assetEditValues.npsReturn,
+            monthlyContribution: assetEditValues.npsContribution,
+          },
+        ],
       },
     });
   };
@@ -84,6 +137,13 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
       returnPre: assumptions?.returnPre || '10.0',
       returnPost: assumptions?.returnPost || '7.0',
       lifeExpectancy: assumptions?.lifeExpectancy || 85,
+    });
+    setAssetEditValues({
+      otherReturn: otherAsset?.expectedReturnPre || assumptions?.returnPre || '10.0',
+      epfReturn: epfAsset?.expectedReturnPre || '8.0',
+      epfContribution: epfAsset?.monthlyContribution || '0',
+      npsReturn: npsAsset?.expectedReturnPre || '10.0',
+      npsContribution: npsAsset?.monthlyContribution || '0',
     });
     setIsEditing(false);
   };
@@ -286,6 +346,37 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
             </div>
           </div>
 
+          <div className="border-t pt-4">
+            <p className="mb-3 text-sm font-semibold text-slate-800">Asset growth &amp; contributions</p>
+            <div className="space-y-4">
+              <AssetSettingRow
+                label="Other Investments"
+                isEditing={isEditing}
+                returnValue={assetEditValues.otherReturn}
+                onReturnChange={(value) => setAssetEditValues(prev => ({ ...prev, otherReturn: value }))}
+                testId="other-investments"
+              />
+              <AssetSettingRow
+                label="EPF"
+                isEditing={isEditing}
+                returnValue={assetEditValues.epfReturn}
+                contributionValue={assetEditValues.epfContribution}
+                onReturnChange={(value) => setAssetEditValues(prev => ({ ...prev, epfReturn: value }))}
+                onContributionChange={(value) => setAssetEditValues(prev => ({ ...prev, epfContribution: value }))}
+                testId="epf"
+              />
+              <AssetSettingRow
+                label="NPS"
+                isEditing={isEditing}
+                returnValue={assetEditValues.npsReturn}
+                contributionValue={assetEditValues.npsContribution}
+                onReturnChange={(value) => setAssetEditValues(prev => ({ ...prev, npsReturn: value }))}
+                onContributionChange={(value) => setAssetEditValues(prev => ({ ...prev, npsContribution: value }))}
+                testId="nps"
+              />
+            </div>
+          </div>
+
           {/* Tax Regime — read-only; lives in CRM defaults, not in the assumptions table */}
           <div className="flex justify-between items-center border-t pt-4 mt-2">
             <span className="text-sm text-slate-600">Tax Regime</span>
@@ -301,5 +392,81 @@ export default function AssumptionsPanel({ scenario, crmDefaults }: AssumptionsP
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+interface AssetSettingRowProps {
+  label: string;
+  isEditing: boolean;
+  returnValue: string;
+  contributionValue?: string;
+  onReturnChange: (value: string) => void;
+  onContributionChange?: (value: string) => void;
+  testId: string;
+}
+
+function AssetSettingRow({
+  label,
+  isEditing,
+  returnValue,
+  contributionValue,
+  onReturnChange,
+  onContributionChange,
+  testId,
+}: AssetSettingRowProps) {
+  if (!isEditing) {
+    return (
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-sm text-slate-600">{label}</span>
+        <div className="text-right">
+          <span className="text-sm font-medium" data-testid={`asset-${testId}-return`}>
+            {Number(returnValue).toFixed(1)}% return
+          </span>
+          {contributionValue !== undefined && (
+            <span className="block text-xs text-slate-500" data-testid={`asset-${testId}-contribution`}>
+              ₹{Number(contributionValue).toLocaleString('en-IN')}/month
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 p-3">
+      <p className="mb-2 text-sm font-medium text-slate-700">{label}</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="text-xs text-slate-600">
+          Expected return (%)
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            min="0"
+            max="30"
+            value={returnValue}
+            onChange={(event) => onReturnChange(event.target.value)}
+            className="mt-1 h-8"
+            data-testid={`input-${testId}-return`}
+          />
+        </label>
+        {contributionValue !== undefined && onContributionChange && (
+          <label className="text-xs text-slate-600">
+            Monthly contribution (₹)
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="100"
+              min="0"
+              max="100000000"
+              value={contributionValue}
+              onChange={(event) => onContributionChange(event.target.value)}
+              className="mt-1 h-8"
+              data-testid={`input-${testId}-contribution`}
+            />
+          </label>
+        )}
+      </div>
+    </div>
   );
 }

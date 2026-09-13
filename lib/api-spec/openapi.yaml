@@ -567,6 +567,31 @@ components:
           type: ["string", "null"]
           enum: ["crm", "user", null]
 
+    ScenarioAsset:
+      type: object
+      description: An investment asset attached to a scenario
+      properties:
+        id:
+          type: string
+        scenarioId:
+          type: string
+        kind:
+          type: string
+          enum: ["equity", "debt", "real_estate", "gold", "cash"]
+        value:
+          type: string
+        expectedReturnPre:
+          type: ["string", "null"]
+        expectedReturnPost:
+          type: ["string", "null"]
+        monthlyContribution:
+          type: ["string", "null"]
+      required:
+        - id
+        - scenarioId
+        - kind
+        - value
+
     ScenarioData:
       type: object
       description: Full scenario with all associated data
@@ -590,6 +615,10 @@ components:
           oneOf:
             - $ref: "#/components/schemas/ScenarioAssumptions"
             - type: "null"
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenarioAsset"
       required:
         - id
         - userId
@@ -659,6 +688,23 @@ components:
           type: ["string", "null"]
           enum: ["crm", "user", null]
 
+    UpdateScenarioAssetBody:
+      type: object
+      description: Editable projection settings for an existing scenario asset
+      properties:
+        id:
+          type: string
+        bucket:
+          type: string
+          enum: ["other", "epf", "nps"]
+        expectedReturnPre:
+          type: string
+        monthlyContribution:
+          type: string
+      required:
+        - bucket
+        - expectedReturnPre
+
     UpdateScenarioBody:
       type: object
       description: Partial update payload for a scenario
@@ -669,6 +715,10 @@ components:
           type: ["string", "null"]
         assumptions:
           $ref: "#/components/schemas/UpdateScenarioAssumptionsBody"
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateScenarioAssetBody"
 
     UpdateCrmDefaultsBody:
       type: object

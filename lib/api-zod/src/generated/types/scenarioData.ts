@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ScenarioAsset } from './scenarioAsset';
 import type { ScenarioAssumptions } from './scenarioAssumptions';
 import type { ScenarioDataMode } from './scenarioDataMode';
 
@@ -23,4 +24,5 @@ export interface ScenarioData {
   /** @nullable */
   updatedAt?: string | null;
   assumptions?: ScenarioAssumptions | null;
+  assets?: ScenarioAsset[];
 }

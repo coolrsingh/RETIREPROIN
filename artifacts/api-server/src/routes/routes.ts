@@ -37,10 +37,24 @@ const updateScenarioAssumptionsSchema = z.object({
   source: z.enum(['crm', 'user']).nullable().optional(),
 });
 
+const updateScenarioAssetSchema = z.object({
+  id: z.string().min(1).optional(),
+  bucket: z.enum(['other', 'epf', 'nps']),
+  expectedReturnPre: z.string().regex(/^\d+(\.\d+)?$/).refine((value) => {
+    const rate = Number(value);
+    return rate >= 0 && rate <= 30;
+  }, "Expected return must be between 0 and 30"),
+  monthlyContribution: z.string().regex(/^\d+(\.\d+)?$/).refine((value) => {
+    const contribution = Number(value);
+    return contribution >= 0 && contribution <= 100000000;
+  }, "Monthly contribution must be between 0 and 100000000").optional(),
+});
+
 const updateScenarioBodySchema = z.object({
   name: z.string().optional(),
   leadId: z.string().nullable().optional(),
   assumptions: updateScenarioAssumptionsSchema.optional(),
+  assets: z.array(updateScenarioAssetSchema).max(3).optional(),
 });
 
 function generateExcelBuffer(
@@ -276,40 +290,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Split the payload: `assumptions` lives in a separate table and must be
       // routed to upsertAssumptions, not to the scenarios row update.
-      const { assumptions: assumptionsPayload, ...scenarioFields } = parsed.data;
+      const { assumptions: assumptionsPayload, assets: assetPayloads, ...scenarioFields } = parsed.data;
 
-      const updatedScenario = await storage.updateScenario(req.params.id, scenarioFields);
+      const updatedScenario = await db.transaction(async (tx) => {
+        const [scenarioRow] = await tx
+          .update(scenarios)
+          .set({ ...scenarioFields, updatedAt: new Date() })
+          .where(and(eq(scenarios.id, req.params.id), eq(scenarios.userId, userId)))
+          .returning();
 
-      // Persist assumption changes when the client sends them.
-      if (assumptionsPayload) {
-        await storage.upsertAssumptions({
-          scenarioId: req.params.id,
-          ...assumptionsPayload,
-        });
-      }
-
-      // Recalculate and persist the projected corpus before returning so
-      // the next GET /api/scenarios list fetch always reflects the latest
-      // inputs — eliminating any race between a background write and an
-      // immediate list refetch on the client.
-      try {
-        const scenarioData = await storage.getScenarioWithAllData(req.params.id);
-        if (scenarioData) {
-          const calculations = await calculateRetirementPlan(scenarioData);
-          await storage.updateScenarioCorpus(
-            req.params.id,
-            calculations.summary.projectedCorpusAtRetirement,
-          );
-          // Surface the freshly computed corpus in the response body so the
-          // client can use it without waiting for an additional list refetch.
-          (updatedScenario as any).projectedCorpus =
-            calculations.summary.projectedCorpusAtRetirement;
+        if (!scenarioRow) {
+          throw new Error("Scenario update lost ownership");
         }
-      } catch {
-        // Corpus recalculation is an optimisation; never fail the save.
-        // The client will get the previous corpus value and will refresh it
-        // the next time the plan dashboard is opened (POST /api/calc/:id).
-      }
+
+        if (assumptionsPayload) {
+          const [existingAssumptions] = await tx
+            .select({ id: assumptions.id })
+            .from(assumptions)
+            .where(eq(assumptions.scenarioId, req.params.id))
+            .limit(1);
+
+          if (existingAssumptions) {
+            await tx
+              .update(assumptions)
+              .set(assumptionsPayload)
+              .where(eq(assumptions.id, existingAssumptions.id));
+          } else {
+            await tx.insert(assumptions).values({
+              scenarioId: req.params.id,
+              ...assumptionsPayload,
+            });
+          }
+        }
+
+        // Asset IDs are client-provided, so scope every update to the owned
+        // scenario. A mismatched or stale ID creates the requested logical
+        // bucket in this scenario; it can never update another scenario's row.
+        if (assetPayloads) {
+          for (const assetPayload of assetPayloads) {
+            const { id, bucket, ...assetFields } = assetPayload;
+            let updatedAsset: { id: string } | undefined;
+
+            if (id) {
+              [updatedAsset] = await tx
+                .update(assets)
+                .set(assetFields)
+                .where(and(eq(assets.id, id), eq(assets.scenarioId, req.params.id)))
+                .returning({ id: assets.id });
+            }
+
+            // Older plans may not have an EPF, NPS, or general row when its
+            // original balance and contribution were zero. Create that bucket
+            // now so users can start contributing without recreating the plan.
+            if (!updatedAsset) {
+              const assetId = bucket === 'other'
+                ? `other:${req.params.id}`
+                : `${bucket}:${req.params.id}`;
+              [updatedAsset] = await tx
+                .insert(assets)
+                .values({
+                  id: assetId,
+                  scenarioId: req.params.id,
+                  kind: bucket === 'other' ? 'equity' : 'debt',
+                  value: '0',
+                  ...assetFields,
+                  monthlyContribution: bucket === 'other' ? '0' : assetFields.monthlyContribution,
+                })
+                .onConflictDoUpdate({
+                  target: assets.id,
+                  set: assetFields,
+                  setWhere: eq(assets.scenarioId, req.params.id),
+                })
+                .returning({ id: assets.id });
+            }
+
+            if (!updatedAsset) {
+              throw new Error(`Unable to update ${bucket} asset`);
+            }
+          }
+        }
+
+        // Read through the same transaction so calculation sees every pending
+        // edit. A calculation or corpus-write failure rolls back the form save.
+        const [
+          [scenarioAssumptions],
+          scenarioHouseholdMembers,
+          scenarioIncomeItems,
+          scenarioExpenseItems,
+          scenarioGoals,
+          scenarioAssets,
+          scenarioLiabilities,
+          scenarioMiniRetirements,
+        ] = await Promise.all([
+          tx.select().from(assumptions).where(eq(assumptions.scenarioId, req.params.id)).limit(1),
+          tx.select().from(householdMembers).where(eq(householdMembers.scenarioId, req.params.id)),
+          tx.select().from(incomeItems).where(eq(incomeItems.scenarioId, req.params.id)),
+          tx.select().from(expenseItems).where(eq(expenseItems.scenarioId, req.params.id)),
+          tx.select().from(goals).where(eq(goals.scenarioId, req.params.id)),
+          tx.select().from(assets).where(eq(assets.scenarioId, req.params.id)),
+          tx.select().from(liabilities).where(eq(liabilities.scenarioId, req.params.id)),
+          tx.select().from(miniRetirements).where(eq(miniRetirements.scenarioId, req.params.id)),
+        ]);
+
+        const calculations = await calculateRetirementPlan({
+          ...scenarioRow,
+          assumptions: scenarioAssumptions,
+          householdMembers: scenarioHouseholdMembers,
+          incomeItems: scenarioIncomeItems,
+          expenseItems: scenarioExpenseItems,
+          goals: scenarioGoals,
+          assets: scenarioAssets,
+          liabilities: scenarioLiabilities,
+          miniRetirements: scenarioMiniRetirements,
+        });
+        const projectedCorpus = calculations.summary.projectedCorpusAtRetirement;
+
+        await tx
+          .update(scenarios)
+          .set({ projectedCorpus: projectedCorpus.toString() })
+          .where(eq(scenarios.id, req.params.id));
+
+        return { ...scenarioRow, projectedCorpus };
+      });
 
       res.json(updatedScenario);
     } catch (error) {

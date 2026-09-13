@@ -111,7 +111,16 @@ export const GetScenarioResponse = zod.object({
   "equityReturn": zod.string().nullish(),
   "debtReturn": zod.string().nullish(),
   "source": zod.union([zod.literal('crm'),zod.literal('user'),zod.literal(null)]).nullish()
-}).describe('Planning assumptions attached to a scenario'),zod.null()]).optional()
+}).describe('Planning assumptions attached to a scenario'),zod.null()]).optional(),
+  "assets": zod.array(zod.object({
+  "id": zod.string(),
+  "scenarioId": zod.string(),
+  "kind": zod.enum(['equity', 'debt', 'real_estate', 'gold', 'cash']),
+  "value": zod.string(),
+  "expectedReturnPre": zod.string().nullish(),
+  "expectedReturnPost": zod.string().nullish(),
+  "monthlyContribution": zod.string().nullish()
+}).describe('An investment asset attached to a scenario')).optional()
 }).describe('Full scenario with all associated data')
 
 
@@ -134,7 +143,13 @@ export const UpdateScenarioBody = zod.object({
   "returnPost": zod.string().nullish(),
   "lifeExpectancy": zod.number().nullish(),
   "source": zod.union([zod.literal('crm'),zod.literal('user'),zod.literal(null)]).nullish()
-}).optional().describe('Partial assumptions payload for a scenario update')
+}).optional().describe('Partial assumptions payload for a scenario update'),
+  "assets": zod.array(zod.object({
+  "id": zod.string().optional(),
+  "bucket": zod.enum(['other', 'epf', 'nps']),
+  "expectedReturnPre": zod.string(),
+  "monthlyContribution": zod.string().optional()
+}).describe('Editable projection settings for an existing scenario asset')).optional()
 }).describe('Partial update payload for a scenario')
 
 export const UpdateScenarioResponse = zod.object({

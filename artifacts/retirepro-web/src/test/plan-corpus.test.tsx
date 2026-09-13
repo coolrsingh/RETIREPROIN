@@ -170,6 +170,23 @@ const baseScenario = {
     lifeExpectancy: 85,
     source: "crm" as const,
   },
+  assets: [
+    {
+      id: `other:${SCENARIO_ID}`,
+      expectedReturnPre: "11.0",
+      monthlyContribution: "0",
+    },
+    {
+      id: `epf:${SCENARIO_ID}`,
+      expectedReturnPre: "8.0",
+      monthlyContribution: "5000",
+    },
+    {
+      id: `nps:${SCENARIO_ID}`,
+      expectedReturnPre: "10.0",
+      monthlyContribution: "3000",
+    },
+  ],
 };
 
 // Wrap with a QueryClientProvider so react-query hooks initialise.
@@ -230,6 +247,49 @@ describe("AssumptionsPanel — save flow keeps plan-card corpus current", () => 
       (args: unknown[]) => JSON.stringify((args[0] as { queryKey?: unknown })?.queryKey)
     );
     expect(invalidatedKeys).toContain(JSON.stringify(listKey));
+  });
+
+  it("sends edited per-asset returns and EPF/NPS contributions", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByTestId("button-edit-assumptions"));
+    await user.clear(screen.getByTestId("input-other-investments-return"));
+    await user.type(screen.getByTestId("input-other-investments-return"), "12.5");
+    await user.clear(screen.getByTestId("input-epf-return"));
+    await user.type(screen.getByTestId("input-epf-return"), "8.5");
+    await user.clear(screen.getByTestId("input-epf-contribution"));
+    await user.type(screen.getByTestId("input-epf-contribution"), "7500");
+    await user.clear(screen.getByTestId("input-nps-return"));
+    await user.type(screen.getByTestId("input-nps-return"), "11");
+    await user.clear(screen.getByTestId("input-nps-contribution"));
+    await user.type(screen.getByTestId("input-nps-contribution"), "4500");
+    await user.click(screen.getByTestId("button-save-assumptions"));
+
+    expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({
+      id: SCENARIO_ID,
+      data: expect.objectContaining({
+        assets: [
+          {
+            id: `other:${SCENARIO_ID}`,
+            bucket: "other",
+            expectedReturnPre: "12.5",
+          },
+          {
+            id: `epf:${SCENARIO_ID}`,
+            bucket: "epf",
+            expectedReturnPre: "8.5",
+            monthlyContribution: "7500",
+          },
+          {
+            id: `nps:${SCENARIO_ID}`,
+            bucket: "nps",
+            expectedReturnPre: "11",
+            monthlyContribution: "4500",
+          },
+        ],
+      }),
+    }));
   });
 
   it("also invalidates the individual scenario and calc queries on success", async () => {

@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateScenarioAssetBody } from './updateScenarioAssetBody';
 import type { UpdateScenarioAssumptionsBody } from './updateScenarioAssumptionsBody';
 
 /**
@@ -15,4 +16,5 @@ export interface UpdateScenarioBody {
   /** @nullable */
   leadId?: string | null;
   assumptions?: UpdateScenarioAssumptionsBody;
+  assets?: UpdateScenarioAssetBody[];
 }

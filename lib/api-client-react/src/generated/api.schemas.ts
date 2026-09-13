@@ -233,6 +233,33 @@ export interface ScenarioAssumptions {
   source?: ScenarioAssumptionsSource;
 }
 
+export type ScenarioAssetKind = typeof ScenarioAssetKind[keyof typeof ScenarioAssetKind];
+
+
+export const ScenarioAssetKind = {
+  equity: 'equity',
+  debt: 'debt',
+  real_estate: 'real_estate',
+  gold: 'gold',
+  cash: 'cash',
+} as const;
+
+/**
+ * An investment asset attached to a scenario
+ */
+export interface ScenarioAsset {
+  id: string;
+  scenarioId: string;
+  kind: ScenarioAssetKind;
+  value: string;
+  /** @nullable */
+  expectedReturnPre?: string | null;
+  /** @nullable */
+  expectedReturnPost?: string | null;
+  /** @nullable */
+  monthlyContribution?: string | null;
+}
+
 export type ScenarioDataMode = typeof ScenarioDataMode[keyof typeof ScenarioDataMode];
 
 
@@ -256,6 +283,7 @@ export interface ScenarioData {
   /** @nullable */
   updatedAt?: string | null;
   assumptions?: ScenarioAssumptions | null;
+  assets?: ScenarioAsset[];
 }
 
 /**
@@ -341,6 +369,25 @@ export interface UpdateScenarioAssumptionsBody {
   source?: UpdateScenarioAssumptionsBodySource;
 }
 
+export type UpdateScenarioAssetBodyBucket = typeof UpdateScenarioAssetBodyBucket[keyof typeof UpdateScenarioAssetBodyBucket];
+
+
+export const UpdateScenarioAssetBodyBucket = {
+  other: 'other',
+  epf: 'epf',
+  nps: 'nps',
+} as const;
+
+/**
+ * Editable projection settings for an existing scenario asset
+ */
+export interface UpdateScenarioAssetBody {
+  id?: string;
+  bucket: UpdateScenarioAssetBodyBucket;
+  expectedReturnPre: string;
+  monthlyContribution?: string;
+}
+
 /**
  * Partial update payload for a scenario
  */
@@ -349,6 +396,7 @@ export interface UpdateScenarioBody {
   /** @nullable */
   leadId?: string | null;
   assumptions?: UpdateScenarioAssumptionsBody;
+  assets?: UpdateScenarioAssetBody[];
 }
 
 export type UpdateCrmDefaultsBodyTaxRegime = typeof UpdateCrmDefaultsBodyTaxRegime[keyof typeof UpdateCrmDefaultsBodyTaxRegime];
