@@ -314,6 +314,35 @@ describe("AssumptionsPanel — save flow keeps plan-card corpus current", () => 
     expect(screen.getByTestId("input-inflation-headline")).toHaveValue(7.5);
   });
 
+  it("resets failed edits to the server value when the user cancels", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByTestId("button-edit-assumptions"));
+    const input = screen.getByTestId("input-inflation-headline");
+    await user.clear(input);
+    await user.type(input, "7.5");
+    await user.click(screen.getByTestId("button-save-assumptions"));
+
+    expect(mockMutate).toHaveBeenCalledOnce();
+
+    const capturedOpts = mockUseUpdateScenario.mock.calls[0]?.[0];
+    expect(capturedOpts?.mutation?.onError).toBeDefined();
+    capturedOpts.mutation.onError(new Error("Network failure"), {}, undefined);
+
+    expect(screen.getByTestId("input-inflation-headline")).toHaveValue(7.5);
+
+    await user.click(screen.getByTestId("button-cancel-edit"));
+
+    expect(screen.getByTestId("button-edit-assumptions")).toBeInTheDocument();
+    expect(screen.queryByTestId("input-inflation-headline")).not.toBeInTheDocument();
+    expect(screen.getByTestId("assumption-inflation-headline")).toHaveTextContent("6.0%");
+    expect(screen.getByTestId("assumption-inflation-headline")).not.toHaveTextContent("7.5%");
+
+    await user.click(screen.getByTestId("button-edit-assumptions"));
+    expect(screen.getByTestId("input-inflation-headline")).toHaveValue(6);
+  });
+
 });
 
 // ---------------------------------------------------------------------------
