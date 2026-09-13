@@ -175,6 +175,7 @@ import Blog11 from "@/pages/blog-11";
 import Blog12 from "@/pages/blog-12";
 import Blog13 from "@/pages/blog-13";
 import Blog14 from "@/pages/blog-14";
+import Blog15 from "@/pages/blog-15";
 import FreePlan from "@/pages/free-plan";
 import FAQ from "@/pages/faq";
 import AdLanding from "@/pages/ad-landing";
@@ -232,6 +233,7 @@ export function render(url: string): string {
             <Route path="/blog/joint-retirement-planning-for-couples" component={Blog12} />
             <Route path="/blog/epf-early-withdrawal-mistake" component={Blog13} />
             <Route path="/blog/retirement-planning-in-india-7-smart-ways-to-make-your-money-last" component={Blog14} />
+            <Route path="/blog/why-your-retirement-number-is-wrong" component={Blog15} />
             <Route path="/free-plan" component={FreePlan} />
             <Route path="/faq" component={FAQ} />
             <Route path="/go" component={AdLanding} />

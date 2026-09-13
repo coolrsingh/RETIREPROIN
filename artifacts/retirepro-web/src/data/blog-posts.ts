@@ -31,6 +31,21 @@ export interface BlogPost {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: "why-your-retirement-number-is-wrong",
+    title: "Why Your Retirement Number Is Wrong — And How Inflation & Late Starts Change Everything",
+    excerpt:
+      "₹1 crore is not a retirement plan. See how inflation, your retirement timeline and a late start change the corpus and monthly SIP you may actually need.",
+    description:
+      "A ₹1 crore retirement target is rarely personal. Learn how inflation, retirement timing and a late start change your required corpus and monthly SIP in India.",
+    readTime: "12 min read",
+    tag: "Retirement Basics",
+    tagColor: "bg-orange-100 text-orange-800",
+    gradient: "from-orange-600 via-rose-700 to-slate-950",
+    date: "13 Sep 2026",
+    dateTime: "2026-09-13",
+    datePublished: "2026-09-13",
+  },
+  {
     slug: "retirement-planning-in-india-7-smart-ways-to-make-your-money-last",
     title: "Retirement Planning in India: 7 Smart Ways to Make Your Money Last",
     excerpt:
