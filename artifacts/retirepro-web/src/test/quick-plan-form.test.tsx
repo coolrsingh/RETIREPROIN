@@ -193,6 +193,30 @@ describe("QuickPlanForm – valid submission", () => {
       expect(screen.queryByText("Monthly income is required")).not.toBeInTheDocument();
     });
   });
+
+  it("submits adjusted inflation and pre-retirement return slider values", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+    fireEvent.change(screen.getByTestId("input-inflation-range"), {
+      target: { value: "6.5" },
+    });
+    fireEvent.change(screen.getByTestId("input-pre-return-range"), {
+      target: { value: "11.5" },
+    });
+
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit.mock.calls[0][0]).toEqual(expect.objectContaining({
+      personaMode: "accumulating",
+      assumptions: expect.objectContaining({
+        inflationHeadline: 6.5,
+        returnPre: 11.5,
+      }),
+    }));
+  });
 });
 
 describe("QuickPlanForm – child row validation", () => {
