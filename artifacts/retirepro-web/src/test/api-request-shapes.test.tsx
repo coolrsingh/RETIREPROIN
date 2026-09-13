@@ -189,6 +189,35 @@ describe("LeadCaptureModal — POST /api/lead request shape", () => {
     const sentKeys = Object.keys(payload.data).sort();
     expect(sentKeys).toEqual(["email", "name", "phone", "scenarioId"]);
   });
+
+  it("rejects a 9-digit phone before calling the lead mutation", async () => {
+    const { default: LeadCaptureModal } = await import(
+      "@/components/lead-capture-modal"
+    );
+
+    render(
+      <Wrap>
+        <LeadCaptureModal
+          isOpen
+          onClose={vi.fn()}
+          onSuccess={vi.fn()}
+        />
+      </Wrap>,
+    );
+
+    const user = userEvent.setup();
+    await user.type(screen.getByTestId("input-lead-name"), "Priya Sharma");
+    await user.type(screen.getByTestId("input-lead-email"), "priya@example.com");
+    await user.type(screen.getByTestId("input-lead-phone"), "987654321");
+    await user.click(screen.getByTestId("checkbox-consent"));
+    await user.click(screen.getByTestId("button-submit-lead"));
+
+    expect(
+      await screen.findByText("Enter a valid 10-digit mobile number"),
+    ).toBeInTheDocument();
+    expect(mockCreateLeadMutate).not.toHaveBeenCalled();
+    expect(capturedLeadPayload).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
