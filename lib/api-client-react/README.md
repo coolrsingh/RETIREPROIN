@@ -8,7 +8,7 @@ Generated React Query hooks and the `customFetch` layer that validates API respo
 # From the repo root
 pnpm --filter @workspace/api-client-react test
 
-# Or via the root-level test script (also runs in CI)
+# Or run tests for every library package that defines a test script (also used in CI)
 pnpm test
 ```
 
