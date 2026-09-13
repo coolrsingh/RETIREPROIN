@@ -325,4 +325,31 @@ describe("ProfileMenu — PUT /api/profile request shape", () => {
     expect(payload.data.monthlyIncome).toBe("80000");
     expect(payload.data.retirementAge).toBe(60);
   });
+
+  it("sends the updated phone value instead of the pre-populated value", async () => {
+    const { default: ProfileMenu } = await import(
+      "@/components/profile-menu"
+    );
+
+    render(
+      <Wrap>
+        <ProfileMenu user={{ firstName: "Arjun", email: "arjun@test.com" }} />
+      </Wrap>,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /arjun/i }));
+    await user.click(await screen.findByRole("button", { name: /edit profile/i }));
+
+    const phoneInput = screen.getByPlaceholderText("+91 98765 43210");
+    await user.clear(phoneInput);
+    await user.type(phoneInput, "9123456780");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => expect(mockUpdateProfileMutate).toHaveBeenCalledOnce());
+
+    const payload = capturedProfilePayload as { data: Record<string, unknown> };
+    expect(payload.data.phone).toBe("9123456780");
+    expect(payload.data.phone).not.toBe("9876543210");
+  });
 });
