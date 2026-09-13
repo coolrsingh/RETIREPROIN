@@ -306,6 +306,29 @@ describe("Home – rename plan (server failure → rollback)", () => {
 // ---------------------------------------------------------------------------
 
 describe("Home – rename plan (duplicate-name validation)", () => {
+  it("shows the duplicate-name error and disables Save for a case-insensitive match", async () => {
+    const user = userEvent.setup();
+    const qc = buildQueryClient([SCENARIO_A, SCENARIO_B]);
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderHome(qc);
+    await screen.findByText("Retirement Alpha");
+
+    await user.click(screen.getByTestId(`btn-options-${SCENARIO_A.id}`));
+    await user.click(screen.getByTestId(`btn-rename-${SCENARIO_A.id}`));
+
+    const input = await screen.findByTestId("input-rename");
+    await user.clear(input);
+    await user.type(input, SCENARIO_B.name.toLowerCase());
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rename-duplicate-error")).toHaveTextContent(
+        "You already have a plan with this name."
+      );
+      expect(screen.getByTestId("btn-rename-confirm")).toBeDisabled();
+    });
+  });
+
   it("shows the duplicate-name error when the user types a name that matches another plan", async () => {
     const user = userEvent.setup();
     const qc = buildQueryClient([SCENARIO_A, SCENARIO_B]);
