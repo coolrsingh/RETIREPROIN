@@ -126,6 +126,45 @@ describe("AdvisorSection — valid submission", () => {
       ).toBeInTheDocument(),
     );
   });
+
+  it("keeps contact details available for a successful retry after a failed request", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true });
+    render(<AdvisorSection />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-name"), "Aditi Mehta");
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    await user.type(
+      screen.getByTestId("input-advisor-email"),
+      "aditi@example.com",
+    );
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument(),
+    );
+
+    expect(screen.getByTestId("input-advisor-name")).toHaveValue("Aditi Mehta");
+    expect(screen.getByTestId("input-advisor-phone")).toHaveValue("9876543210");
+    expect(screen.getByTestId("input-advisor-email")).toHaveValue(
+      "aditi@example.com",
+    );
+
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByText("You're on the list!")).toBeInTheDocument(),
+    );
+
+    const [, options] = mockFetch.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(options.body as string)).toEqual({
+      name: "Aditi Mehta",
+      phone: "9876543210",
+      email: "aditi@example.com",
+    });
+  });
 });
 
 describe("AdvisorSection — Submit another button", () => {
