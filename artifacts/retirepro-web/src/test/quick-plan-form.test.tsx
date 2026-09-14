@@ -220,6 +220,39 @@ describe("QuickPlanForm – valid submission", () => {
 });
 
 describe("QuickPlanForm – child row validation", () => {
+  it("keeps each child's details when another child is edited", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await fillRequiredFields(user);
+
+    await user.click(screen.getByTestId("button-add-child"));
+    await user.click(screen.getByTestId("button-add-child"));
+
+    await user.type(screen.getByTestId("input-child-name-0"), "Aarav");
+    await user.selectOptions(screen.getByTestId("input-child-dob-month-0"), "03");
+    await user.selectOptions(screen.getByTestId("input-child-dob-year-0"), "2015");
+
+    await user.type(screen.getByTestId("input-child-name-1"), "Meera");
+    await user.selectOptions(screen.getByTestId("input-child-dob-month-1"), "11");
+    await user.selectOptions(screen.getByTestId("input-child-dob-year-1"), "2018");
+
+    await user.clear(screen.getByTestId("input-child-name-1"));
+    await user.type(screen.getByTestId("input-child-name-1"), "Meera Sharma");
+
+    expect(screen.getByTestId("input-child-name-0")).toHaveValue("Aarav");
+    expect(screen.getByTestId("input-child-dob-month-0")).toHaveValue("03");
+    expect(screen.getByTestId("input-child-dob-year-0")).toHaveValue("2015");
+
+    await user.click(screen.getByTestId("button-create-plan"));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit.mock.calls[0][0].children).toEqual([
+      expect.objectContaining({ name: "Aarav", dob: "2015-03-01" }),
+      expect.objectContaining({ name: "Meera Sharma", dob: "2018-11-01" }),
+    ]);
+  });
+
   it("blocks submission and shows an error when a child row is added but left completely blank", async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderForm();
