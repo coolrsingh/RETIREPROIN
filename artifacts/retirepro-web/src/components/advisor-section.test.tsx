@@ -246,6 +246,25 @@ describe("AdvisorSection — optional email field", () => {
     expect(body.email).toBe("test@example.com");
   });
 
+  it("trims leading and trailing whitespace from email in the POST body", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    render(<AdvisorSection defaultName="Test User" />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    const emailInput = screen.getByTestId("input-advisor-email");
+    fireEvent.change(emailInput, {
+      target: { value: "  test@example.com  " },
+    });
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.email).toBe("test@example.com");
+  });
+
   it("omits email from the POST body when the user leaves it blank", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
     render(<AdvisorSection defaultName="Test User" />);
