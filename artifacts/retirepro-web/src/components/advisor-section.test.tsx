@@ -268,6 +268,49 @@ describe("AdvisorSection — duplicate submission prevention", () => {
   });
 });
 
+describe("AdvisorSection — callback status announcements", () => {
+  it("announces when a callback request is sending and when it succeeds", async () => {
+    let resolveFetch!: () => void;
+    const inflight = new Promise<{ ok: boolean }>(resolve => {
+      resolveFetch = () => resolve({ ok: true });
+    });
+    mockFetch.mockReturnValueOnce(inflight);
+
+    render(<AdvisorSection />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Sending your callback request.",
+    );
+
+    resolveFetch();
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Your callback request was sent.",
+      ),
+    );
+  });
+
+  it("announces when a callback request cannot be sent", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    render(<AdvisorSection />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId("input-advisor-phone"), "9876543210");
+    await user.click(screen.getByTestId("button-advisor-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "We could not send your callback request.",
+      ),
+    );
+  });
+});
+
 describe("AdvisorSection — optional email field", () => {
   it("includes email in the POST body when the user fills it in", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });

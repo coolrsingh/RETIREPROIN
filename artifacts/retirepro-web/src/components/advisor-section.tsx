@@ -44,6 +44,14 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [phoneError, setPhoneError] = useState("");
   const submissionInFlight = useRef(false);
+  const statusAnnouncement =
+    status === "submitting"
+      ? "Sending your callback request."
+      : status === "success"
+        ? "Your callback request was sent. An advisor will contact you within one business day."
+        : status === "error"
+          ? "We could not send your callback request. Please try again or contact us on WhatsApp."
+          : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,6 +165,9 @@ export default function AdvisorSection({ defaultName = "" }: AdvisorSectionProps
                 boxShadow: "0 8px 40px rgba(232,148,10,0.08), 0 2px 12px rgba(0,0,0,0.06)",
               }}
             >
+              <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {statusAnnouncement}
+              </div>
               <AnimatePresence mode="wait">
                 {status === "success" ? (
                   <motion.div
