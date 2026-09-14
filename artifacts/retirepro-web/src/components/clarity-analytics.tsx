@@ -26,7 +26,11 @@ export default function ClarityAnalytics({ projectId }: ClarityAnalyticsProps) {
       t.async = true;
       t.src = "https://www.clarity.ms/tag/" + i;
       const y = l.getElementsByTagName(r)[0];
-      y.parentNode?.insertBefore(t, y);
+      if (y?.parentNode) {
+        y.parentNode.insertBefore(t, y);
+      } else {
+        l.head?.appendChild(t);
+      }
     })(window, document, "clarity", "script", projectId);
   }, [projectId]);
 
